@@ -15,5 +15,6 @@ struct Token {
 	TokenType token;
 	char* value;
 };
+typedef struct Token Token;
 
 #endif // SS_LEX_H

@@ -3,31 +3,24 @@
 
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
 
-#define READ
 
-#ifdef READ
-int main() {
-	const char* path = "C:\\Users\\User\\Desktop\\Projects\\SeaScript\\int.ssb";
-	Bytecode bytecode;
-	Vm vm;
-	vm_init(&vm, 100);
-	read_from_file(&bytecode, path);
-	return vm_execute(&vm, &bytecode);
-}
-#else
+
 int main() {
 	Instruction instructions[] = {
 		{
-			LOADCONST, {500}
+			LOADCONST, {100} // Pushes 100 onto the stack
 		},
 		{
-			LOADCONST, {10}
+			STORE, {0} // Stores `100` as a global in address 0
 		},
 		{
-			MUL, {}
+			LOADCONST, {35} // blocker
 		},
 		{
-			IPRINT, {}
+			LOAD, {0} // Loads address 0 onto the stack
+		},
+		{
+			IPRINT, {} // 100
 		},
 		{
 			EXIT, {0}
@@ -43,6 +36,6 @@ int main() {
 
 	return vm_execute(&vm, &bytecode);
 }
-#endif
+
 
 

@@ -42,11 +42,11 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 			pop_stack(&vm->stack);
 			vm->ip++;
 		case STORE:
-			//TODO
+			vm->globals[cinstr.args[0]] = *top_stack(&vm->stack);
 			vm->ip++;
 			break;
 		case LOAD:
-			//TODO
+			push_stack(&vm->stack, vm->globals[cinstr.args[0]]);
 			vm->ip++;
 			break;
 		case ADD:
@@ -78,11 +78,40 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 			vm->ip++;
 			break;
 		case EQ:
-			//TODO
-			vm->ip++;
+			top = top_stack(&vm->stack);
+			f = *(top--);
+			s = *(top--);
+			if (f == s)
+				vm->ip = cinstr.args[0];
+			else
+				vm->ip++;
+			break;
+		case LT:
+			top = top_stack(&vm->stack);
+			f = *(top--);
+			s = *(top--);
+			if (f < s)
+				vm->ip = cinstr.args[0];
+			else
+				vm->ip++;
+			break;
+		case GT:
+			top = top_stack(&vm->stack);
+			f = *(top--);
+			s = *(top--);
+			if (f > s)
+				vm->ip = cinstr.args[0];
+			else
+				vm->ip++;
 			break;
 		case JUMP:
 			vm->ip = cinstr.args[0];
+			break;
+		case CALL:
+			//TODO
+			break;
+		case RETURN:
+			//TODO
 			break;
 		case IPRINT:
 			printf("%d", *top_stack(&vm->stack));
