@@ -20,7 +20,7 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 	Instruction cinstr;
 	instrs = to_instructions(bytecode);
 
-	STACK_TYPE* top;
+	stack_type* top;
 	int f = 0;
 	int s = 0;
 

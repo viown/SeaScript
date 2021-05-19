@@ -6,10 +6,11 @@
 
 #define MAX_ARGS 3
 
+typedef int32_t argument;
 
 struct Instruction {
 	Opcode op;
-	word args[MAX_ARGS];
+	argument args[MAX_ARGS];
 };
 
 typedef struct Instruction Instruction;

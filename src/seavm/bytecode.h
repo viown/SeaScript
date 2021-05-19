@@ -6,7 +6,7 @@
 
 
 struct Bytecode {
-	STACK_TYPE* raw_data;
+	stack_type* raw_data;
 	size_t length;
 };
 

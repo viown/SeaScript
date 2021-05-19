@@ -6,8 +6,8 @@ Stack create_stack() {
     Stack stack;
     stack.total_size = 10;
     stack.allocated = 0;
-    stack.stack = malloc(stack.total_size * sizeof(STACK_TYPE));
-    for (byte i = 0; i < stack.total_size; ++i) {
+    stack.stack = malloc(stack.total_size * sizeof(stack_type));
+    for (stack_type i = 0; i < stack.total_size; ++i) {
 		stack.stack[i] = 0;
     }
     return stack;
@@ -34,7 +34,7 @@ inline void pop_stack(Stack* stack) {
     stack->stack[--stack->allocated] = 0;
 }
 
-inline STACK_TYPE* top_stack(Stack* stack) {
+inline stack_type* top_stack(Stack* stack) {
 	if (stack->allocated == 0)
 		return &stack->stack[0];
     return &stack->stack[stack->allocated-1];
