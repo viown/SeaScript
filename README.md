@@ -1,0 +1,3 @@
+# SeaScript
+
+a programming language

@@ -1,0 +1,6 @@
+build/
+*.cbp
+*.sln
+*.depend
+*.layout
+.vscode
