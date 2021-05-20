@@ -18,6 +18,7 @@ enum Opcode {
     JUMP,
     CALL,
     RETURN,
+    CALLC, // Call C function
     IPRINT, // Print int
     CPRINT, // Print char
 };

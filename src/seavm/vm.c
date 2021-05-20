@@ -21,8 +21,8 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 	instrs = to_instructions(bytecode);
 
 	stack_type* top;
-	int f = 0;
-	int s = 0;
+	stack_type f = 0;
+	stack_type s = 0;
 
 	while (vm->ip != bytecode->length)
 	{
@@ -114,7 +114,7 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 			//TODO
 			break;
 		case IPRINT:
-			printf("%d", *top_stack(&vm->stack));
+			printf("%f", *top_stack(&vm->stack));
 			vm->ip++;
 			break;
 		case CPRINT:

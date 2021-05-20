@@ -7,7 +7,7 @@ Stack create_stack() {
     stack.total_size = 10;
     stack.allocated = 0;
     stack.stack = malloc(stack.total_size * sizeof(stack_type));
-    for (stack_type i = 0; i < stack.total_size; ++i) {
+    for (size_t i = 0; i < stack.total_size; ++i) {
 		stack.stack[i] = 0;
     }
     return stack;
@@ -23,7 +23,7 @@ bool resize_stack(Stack* stack, stack_size new_size) {
 	}
 }
 
-inline void push_stack(Stack* stack, int value) {
+inline void push_stack(Stack* stack, stack_type value) {
     if (stack->allocated == stack->total_size) {
         resize_stack(stack, stack->total_size * 2);
     }
