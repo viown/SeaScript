@@ -27,6 +27,7 @@ Instruction* to_instructions(Bytecode* bytecode) {
 		instruction.args[0] = bytecode->raw_data[++cursor];
 		instruction.args[1] = bytecode->raw_data[++cursor];
 		instruction.args[2] = bytecode->raw_data[++cursor];
+
 		cursor++;
 		instructions[i] = instruction;
 	}

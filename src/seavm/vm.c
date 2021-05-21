@@ -33,6 +33,7 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 		case EXIT:
 			free_bytecode(bytecode);
 			free(instrs);
+			vm_free(vm);
 			return !(cinstr.args[0] == EXIT_SUCCESS);
 		case LOADCONST:
 			push_stack(&vm->stack, cinstr.args[0]);
@@ -43,6 +44,7 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 			vm->ip++;
 		case STORE:
 			vm->globals[cinstr.args[0]] = *top_stack(&vm->stack);
+			vm->global_used++;
 			vm->ip++;
 			break;
 		case LOAD:
@@ -81,28 +83,19 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 			top = top_stack(&vm->stack);
 			f = *(top--);
 			s = *(top--);
-			if (f == s)
-				vm->ip = cinstr.args[0];
-			else
-				vm->ip++;
+			vm->ip = (f == s) ? cinstr.args[0] : vm->ip + 1;
 			break;
 		case LT:
 			top = top_stack(&vm->stack);
 			f = *(top--);
 			s = *(top--);
-			if (f < s)
-				vm->ip = cinstr.args[0];
-			else
-				vm->ip++;
+			vm->ip = (f < s) ? cinstr.args[0] : vm->ip + 1;
 			break;
 		case GT:
 			top = top_stack(&vm->stack);
 			f = *(top--);
 			s = *(top--);
-			if (f > s)
-				vm->ip = cinstr.args[0];
-			else
-				vm->ip++;
+			vm->ip = (f > s) ? cinstr.args[0] : vm->ip + 1;
 			break;
 		case JUMP:
 			vm->ip = cinstr.args[0];
@@ -128,5 +121,6 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 
 	free_bytecode(bytecode);
 	free(instrs);
+	vm_free(vm);
 	return EXIT_FAILURE; // Should exit properly through (EXIT 0)
 }

@@ -7,6 +7,9 @@
 #define IS_CHAR(x) ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z'))
 #define IS_NUM(x) (x >= '0' && x <= '9')
 
+
+#define MAX_VALUE_SIZE 1000
+
 static const char* const ss_keywords[] = {
 	"if", "function", "while", "break", "return", "var"
 };
@@ -24,21 +27,26 @@ typedef enum TokenType TokenType;
 
 struct Token {
 	TokenType token;
-	char* value;
+	char value[MAX_VALUE_SIZE];
 };
 typedef struct Token Token;
 
 struct lex_Object {
 	char* source;
-	size_t length;
 	char* current;
+	size_t length;
+	Token* tokens;
+	size_t token_size;
+	size_t token_used;
 };
+typedef struct lex_Object lex_Object;
 
 bool is_operator(char c);
 bool is_keyword(const char* c);
 bool is_punctuator(char c);
 
-
-void lex(Token* tokens, int length);
+void lexObject_init(lex_Object* object, char* source);
+void lex(lex_Object* lexObject);
+void lex_free(lex_Object* lexObject);
 
 #endif // SS_LEX_H

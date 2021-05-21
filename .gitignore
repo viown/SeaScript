@@ -3,5 +3,6 @@ build/
 *.sln
 *.depend
 *.layout
+*.ss
 *.ssb
 .vscode
