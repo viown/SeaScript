@@ -2,21 +2,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include "./lex.h"
+#include "./seavm/bytecode.h"
 #include "./seavm/vm.h"
 
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
-
-void test(lex_Object* obj) {
-	char n[10] = "hi";
-	strcpy(obj->tokens[0].value, n);
-}
 
 void visualize_token(Token* token) {
 	printf("<SPECIFIER='%d', VALUE='%s'>\n", token->token,token->value);
 }
 
+
 int main() {
-	char* source = "var a = 533\nvar b = 200 ";
+	// read test file
+	const char* path = "tests\\test_lex.ss";
+	char buffer[1000];
+	int new_index = 0;
+	FILE* file = fopen(path, "r");
+	int current_char = getc(file);
+	while (current_char != EOF) {
+		buffer[new_index++] = current_char;
+		current_char = getc(file);
+	}
+	buffer[new_index++] = '\0';
+	// lex test
+	char* source = buffer;
 	lex_Object object;
 	lexObject_init(&object, source);
 	lex(&object);

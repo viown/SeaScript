@@ -6,6 +6,7 @@
 bool is_operator(char c) {
 	switch (c) {
 	case '.':
+	case ',':
 	case '>':
 	case '<':
 	case '+':
@@ -66,6 +67,7 @@ void append_token(lex_Object* object, Token token) {
 
 	TODO:
 	- Strings
+	- Comments
 */
 void lex(lex_Object* lexObject) {
 	char current_token[MAX_VALUE_SIZE];
@@ -86,7 +88,7 @@ void lex(lex_Object* lexObject) {
 					is_collecting_num = true;
 				current_token[index++] = *lexObject->current;
 			}
-		} else if (IS_WHITESPACE(*lexObject->current) || is_operator(*lexObject->current) || IS_END_OF_LINE(*lexObject->current)) {
+		} else if (IS_WHITESPACE(*lexObject->current) || is_operator(*lexObject->current) || is_punctuator(*lexObject->current) || IS_END_OF_LINE(*lexObject->current)) {
 			if (is_collecting) {
 				is_collecting = false;
 				Token token;
@@ -108,9 +110,10 @@ void lex(lex_Object* lexObject) {
 				index = 0;
 				memset(current_token, 0, sizeof(current_token));
 			}
-			if (is_operator(*lexObject->current)) {
+			if (is_operator(*lexObject->current) || is_punctuator(*lexObject->current)) {
 				Token op;
-				op.token = OPERATOR;
+				memset(op.value, 0, sizeof(op.value));
+				op.token = is_operator(*lexObject->current) ? OPERATOR : PUNCTUATOR;
 				op.value[0] = *lexObject->current;
 				append_token(lexObject, op);
 			}
