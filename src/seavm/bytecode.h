@@ -1,5 +1,6 @@
 #ifndef SEAVM_BYTECODE_H
 #define SEAVM_BYTECODE_H
+#include <stdio.h>
 #include <stddef.h>
 #include "./instruction.h"
 #include "./stack.h"
@@ -16,6 +17,7 @@ void to_bytecode(Bytecode* bytecode, Instruction* instructions, size_t length);
 Instruction* to_instructions(Bytecode* bytecode);
 
 void save_to_file(Bytecode* bytecode, const char* path);
+long get_file_size(FILE* file);
 void read_from_file(Bytecode* bytecode, const char* path);
 
 void free_bytecode(Bytecode* bytecode);

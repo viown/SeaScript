@@ -71,6 +71,7 @@ void append_token(lex_Object* object, Token token) {
 */
 void lex(lex_Object* lexObject) {
 	char current_token[MAX_VALUE_SIZE];
+	memset(current_token, 0, sizeof(current_token));
 	int index = 0;
 	bool is_collecting = false;
 	bool is_collecting_num = false;

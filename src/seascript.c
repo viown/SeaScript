@@ -11,11 +11,8 @@ void visualize_token(Token* token) {
 	printf("<SPECIFIER='%d', VALUE='%s'>\n", token->token,token->value);
 }
 
-
-int main() {
-	// read test file
-	const char* path = "tests\\test_lex.ss";
-	char buffer[1000];
+char* read_file(const char* path) {
+	char* buffer = malloc(1000);
 	int new_index = 0;
 	FILE* file = fopen(path, "r");
 	int current_char = getc(file);
@@ -24,8 +21,12 @@ int main() {
 		current_char = getc(file);
 	}
 	buffer[new_index++] = '\0';
+	return buffer;
+}
+
+int main() {
+	char* source = read_file("tests\\test_lex.ss");
 	// lex test
-	char* source = buffer;
 	lex_Object object;
 	lexObject_init(&object, source);
 	lex(&object);
@@ -33,6 +34,7 @@ int main() {
 		visualize_token(&object.tokens[i]);
 	}
 	lex_free(&object);
+	free(source);
 	return 0;
 }
 
