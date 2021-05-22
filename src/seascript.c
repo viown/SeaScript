@@ -25,7 +25,7 @@ char* read_file(const char* path) {
 }
 
 int main() {
-	char* source = read_file("tests\\test_lex.ss");
+	char* source = read_file("tests\\comments.ss");
 	// lex test
 	lex_Object object;
 	lexObject_init(&object, source);

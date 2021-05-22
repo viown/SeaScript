@@ -4,14 +4,15 @@
 
 #define IS_WHITESPACE(x) (x == '\t' || x == ' ')
 #define IS_END_OF_LINE(x) (x == '\n')
-#define IS_CHAR(x) ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z'))
+#define IS_CHAR(x) ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z') || x == '_')
 #define IS_NUM(x) (x >= '0' && x <= '9')
 
 
 #define MAX_VALUE_SIZE 1000
 
 static const char* const ss_keywords[] = {
-	"if", "function", "while", "break", "return", "var"
+	"if", "function", "while", "break",
+	"return", "global", "local", "load"
 };
 static const int keyword_count = 6;
 

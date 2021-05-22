@@ -1,5 +1,5 @@
-var a = 100
-var b = 200
+global a = 100
+global b = 200
 
 function sum(a, b) {
 	return a + b

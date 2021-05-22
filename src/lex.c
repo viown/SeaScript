@@ -67,7 +67,6 @@ void append_token(lex_Object* object, Token token) {
 
 	TODO:
 	- Strings
-	- Comments
 */
 void lex(lex_Object* lexObject) {
 	char current_token[MAX_VALUE_SIZE];
@@ -77,6 +76,19 @@ void lex(lex_Object* lexObject) {
 	bool is_collecting_num = false;
 	bool is_collecting_string = false;
 	while (*lexObject->current != '\0') {
+		if (*lexObject->current == '/' && *(lexObject->current+1) == '/' && !is_collecting_string) {
+			while (*lexObject->current != '\0' && !IS_END_OF_LINE(*lexObject->current)) { // Reached comment, loop through until end of line or end of code is reached.
+				current_token[index++] = *lexObject->current;
+				lexObject->current++;
+			}
+			Token comment;
+			comment.token = COMMENT;
+			strcpy(comment.value, current_token);
+			append_token(lexObject, comment);
+			index = 0;
+			memset(current_token, 0, sizeof(current_token));
+			continue;
+		}
 		if (IS_CHAR(*lexObject->current)) {
 			if (!is_collecting)
 				is_collecting = true;

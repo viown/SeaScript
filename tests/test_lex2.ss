@@ -1,2 +1,2 @@
-var   a    = 500 // whitespace is ignored
-var b=500 // a == b (true)
+global   a    = 500 // whitespace is ignored
+global b=500 // a == b (true)
