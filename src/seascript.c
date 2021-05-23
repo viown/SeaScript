@@ -11,9 +11,9 @@ void visualize_token(Token* token) {
 }
 
 char* read_file(const char* path) {
-	char* buffer = malloc(1000);
-	int new_index = 0;
 	FILE* file = fopen(path, "r");
+	char* buffer = malloc(get_file_size(file) + 1);
+	int new_index = 0;
 	int current_char = getc(file);
 	while (current_char != EOF) {
 		buffer[new_index++] = current_char;
