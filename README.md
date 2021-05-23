@@ -1,3 +1,3 @@
 # SeaScript
 
-a programming language
+SeaScript is a simple, typeless programming language made in C.

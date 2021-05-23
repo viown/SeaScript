@@ -5,7 +5,6 @@
 #include "./seavm/bytecode.h"
 #include "./seavm/vm.h"
 
-#define LEN(x) (sizeof(x) / sizeof(x[0]))
 
 void visualize_token(Token* token) {
 	printf("<SPECIFIER='%d', VALUE='%s'>\n", token->token,token->value);
@@ -25,7 +24,7 @@ char* read_file(const char* path) {
 }
 
 int main() {
-	char* source = read_file("tests\\comments.ss");
+	char* source = read_file("tests\\test_lex.ss");
 	// lex test
 	lex_Object object;
 	lexObject_init(&object, source);
