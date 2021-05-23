@@ -15,6 +15,7 @@ enum Opcode {
     EQ,
     LT,
     GT,
+    NEWARRAY,
     JUMP,
     CALL,
     RETURN,

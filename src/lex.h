@@ -60,6 +60,8 @@ bool is_punctuator(char c);
 
 void lexObject_init(lex_Object* object, char* source);
 void lex(lex_Object* lexObject);
+void analyze_syntax(lex_Object* lexObject);
+
 void lex_free(lex_Object* lexObject);
 
 #endif // SS_LEX_H

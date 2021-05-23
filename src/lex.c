@@ -133,6 +133,10 @@ void lex(lex_Object* lexObject) {
 	}
 }
 
+void analyze_syntax(lex_Object* lexObject) {
+
+}
+
 void lex_free(lex_Object* lexObject) {
 	free(lexObject->tokens);
 }

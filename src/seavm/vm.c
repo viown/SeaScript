@@ -101,10 +101,11 @@ bool vm_execute(Vm* vm, Bytecode* bytecode)
 			vm->ip = cinstr.args[0];
 			break;
 		case CALL:
-			//TODO
+			push_stack(&vm->stack, vm->ip); // Push return address
+			vm->ip = cinstr.args[0]; // Jump to function
 			break;
 		case RETURN:
-			//TODO
+			vm->ip = vm->globals[cinstr.args[0]] + 1; // Return to call function.
 			break;
 		case IPRINT:
 			printf("%f", *top_stack(&vm->stack));

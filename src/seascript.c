@@ -24,16 +24,38 @@ char* read_file(const char* path) {
 }
 
 int main() {
-	char* source = read_file("tests\\test_lex.ss");
-	// lex test
-	lex_Object object;
-	lexObject_init(&object, source);
-	lex(&object);
-	for (int i = 0; i < object.token_used; ++i) {
-		visualize_token(&object.tokens[i]);
-	}
-	lex_free(&object);
-	free(source);
-	return 0;
+	Instruction instructions[] = {
+		{
+			LOADCONST, {100}
+		},
+		{
+			CALL, {4},
+		},
+		{
+			IPRINT, {}
+		},
+		{
+			EXIT, {0}
+		},
+		// FUNCTION: return 10
+		{
+			STORE, {1} // Store return address
+		},
+		{
+			LOADCONST, {10}
+		},
+		{
+			RETURN, {1}
+		}
+
+	};
+	Bytecode bytecode;
+	struct Vm vm;
+
+	vm_init(&vm, 100);
+	to_bytecode(&bytecode, instructions, LEN(instructions));
+	save_to_file(&bytecode, "test.ssb");
+
+	return vm_execute(&vm, &bytecode);
 }
 
