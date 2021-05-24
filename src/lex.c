@@ -91,6 +91,18 @@ void lex(lex_Object* lexObject) {
 			index = 0;
 			memset(current_token, 0, sizeof(current_token));
 		}
+		if (*lexObject->current == '"' || *lexObject->current == '\'') {
+			char format_used = *lexObject->current;
+			lexObject->current++;
+			while (*lexObject->current != format_used) {
+				// TODO: Escape sequences should be translated here
+				current_token[index++] = *lexObject->current;
+				lexObject->current++;
+			}
+			append_token(lexObject, create_token(current_token, LITERAL));
+			index = 0;
+			memset(current_token, 0, sizeof(current_token));
+		}
 		if (IS_WHITESPACE(*lexObject->current) || IS_END_OF_LINE(*lexObject->current) || is_operator(*lexObject->current) || is_punctuator(*lexObject->current)) {
 			if (is_collecting) {
 				is_collecting = false;
@@ -134,7 +146,7 @@ void lex(lex_Object* lexObject) {
 }
 
 void analyze_syntax(lex_Object* lexObject) {
-
+	//TODO
 }
 
 void lex_free(lex_Object* lexObject) {
