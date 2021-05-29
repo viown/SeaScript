@@ -1,5 +1,6 @@
 #ifndef SS_LEX_H
 #define SS_LEX_H
+#include <stdint.h>
 #include <stdbool.h>
 
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
@@ -9,6 +10,8 @@
 #define IS_CHAR(x) ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z') || x == '_')
 #define IS_NUM(x) (x >= '0' && x <= '9')
 
+#define NEXT_TOKEN(x) (*(x+1))
+#define PREVIOUS_TOKEN(x) (*(x-1))
 
 #define MAX_VALUE_SIZE 1000
 
@@ -27,7 +30,7 @@ static const char* const ss_globals[] = {
 };
 static const int global_count = LEN(ss_globals);
 
-enum TokenType {
+typedef enum {
 	IDENTIFIER, // variable names, function names, etc
 	KEYWORD, // e.g if, func, while, return, etc
 	OPERATOR, // >=, <=, >, <, =, etc
@@ -35,24 +38,21 @@ enum TokenType {
 	PUNCTUATOR, // (), {}, [], etc
 	GLOBAL, // A reserved global, usually resolves into a certain value
 	COMMENT, // like this
-};
-typedef enum TokenType TokenType;
+} TokenType;
 
-struct Token {
+typedef struct {
 	TokenType token;
 	char value[MAX_VALUE_SIZE];
-};
-typedef struct Token Token;
+} Token;
 
-struct lex_Object {
+typedef struct {
 	char* source;
 	char* current;
-	size_t length;
+	int64_t length;
 	Token* tokens;
-	size_t token_size;
-	size_t token_used;
-};
-typedef struct lex_Object lex_Object;
+	int64_t token_size;
+	int64_t token_used;
+} lex_Object;
 
 bool is_operator(char c);
 bool is_keyword(const char* c);

@@ -3,16 +3,23 @@
 
 /* SeaScript data types */
 
+typedef enum {
+	NUMBER,
+	STRING,
+	ARRAY,
+	FUNCTION
+} ObjectType;
+
+typedef struct {
+	void* object;
+	ObjectType type;
+} ss_Object;
+
 typedef double ss_Number;
 
-struct ss_String {
-	char* string;
-	int length;
-};
-
-struct ss_Array {
+typedef struct {
 	void** items;
 	int length;
-};
+} ss_Array;
 
 #endif // SS_TYPES_H

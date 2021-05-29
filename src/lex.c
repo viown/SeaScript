@@ -14,6 +14,7 @@ bool is_operator(char c) {
 	case '*':
 	case '/':
 	case '=':
+	case ';': /* optional; but can be used to indicate the end of line. */
 		return true;
 	default:
 		return false;
@@ -37,7 +38,6 @@ bool is_punctuator(char c) {
 	case ']':
 	case '{':
 	case '}':
-	case ';': // optional; but can be used to indicate the end of line.
 		return true;
 	default:
 		return false;
@@ -68,12 +68,6 @@ Token create_token(char* value, TokenType type) {
 	return token;
 }
 
-/*
-	It works but can definitely be improved and cleaned.
-
-	TODO:
-	- Strings
-*/
 void lex(lex_Object* lexObject) {
 	char current_token[MAX_VALUE_SIZE];
 	memset(current_token, 0, sizeof(current_token));
@@ -82,7 +76,7 @@ void lex(lex_Object* lexObject) {
 	bool is_collecting_num = false;
 	bool is_collecting_string = false;
 	while (*lexObject->current != '\0') {
-		if (*lexObject->current == '/' && *(lexObject->current+1) == '/' && !is_collecting_string) {
+		if (*lexObject->current == '/' && NEXT_TOKEN(lexObject->current) == '/' && !is_collecting_string) {
 			while (*lexObject->current != '\0' && !IS_END_OF_LINE(*lexObject->current)) { // Reached comment, loop through until end of line or end of code is reached.
 				current_token[index++] = *lexObject->current;
 				lexObject->current++;
@@ -122,7 +116,6 @@ void lex(lex_Object* lexObject) {
 				op.token = is_operator(*lexObject->current) ? OPERATOR : PUNCTUATOR;
 				op.value[0] = *lexObject->current;
 				append_token(lexObject, op);
-				//index = 0;
 			}
 		} else if (IS_CHAR(*lexObject->current)) {
 			if (!is_collecting)
@@ -139,7 +132,7 @@ void lex(lex_Object* lexObject) {
 		}
 		lexObject->current++;
 	}
-	if (strcmp(current_token, "") != 0) {
+	if (strcmp(current_token, "") != 0) { // FIXME: Sometimes may append an invalid token
 		Token token = create_token(current_token, is_keyword(current_token) ? KEYWORD : IDENTIFIER);
 		append_token(lexObject, token);
 	}
