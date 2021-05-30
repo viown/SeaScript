@@ -21,7 +21,6 @@ typedef int64_t IndexValue;
 typedef char Operator;
 
 typedef enum {
-	s_NULLTYPE,
 	s_SCOPE,
 	s_FUNCTION,
 	s_FUNCTIONCALL,
@@ -75,11 +74,6 @@ typedef struct {
 } ss_Identifier;
 
 ss_Object to_object(Token token);
-
-// debugging
-bool is_function_call(Token* current_token);
-bool is_function_definition(Token* current_token);
-State parse_argument(Token* tokens);
 
 State* parse(lex_Object object);
 

@@ -9,16 +9,16 @@
 */
 
 /* check whether current identifier leads to a function call */
-inline bool is_function_call(Token* current_token) {
+static inline bool is_function_call(Token* current_token) {
 	return strcmp(NEXT_TOKEN(current_token).value, FUNC_OPEN) == 0 && !(strcmp(PREVIOUS_TOKEN(current_token).value, "function") == 0);
 }
 
 /* check whether current identifier is a function definition */
-inline bool is_function_definition(Token* current_token) {
+static inline bool is_function_definition(Token* current_token) {
 	return strcmp(NEXT_TOKEN(current_token).value, FUNC_OPEN) == 0 && (strcmp(PREVIOUS_TOKEN(current_token).value, "function") == 0);
 }
 
-bool is_variable_declaration(Token* current_token) {
+static inline bool is_variable_declaration(Token* current_token) {
 	return strcmp(PREVIOUS_TOKEN(current_token).value, "global") == 0 || strcmp(PREVIOUS_TOKEN(current_token).value, "local") == 0;
 }
 
@@ -33,9 +33,11 @@ State parse_argument(Token* token) {
 		literal.value = atof(token->value);
 		state.state = &literal;
 		state.type = s_LITERAL;
-	} else {
-		state.state = NULL;
-		state.type = s_NULLTYPE;
+	} else if (token->token == IDENTIFIER) {
+		ss_Identifier identifier;
+		strcpy(identifier.identifier, token->value);
+		state.state = &identifier;
+		state.type = s_IDENTIFIER;
 	}
 	return state;
 }
@@ -80,6 +82,7 @@ State* parse_statement(Token* token) {
 	return states;
 }
 
+
 State* parse(lex_Object object) {
 	Token* current_token = object.tokens;
 	Token* end = &current_token[object.token_used];
@@ -100,11 +103,12 @@ State* parse(lex_Object object) {
 				variable_state.state = &variable;
 				variable_state.type = s_VARIABLE;
 				states[used++] = variable_state;
-				ss_Variable v = *(ss_Variable*)states[0].state;
 				/*
+				ss_Variable v = *(ss_Variable*)states[0].state;
 				ss_Identifier x = *(ss_Identifier*)var_state[0].state;
 				printf("Type: %d\n", var_state[0].type);
-				printf("L: %s", x.identifier);*/
+				printf("L: %s", x.identifier);
+				*/
 				skip_to_end(&value);
 			}
 		}

@@ -7,8 +7,9 @@
 
 #define IS_WHITESPACE(x) (x == '\t' || x == ' ')
 #define IS_END_OF_LINE(x) (x == '\n')
-#define IS_CHAR(x) ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z') || x == '_')
+#define IS_CHAR(x) ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z'))
 #define IS_NUM(x) (x >= '0' && x <= '9')
+#define IS_IDENTIFIER_CHAR(x) (IS_CHAR(x) || x == '_')
 
 #define NEXT_TOKEN(x) (*(x+1))
 #define PREVIOUS_TOKEN(x) (*(x-1))

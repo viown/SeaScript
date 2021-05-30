@@ -117,7 +117,7 @@ void lex(lex_Object* lexObject) {
 				op.value[0] = *lexObject->current;
 				append_token(lexObject, op);
 			}
-		} else if (IS_CHAR(*lexObject->current)) {
+		} else if (IS_IDENTIFIER_CHAR(*lexObject->current)) {
 			if (!is_collecting)
 				is_collecting = true;
 			current_token[index++] = *lexObject->current;
