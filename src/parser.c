@@ -82,12 +82,19 @@ State* parse_statement(Token* token) {
 	return states;
 }
 
+ss_Variable* create_variable(char* var_name, State* var_states) {
+	ss_Variable* variable = malloc(sizeof(ss_Variable));
+	strcpy(variable->variable_name, var_name);
+	variable->states = var_states;
+	return variable;
+}
 
-State* parse(lex_Object object) {
+ParseObject parse(lex_Object object) {
 	Token* current_token = object.tokens;
 	Token* end = &current_token[object.token_used];
+	ParseObject parse_obj;
 	State* states = malloc(1000 * sizeof(State)); /* temporary */
-	int used = 0;
+	int length = 0;
 	while (current_token != end) {
 		if (current_token->token == KEYWORD) {
 			if (is_variable_declaration(current_token + 1)) {
@@ -95,25 +102,19 @@ State* parse(lex_Object object) {
 				++current_token; /* skip assignment operator */
 				Token* value = ++current_token; /* pointer to first token */
 				State* var_state = parse_statement(value);
-				ss_Variable variable;
-				strcpy(variable.variable_name, variable_name->value);
-				variable.states = var_state;
+				ss_Variable* variable = create_variable(variable_name->value, var_state);
 
 				State variable_state;
-				variable_state.state = &variable;
+				variable_state.state = &(*variable);
 				variable_state.type = s_VARIABLE;
-				states[used++] = variable_state;
-				/*
-				ss_Variable v = *(ss_Variable*)states[0].state;
-				ss_Identifier x = *(ss_Identifier*)var_state[0].state;
-				printf("Type: %d\n", var_state[0].type);
-				printf("L: %s", x.identifier);
-				*/
-				skip_to_end(&value);
+				states[length++] = variable_state;
+				skip_to_end(&current_token);
 			}
 		}
 		current_token++;
 	}
-	return states;
+	parse_obj.begin = states;
+	parse_obj.length = length;
+	return parse_obj;
 }
 

@@ -36,10 +36,16 @@ typedef enum {
 	INDEX
 } OperatorType;
 
+
 typedef struct {
 	StateType type;
 	void* state;
 } State;
+
+typedef struct {
+	State* begin;
+	size_t length;
+} ParseObject;
 
 typedef struct {
 	State* states;
@@ -75,6 +81,6 @@ typedef struct {
 
 ss_Object to_object(Token token);
 
-State* parse(lex_Object object);
+ParseObject parse(lex_Object object);
 
 #endif // SS_PARSER_H

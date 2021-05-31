@@ -8,6 +8,6 @@
 */
 
 void visualize_tokens(lex_Object* object);
-void visualize_states(State* begin);
+void visualize_states(ParseObject* object);
 
 #endif // SS_DEBUG_H

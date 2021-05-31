@@ -25,9 +25,10 @@ int main() {
 	lex_Object object;
 	lexObject_init(&object, source);
 	lex(&object);
-	visualize_tokens(&object);
-	State* s = parse(object);
-	free(s); /* todo: also free internals */
+	//visualize_tokens(&object);
+	ParseObject s = parse(object);
+	visualize_states(&s);
+	free(s.begin); /* todo: also free internals */
 	lex_free(&object);
 	free(source);
 	return 0;
