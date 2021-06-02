@@ -14,7 +14,7 @@ Stack create_stack() {
 }
 
 bool resize_stack(Stack* stack, stack_size new_size) {
-	stack->stack = realloc(stack->stack, new_size);
+	stack->stack = realloc(stack->stack, new_size * sizeof(stack_type));
 	if (stack->stack != 0) {
 		stack->total_size = new_size;
 		return 1;

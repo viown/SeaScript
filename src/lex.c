@@ -54,9 +54,9 @@ void lexObject_init(lex_Object* object, char* source) {
 }
 
 void append_token(lex_Object* object, Token token) {
-	if (object->token_size == object->token_used) {
-		object->tokens = realloc(object->tokens, object->token_size * 2);
+	if (object->token_used >= object->token_size) {
 		object->token_size *= 2;
+		object->tokens = realloc(object->tokens, object->token_size * sizeof(Token));
 	}
 	object->tokens[object->token_used++] = token;
 }
@@ -68,16 +68,16 @@ Token create_token(char* value, TokenType type) {
 	return token;
 }
 
-void lex(lex_Object* lexObject) {
+void lex(lex_Object* lexObject) { /* todo: negative & decimal numbers */
 	char current_token[MAX_VALUE_SIZE];
 	memset(current_token, 0, sizeof(current_token));
 	int index = 0;
-	bool is_collecting = false; // identifier or keyword, we just don't know yet.
+	bool is_collecting = false; /* identifier or keyword, we just don't know yet. */
 	bool is_collecting_num = false;
 	bool is_collecting_string = false;
 	while (*lexObject->current != '\0') {
 		if (*lexObject->current == '/' && NEXT_TOKEN(lexObject->current) == '/' && !is_collecting_string) {
-			while (*lexObject->current != '\0' && !IS_END_OF_LINE(*lexObject->current)) { // Reached comment, loop through until end of line or end of code is reached.
+			while (*lexObject->current != '\0' && !IS_END_OF_LINE(*lexObject->current)) { /* reached comment, loop through until end of line or end of code is reached. */
 				current_token[index++] = *lexObject->current;
 				lexObject->current++;
 			}
@@ -93,7 +93,7 @@ void lex(lex_Object* lexObject) {
 				current_token[index++] = *lexObject->current;
 				lexObject->current++;
 			}
-			append_token(lexObject, create_token(current_token, LITERAL));
+			append_token(lexObject, create_token(current_token, SLITERAL));
 			index = 0;
 			memset(current_token, 0, sizeof(current_token));
 		}
@@ -106,7 +106,7 @@ void lex(lex_Object* lexObject) {
 				memset(current_token, 0, sizeof(current_token));
 			} else if (is_collecting_num) {
 				is_collecting_num = false;
-				append_token(lexObject, create_token(current_token, LITERAL));
+				append_token(lexObject, create_token(current_token, ILITERAL));
 				index = 0;
 				memset(current_token, 0, sizeof(current_token));
 			}

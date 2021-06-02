@@ -22,22 +22,40 @@ static inline bool is_variable_declaration(Token* current_token) {
 	return strcmp(PREVIOUS_TOKEN(current_token).value, "global") == 0 || strcmp(PREVIOUS_TOKEN(current_token).value, "local") == 0;
 }
 
-/* this is what I expect to be passed in: func(test(23)) */
-/*                                             ^^^^^^^^  */
-State parse_argument(Token* token) {
+static inline bool is_array_index(Token* current_token) {
+	return strcmp(NEXT_TOKEN(current_token).value, INDEX_OPEN) == 0;
+}
+
+
+State parse_value(Token* token) {
 	State state;
 	if (is_function_call(&token[0])) {
-		/* todo, this is gonna involve using recursion until a literal is found */
-	} else if (token->token == LITERAL) {
-		ss_Literal literal;
-		literal.value = atof(token->value);
-		state.state = &literal;
-		state.type = s_LITERAL;
+		/* todo */
+	} else if (is_literal(token->token)) {
+		if (token->token == ILITERAL) {
+			ss_Literal* literal = malloc(sizeof(ss_Literal));
+			literal->value = atof(token->value);
+			literal->type = l_INTEGER;
+			state.state = &(*literal);
+			state.type = s_LITERAL;
+		} else if (token->token == SLITERAL) {
+			/* todo */
+		}
 	} else if (token->token == IDENTIFIER) {
-		ss_Identifier identifier;
-		strcpy(identifier.identifier, token->value);
-		state.state = &identifier;
+		ss_Identifier* identifier = malloc(sizeof(ss_Identifier));
+		strcpy(identifier->identifier, token->value);
+		state.state = &(*identifier);
 		state.type = s_IDENTIFIER;
+	} else if (token->token == OPERATOR) {
+		if (is_math_op(token->value[0])) {
+			ss_Operator* op = malloc(sizeof(ss_Operator));
+			Operator* math_operator = malloc(sizeof(Operator));
+			*math_operator = token->value[0];
+			op->type = MATH;
+			op->op = &(*math_operator);
+			state.state = &(*op);
+			state.type = s_OPERATOR;
+		}
 	}
 	return state;
 }
@@ -50,45 +68,27 @@ void skip_to_end(Token** ptoken) {
 }
 
 /* reads the tokens until an ';' is encountered */
-State* parse_statement(Token* token) {
+ParseObject parse_statement(Token* token) {
+	ParseObject object;
 	State* states = malloc(255 * sizeof(State));
 	int used = 0;
 	while (strcmp(token->value, EOS) != 0) {
-		if (token->token == IDENTIFIER) {
-			if (is_function_call(token)) {
-				/* todo */
-			} else {
-				State state;
-				ss_Identifier identifier;
-				strcpy(identifier.identifier, token->value);
-				state.state = &identifier;
-				state.type = s_IDENTIFIER;
-				states[used++] = state;
-			}
-		} else if (token->token == OPERATOR) {
-			if (IS_MATH_OP(token->value[0])) {
-				State state;
-				ss_Operator op;
-				Operator math_operator = token->value[0];
-				op.type = MATH;
-				op.op = &math_operator;
-				state.state = &op;
-				state.type = s_OPERATOR;
-				states[used++] = state;
-			}
-		}
+		states[used++] = parse_value(token);
 		token++;
 	}
-	return states;
+	object.states = states;
+	object.length = used;
+	return object;
 }
 
-ss_Variable* create_variable(char* var_name, State* var_states) {
+ss_Variable* create_variable(char* var_name, ParseObject var_states) {
 	ss_Variable* variable = malloc(sizeof(ss_Variable));
 	strcpy(variable->variable_name, var_name);
 	variable->states = var_states;
 	return variable;
 }
 
+/* parses an entire scope */
 ParseObject parse(lex_Object object) {
 	Token* current_token = object.tokens;
 	Token* end = &current_token[object.token_used];
@@ -98,10 +98,10 @@ ParseObject parse(lex_Object object) {
 	while (current_token != end) {
 		if (current_token->token == KEYWORD) {
 			if (is_variable_declaration(current_token + 1)) {
-				Token* variable_name = ++current_token;
+				Token* variable_name = ++current_token; /* name of variable */
 				++current_token; /* skip assignment operator */
 				Token* value = ++current_token; /* pointer to first token */
-				State* var_state = parse_statement(value);
+				ParseObject var_state = parse_statement(value);
 				ss_Variable* variable = create_variable(variable_name->value, var_state);
 
 				State variable_state;
@@ -113,8 +113,27 @@ ParseObject parse(lex_Object object) {
 		}
 		current_token++;
 	}
-	parse_obj.begin = states;
+	parse_obj.states = states;
 	parse_obj.length = length;
 	return parse_obj;
 }
 
+void free_ParseObject(ParseObject* object) {
+	for (size_t i = 0; i < object->length; ++i) {
+		State current = object->states[i];
+		if (current.type == s_VARIABLE) {
+			ss_Variable var = get_variable(current.state);
+			ParseObject states = var.states;
+			for (int i = 0; i < states.length; ++i) {
+				if (states.states[i].type == s_IDENTIFIER) {
+					free(&(get_identifier(states.states[i].state).identifier));
+				} else if (states.states[i].type == s_OPERATOR) {
+					free(&(get_operator(states.states[i].state).op));
+					free(states.states[i].state);
+				}
+			}
+			free(states.states);
+		}
+	}
+	free(object->states);
+}

@@ -32,13 +32,14 @@ static const char* const ss_globals[] = {
 static const int global_count = LEN(ss_globals);
 
 typedef enum {
-	IDENTIFIER, // variable names, function names, etc
-	KEYWORD, // e.g if, func, while, return, etc
-	OPERATOR, // >=, <=, >, <, =, etc
-	LITERAL, // booleans, strings, numbers, etc
-	PUNCTUATOR, // (), {}, [], etc
-	GLOBAL, // A reserved global, usually resolves into a certain value
-	COMMENT, // like this
+	IDENTIFIER, /* variable names, function names, etc */
+	KEYWORD, /* e.g if, func, while, return, etc */
+	OPERATOR, /* >=, <=, >, <, =, etc */
+	ILITERAL, /* integer */
+	SLITERAL, /* string literal */
+	PUNCTUATOR, /* (), {}, [], etc */
+	GLOBAL, /* A reserved global, usually resolves into a certain value */
+	COMMENT, /* like this */
 } TokenType;
 
 typedef struct {

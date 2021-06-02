@@ -28,7 +28,7 @@ int main() {
 	//visualize_tokens(&object);
 	ParseObject s = parse(object);
 	visualize_states(&s);
-	free(s.begin); /* todo: also free internals */
+	free_ParseObject(&s);
 	lex_free(&object);
 	free(source);
 	return 0;

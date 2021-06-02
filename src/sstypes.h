@@ -1,10 +1,10 @@
 #ifndef SS_TYPES_H
 #define SS_TYPES_H
 
-/* SeaScript data types */
+/* language data types */
 
 typedef enum {
-	NUMBER,
+	INTEGER,
 	STRING,
 	ARRAY,
 	FUNCTION
@@ -18,7 +18,7 @@ typedef struct {
 typedef double ss_Number;
 
 typedef struct {
-	void** items;
+	ss_Number* items;
 	int length;
 } ss_Array;
 
