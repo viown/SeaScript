@@ -93,8 +93,9 @@ ParseObject parse(lex_Object object) {
 	Token* current_token = object.tokens;
 	Token* end = &current_token[object.token_used];
 	ParseObject parse_obj;
-	State* states = malloc(1000 * sizeof(State)); /* temporary */
+	int size = 1000;
 	int length = 0;
+	State* states = malloc(size * sizeof(State));
 	while (current_token != end) {
 		if (current_token->token == KEYWORD) {
 			if (is_variable_declaration(current_token + 1)) {
@@ -110,6 +111,10 @@ ParseObject parse(lex_Object object) {
 				states[length++] = variable_state;
 				skip_to_end(&current_token);
 			}
+		}
+		if (length >= size) {
+			size *= 2;
+			states = realloc(states, size * sizeof(State));
 		}
 		current_token++;
 	}
