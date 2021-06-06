@@ -10,9 +10,15 @@
 #define IS_CHAR(x) ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z'))
 #define IS_NUM(x) (x >= '0' && x <= '9')
 #define IS_IDENTIFIER_CHAR(x) (IS_CHAR(x) || x == '_')
+#define IS_DECIMAL_POINT(x) (x == '.')
+
+#define IS_TOKEN_SEPARATOR(character) (IS_WHITESPACE(character) || IS_END_OF_LINE(character) || is_operator(character) || is_punctuator(character))
 
 #define NEXT_TOKEN(x) (*(x+1))
 #define PREVIOUS_TOKEN(x) (*(x-1))
+
+#define IS_START_TOKEN(token) (token->is_start)
+#define IS_END_TOKEN(token) (token->is_end)
 
 #define MAX_VALUE_SIZE 1000
 
@@ -35,7 +41,7 @@ typedef enum {
 	IDENTIFIER, /* variable names, function names, etc */
 	KEYWORD, /* e.g if, func, while, return, etc */
 	OPERATOR, /* >=, <=, >, <, =, etc */
-	ILITERAL, /* integer */
+	ILITERAL, /* integer or float */
 	SLITERAL, /* string literal */
 	PUNCTUATOR, /* (), {}, [], etc */
 	GLOBAL, /* A reserved global, usually resolves into a certain value */
@@ -45,6 +51,10 @@ typedef enum {
 typedef struct {
 	TokenType token;
 	char value[MAX_VALUE_SIZE];
+
+	/* bools to indicate start/end of token stream */
+	bool is_start;
+	bool is_end;
 } Token;
 
 typedef struct {

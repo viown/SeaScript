@@ -10,4 +10,6 @@
 void visualize_tokens(lex_Object* object);
 void visualize_states(ParseObject* object);
 
+void visualize_token(Token* token);
+
 #endif // SS_DEBUG_H

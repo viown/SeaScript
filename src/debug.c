@@ -4,7 +4,7 @@
 
 void visualize_tokens(lex_Object* object) {
 	for (int i = 0; i < object->token_used; ++i) {
-		printf("<SPECIFIER='%d', VALUE='%s'>\n", object->tokens[i].token, object->tokens[i].value);
+		printf("<SPECIFIER='%d', VALUE='%s', IS_START=%d, IS_END=%d>\n", object->tokens[i].token, object->tokens[i].value, object->tokens[i].is_start, object->tokens[i].is_end);
 	}
 }
 
@@ -39,4 +39,8 @@ void visualize_states(ParseObject* object) {
 		}
 	}
 	printf("\n");
+}
+
+void visualize_token(Token* token) {
+	printf("<SPECIFIER=%d, VALUE=%s>\n", token->token, token->value);
 }

@@ -11,6 +11,7 @@
 #define ARRAY_CLOSE "]"
 #define INDEX_OPEN "["
 #define INDEX_CLOSE "]"
+#define ARG_SEPARATOR ","
 /* end of statement */
 #define EOS ";"
 
@@ -61,18 +62,20 @@ typedef struct {
 	size_t length;
 } ParseObject;
 
-typedef struct {
+typedef struct { /* not in use */
 	State* states;
+	size_t length;
 } Scope;
 
 typedef struct {
 	char function_name[MAX_IDENTIFIER_SIZE];
-	Scope* scope;
+	ParseObject* scope;
 } ss_Function;
 
 typedef struct {
 	char function_name[MAX_IDENTIFIER_SIZE];
-	ss_Number arguments[MAX_ARGUMENTS]; // TODO: ss_Object
+	State* arguments;
+	size_t arg_count;
 } ss_FunctionCall;
 
 typedef struct {

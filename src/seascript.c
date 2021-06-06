@@ -10,26 +10,30 @@
 
 char* read_file(const char* path) {
 	FILE *fp = fopen(path, "r");
-	char* source = malloc(get_file_size(fp) + 1);
+	char* source = malloc(get_file_size(fp) + 2);
 	if (fp != NULL) {
 		size_t len = fread(source, sizeof(char), get_file_size(fp), fp);
+		source[len++] = ' '; /* closing whitespace */
 		source[len++] = '\0';
 		fclose(fp);
+		return source;
+	} else {
+		return NULL;
 	}
-	return source;
 }
 
 int main() {
-	char* source = read_file("tests\\parser_test.ss");
-	// lex test
-	lex_Object object;
-	lexObject_init(&object, source);
-	lex(&object);
-	//visualize_tokens(&object);
-	ParseObject s = parse(object);
-	visualize_states(&s);
-	free_ParseObject(&s);
-	lex_free(&object);
+	char* source = read_file("tests\\parser_test.ssc");
+	if (source != NULL ) {
+		lex_Object object;
+		lexObject_init(&object, source);
+		lex(&object);
+		visualize_tokens(&object);
+		//ParseObject s = parse(object);
+		//visualize_states(&s);
+		//free_ParseObject(&s);
+		lex_free(&object);
+	}
 	free(source);
 	return 0;
 }
