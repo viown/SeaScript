@@ -10,9 +10,10 @@
 
 char* read_file(const char* path) {
 	FILE *fp = fopen(path, "r");
-	char* source = malloc(10000 + 2); /* FIXME: get_file_size() doesn't work well with linux */
+	long file_size = get_file_size(path);
+	char* source = malloc(file_size + 2);
 	if (fp != NULL) {
-		size_t len = fread(source, sizeof(char), 10000 , fp);
+		size_t len = fread(source, sizeof(char), file_size , fp);
 		source[len++] = ' '; /* closing whitespace */
 		source[len++] = '\0';
 		fclose(fp);

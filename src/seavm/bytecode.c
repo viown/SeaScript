@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __linux__
+#include <sys/stat.h>
+#endif // __linux__
+
 void to_bytecode(Bytecode* bytecode, Instruction* instructions, size_t length) {
 	bytecode->length = length;
 	stack_type* buffer = malloc((length * 4) * sizeof(stack_type));
@@ -45,12 +49,20 @@ void save_to_file(Bytecode* bytecode, const char* path) {
 	fclose(file);
 }
 
-long get_file_size(FILE* file) {
+long get_file_size(const char* path) {
+    #ifdef __linux__
+    struct stat st;
+    stat(path, &st);
+    return st.st_size;
+    #else
+    FILE *file = fopen(path, "r");
 	long size;
 	fseek(file, 0, SEEK_END);
 	size = ftell(file);
 	fseek(file, 0, SEEK_SET);
+	fclose(fp);
 	return size;
+	#endif
 }
 
 void read_from_file(Bytecode* bytecode, const char* path) {

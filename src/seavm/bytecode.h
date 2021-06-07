@@ -17,7 +17,7 @@ void to_bytecode(Bytecode* bytecode, Instruction* instructions, size_t length);
 Instruction* to_instructions(Bytecode* bytecode);
 
 void save_to_file(Bytecode* bytecode, const char* path);
-long get_file_size(FILE* file);
+long get_file_size(const char* path);
 void read_from_file(Bytecode* bytecode, const char* path);
 
 void free_bytecode(Bytecode* bytecode);
