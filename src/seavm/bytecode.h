@@ -7,8 +7,8 @@
 
 
 struct Bytecode {
-	stack_type* raw_data;
-	size_t length;
+    stack_type* raw_data;
+    size_t length;
 };
 
 typedef struct Bytecode Bytecode;

@@ -4,22 +4,22 @@
 /* language data types */
 
 typedef enum {
-	INTEGER,
-	STRING,
-	ARRAY,
-	FUNCTION
+    INTEGER,
+    STRING,
+    ARRAY,
+    FUNCTION
 } ObjectType;
 
 typedef struct {
-	void* object;
-	ObjectType type;
+    void* object;
+    ObjectType type;
 } ss_Object;
 
 typedef double ss_Number;
 
 typedef struct {
-	ss_Number* items;
-	int length;
+    ss_Number* items;
+    int length;
 } ss_Array;
 
 #endif // SS_TYPES_H

@@ -12,12 +12,12 @@
 #define EXIT_FAILURE 1
 
 typedef struct {
-	Stack stack;
-	int ip;
+    Stack stack;
+    int ip;
 
-	int* globals;
-	int global_size;
-	int global_used;
+    int* globals;
+    int global_size;
+    int global_used;
 } Vm;
 
 void vm_init(Vm* vm, int global_size);

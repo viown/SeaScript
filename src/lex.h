@@ -23,47 +23,47 @@
 #define MAX_VALUE_SIZE 1000
 
 static const char* const ss_keywords[] = {
-	"if", "function", "while", "break",
-	"return", "global", "local", "load",
-	"for", "in", "not", "and", "or"
+    "if", "function", "while", "break",
+    "return", "global", "local", "load",
+    "for", "in", "not", "and", "or"
 };
 static const int keyword_count = LEN(ss_keywords);
 
 static const char* const ss_globals[] = {
-	"true", // 1
-	"false", // 0
-	"inf", // (value > inf) will always be false
-	"_debug" // true if running in debug env
+    "true", // 1
+    "false", // 0
+    "inf", // (value > inf) will always be false
+    "_debug" // true if running in debug env
 };
 static const int global_count = LEN(ss_globals);
 
 typedef enum {
-	IDENTIFIER, /* variable names, function names, etc */
-	KEYWORD, /* e.g if, func, while, return, etc */
-	OPERATOR, /* >=, <=, >, <, =, etc */
-	ILITERAL, /* integer or float */
-	SLITERAL, /* string literal */
-	PUNCTUATOR, /* (), {}, [], etc */
-	GLOBAL, /* A reserved global, usually resolves into a certain value */
-	COMMENT, /* like this */
+    IDENTIFIER, /* variable names, function names, etc */
+    KEYWORD, /* e.g if, func, while, return, etc */
+    OPERATOR, /* >=, <=, >, <, =, etc */
+    ILITERAL, /* integer or float */
+    SLITERAL, /* string literal */
+    PUNCTUATOR, /* (), {}, [], etc */
+    GLOBAL, /* A reserved global, usually resolves into a certain value */
+    COMMENT, /* like this */
 } TokenType;
 
 typedef struct {
-	TokenType token;
-	char value[MAX_VALUE_SIZE];
+    TokenType token;
+    char value[MAX_VALUE_SIZE];
 
-	/* bools to indicate start/end of token stream */
-	bool is_start;
-	bool is_end;
+    /* bools to indicate start/end of token stream */
+    bool is_start;
+    bool is_end;
 } Token;
 
 typedef struct {
-	char* source;
-	char* current;
-	int64_t length;
-	Token* tokens;
-	int64_t token_size;
-	int64_t token_used;
+    char* source;
+    char* current;
+    int64_t length;
+    Token* tokens;
+    int64_t token_size;
+    int64_t token_used;
 } lex_Object;
 
 bool is_operator(char c);

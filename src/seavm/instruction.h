@@ -5,8 +5,8 @@
 #define MAX_ARGS 3
 
 struct Instruction {
-	Opcode op;
-	int args[MAX_ARGS];
+    Opcode op;
+    int args[MAX_ARGS];
 };
 
 typedef struct Instruction Instruction;

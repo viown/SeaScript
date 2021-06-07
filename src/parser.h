@@ -31,70 +31,70 @@ typedef int64_t IndexValue;
 typedef char Operator;
 
 typedef enum {
-	s_SCOPE,
-	s_FUNCTION,
-	s_FUNCTIONCALL,
-	s_VARIABLE,
-	s_LITERAL,
-	s_OPERATOR,
-	s_IDENTIFIER,
+    s_SCOPE,
+    s_FUNCTION,
+    s_FUNCTIONCALL,
+    s_VARIABLE,
+    s_LITERAL,
+    s_OPERATOR,
+    s_IDENTIFIER,
 } StateType;
 
 typedef enum {
-	MATH,
-	COMPARISON,
-	INDEX
+    MATH,
+    COMPARISON,
+    INDEX
 } OperatorType;
 
 typedef enum {
-	l_INTEGER,
-	l_STRING
+    l_INTEGER,
+    l_STRING
 } LiteralType;
 
 
 typedef struct {
-	StateType type;
-	void* state;
+    StateType type;
+    void* state;
 } State;
 
 typedef struct {
-	State* states;
-	size_t length;
+    State* states;
+    size_t length;
 } ParseObject;
 
 typedef struct { /* not in use */
-	State* states;
-	size_t length;
+    State* states;
+    size_t length;
 } Scope;
 
 typedef struct {
-	char function_name[MAX_IDENTIFIER_SIZE];
-	ParseObject* scope;
+    char function_name[MAX_IDENTIFIER_SIZE];
+    ParseObject* scope;
 } ss_Function;
 
 typedef struct {
-	char function_name[MAX_IDENTIFIER_SIZE];
-	State* arguments;
-	size_t arg_count;
+    char function_name[MAX_IDENTIFIER_SIZE];
+    State* arguments;
+    size_t arg_count;
 } ss_FunctionCall;
 
 typedef struct {
-	char variable_name[MAX_IDENTIFIER_SIZE];
-	ParseObject states;
+    char variable_name[MAX_IDENTIFIER_SIZE];
+    ParseObject states;
 } ss_Variable;
 
 typedef struct {
-	ss_Number value; // TODO: ss_Object
-	LiteralType type;
+    ss_Number value; // TODO: ss_Object
+    LiteralType type;
 } ss_Literal;
 
 typedef struct {
-	OperatorType type;
-	void* op;
+    OperatorType type;
+    void* op;
 } ss_Operator;
 
 typedef struct {
-	char identifier[MAX_IDENTIFIER_SIZE];
+    char identifier[MAX_IDENTIFIER_SIZE];
 } ss_Identifier;
 
 ss_Object to_object(Token token);
