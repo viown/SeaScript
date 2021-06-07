@@ -6,7 +6,7 @@ Stack create_stack() {
     Stack stack;
     stack.total_size = 10;
     stack.allocated = 0;
-    stack.stack = malloc(stack.total_size * sizeof(stack_type));
+    stack.stack = (stack_type*)malloc(stack.total_size * sizeof(stack_type));
     for (size_t i = 0; i < stack.total_size; ++i) {
         stack.stack[i] = 0;
     }
@@ -14,7 +14,7 @@ Stack create_stack() {
 }
 
 bool resize_stack(Stack* stack, stack_size new_size) {
-    stack->stack = realloc(stack->stack, new_size * sizeof(stack_type));
+    stack->stack = (stack_type*)realloc(stack->stack, new_size * sizeof(stack_type));
     if (stack->stack != 0) {
         stack->total_size = new_size;
         return 1;

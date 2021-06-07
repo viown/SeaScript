@@ -56,7 +56,7 @@ void lexObject_init(lex_Object* object, char* source) {
 void append_token(lex_Object* object, Token token) {
     if (object->token_used >= object->token_size) {
         object->token_size *= 2;
-        object->tokens = realloc(object->tokens, object->token_size * sizeof(Token));
+        object->tokens = (Token*)realloc(object->tokens, object->token_size * sizeof(Token));
     }
     token.is_start = false;
     token.is_end = false;

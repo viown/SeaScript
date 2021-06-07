@@ -11,7 +11,7 @@
 char* read_file(const char* path) {
     FILE *fp = fopen(path, "r");
     long file_size = get_file_size(path);
-    char* source = malloc(file_size + 2);
+    char* source = (char*)malloc(file_size + 2);
     if (fp != NULL) {
         size_t len = fread(source, sizeof(char), file_size, fp);
         source[len++] = ' '; /* closing whitespace */

@@ -9,7 +9,7 @@
 
 void to_bytecode(Bytecode* bytecode, Instruction* instructions, size_t length) {
     bytecode->length = length;
-    stack_type* buffer = malloc((length * 4) * sizeof(stack_type));
+    stack_type* buffer = (stack_type*)malloc((length * 4) * sizeof(stack_type));
     int cursor = 0;
     for (size_t i = 0; i < length; ++i) {
         Instruction current_instruction = instructions[i];
@@ -23,7 +23,7 @@ void to_bytecode(Bytecode* bytecode, Instruction* instructions, size_t length) {
 }
 
 Instruction* to_instructions(Bytecode* bytecode) {
-    Instruction* instructions = malloc(sizeof(Instruction) * bytecode->length);
+    Instruction* instructions = (Instruction*)malloc(sizeof(Instruction) * bytecode->length);
     int cursor = 0;
     for (size_t i = 0; i < bytecode->length; ++i) {
         Instruction instruction;
@@ -71,7 +71,7 @@ void read_from_file(Bytecode* bytecode, const char* path) {
     stack_type buffer[file_size / sizeof(stack_type)];
     fread(buffer, sizeof(buffer), 1, file);
     bytecode->length = ((file_size) / sizeof(stack_type)) / 4;
-    stack_type* raw_data = malloc(file_size);
+    stack_type* raw_data = (stack_type*)malloc(file_size);
     memcpy(raw_data, buffer, file_size);
     bytecode->raw_data = raw_data;
 }
