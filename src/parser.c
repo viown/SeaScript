@@ -151,17 +151,7 @@ ParseObject parse(lex_Object object) {
 		} else if (current_token->token == IDENTIFIER) {
 			if (is_function_call(current_token)) {
 				State fcall = parse_value(current_token);
-				ss_FunctionCall closure = (*(ss_FunctionCall*)fcall.state);
-				printf("type: %d\n", fcall.type);
-				printf("<call_name=%s>\n", closure.function_name);
-				printf("length: %d\n", closure.arg_count);
-				for (int i = 0; i < closure.arg_count; ++i) {
-					State st = closure.arguments[i];
-					if (st.type == s_LITERAL) {
-						ss_Literal literal = get_literal(st.state);
-						printf("<argument, value=%f>\n", literal.value);
-					}
-				}
+				states[length++] = fcall;
 				skip_to_end(&current_token);
 			}
 		}
@@ -186,7 +176,7 @@ void free_ParseObject(ParseObject* object) {
 				if (states.states[i].type == s_IDENTIFIER) {
 					free(&(get_identifier(states.states[i].state).identifier));
 				} else if (states.states[i].type == s_OPERATOR) {
-					free(&(get_operator(states.states[i].state).op));
+					free(&(*(Operator*)get_operator(states.states[i].state).op));
 					free(states.states[i].state);
 				}
 			}

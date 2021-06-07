@@ -10,9 +10,9 @@
 
 char* read_file(const char* path) {
 	FILE *fp = fopen(path, "r");
-	char* source = malloc(get_file_size(fp) + 2);
+	char* source = malloc(10000 + 2); /* FIXME: get_file_size() doesn't work well with linux */
 	if (fp != NULL) {
-		size_t len = fread(source, sizeof(char), get_file_size(fp), fp);
+		size_t len = fread(source, sizeof(char), 10000 , fp);
 		source[len++] = ' '; /* closing whitespace */
 		source[len++] = '\0';
 		fclose(fp);
@@ -23,7 +23,7 @@ char* read_file(const char* path) {
 }
 
 int main() {
-	char* source = read_file("tests\\parser_test.ssc");
+	char* source = read_file("tests/parser_test.ssc");
 	if (source != NULL ) {
 		lex_Object object;
 		lexObject_init(&object, source);
