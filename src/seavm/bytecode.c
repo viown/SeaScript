@@ -60,14 +60,14 @@ long get_file_size(const char* path) {
 	fseek(file, 0, SEEK_END);
 	size = ftell(file);
 	fseek(file, 0, SEEK_SET);
-	fclose(fp);
+	fclose(file);
 	return size;
 	#endif
 }
 
 void read_from_file(Bytecode* bytecode, const char* path) {
 	FILE* file = fopen(path, "rb");
-	long file_size = get_file_size(file);
+	long file_size = get_file_size(path);
 	stack_type buffer[file_size / sizeof(stack_type)];
 	fread(buffer, sizeof(buffer), 1, file);
 	bytecode->length = ((file_size) / sizeof(stack_type)) / 4;
