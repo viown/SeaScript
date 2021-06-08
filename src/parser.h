@@ -26,6 +26,7 @@
 #define get_identifier(state) (*(ss_Identifier*)state)
 #define get_operator(state) (*(ss_Operator*)state)
 #define get_literal(state) (*(ss_Literal*)state)
+#define get_functioncall(state) (*(ss_FunctionCall*)state)
 
 typedef int64_t IndexValue;
 typedef char Operator;
@@ -53,8 +54,8 @@ typedef enum {
 
 
 typedef struct {
-    StateType type;
     void* state;
+    StateType type;
 } State;
 
 typedef struct {
