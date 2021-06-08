@@ -38,14 +38,8 @@ static inline bool is_array_index(Token* current_token) {
 }
 
 /* skips to end of statement */
-void skip_to_end(Token** ptoken) {
-    while (strcmp((*ptoken)->value, EOS) != 0) {
-        (*ptoken)++;
-    }
-}
-/* skip a function call's arguments */
-void skip_to_endcall(Token** ptoken) {
-    while (strcmp((*ptoken)->value, FUNC_CLOSE) != 0) {
+void skip_to_end(Token** ptoken, const char* end) {
+    while (strcmp((*ptoken)->value, end) != 0) {
         (*ptoken)++;
     }
 }
@@ -60,7 +54,7 @@ void parse_function_call(State* state, Token* token) {
         if (strcmp(token->value, ARG_SEPARATOR) != 0) {
             State value = parse_value(token);
             if (value.type == s_FUNCTIONCALL) {
-                skip_to_endcall(&token);
+                skip_to_end(&token, FUNC_CLOSE);
             }
             arguments[length++] = value;
         }
@@ -161,13 +155,13 @@ ParseObject parse(lex_Object object) {
 
                 State variable_state = {&(*variable), s_VARIABLE};
                 states[length++] = variable_state;
-                skip_to_end(&current_token);
+                skip_to_end(&current_token, EOS);
             }
         } else if (current_token->token == IDENTIFIER) {
             if (is_function_call(current_token)) {
                 State fcall = parse_value(current_token);
                 states[length++] = fcall;
-                skip_to_end(&current_token);
+                skip_to_end(&current_token, EOS);
             }
         }
         if (length >= size) {
