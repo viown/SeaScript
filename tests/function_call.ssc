@@ -1,3 +1,11 @@
-// Example of a nested function call
+// These are all valid, but may cause bad behaviour.
+// In future updates, the parser will be able to detect this and throw an error. But it's alright for now.
+foo(<3, 8, 10, 20>); // -> foo(3, 8, 10, 20, 20), I do not know why there is an extra 20.
+foo(,,,, 6 ,,,, 10); // -> foo(6, 10)
+foo(...); // -> foo(0)
+foo(%, !, ^); // -> foo()
+foo(hello, world); // -> foo()
 
-foo(bar(foo(bar(10, 20))));
+// Nested function calls
+
+foo(bar(foo(bar(foo())))); // ok

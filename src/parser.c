@@ -33,6 +33,15 @@ static inline bool is_variable_declaration(Token* current_token) {
     }
 }
 
+static inline bool is_variable_reassignment(Token* current_token) {
+    bool is_assigning = current_token->token == IDENTIFIER && strcmp(NEXT_TOKEN(current_token).value, "=");
+    if (!IS_START_TOKEN(current_token)) {
+        return is_assigning && strcmp(PREVIOUS_TOKEN(current_token).value, "global") != 0;
+    } else {
+        return is_assigning;
+    }
+}
+
 static inline bool is_array_index(Token* current_token) {
     return current_token->token == IDENTIFIER && (strcmp(NEXT_TOKEN(current_token).value, INDEX_OPEN) == 0);
 }
@@ -41,6 +50,16 @@ static inline bool is_array_index(Token* current_token) {
 void skip_to_end(Token** ptoken, const char* end) {
     while (strcmp((*ptoken)->value, end) != 0) {
         (*ptoken)++;
+    }
+}
+
+void skip_to_end_call(Token** ptoken) {
+    while (strcmp((*ptoken)->value, FUNC_CLOSE) != 0) {
+        (*ptoken)++;
+        if (is_function_call(*ptoken)) {
+            skip_to_end_call(ptoken);
+            (*ptoken)++;
+        }
     }
 }
 
@@ -54,7 +73,7 @@ void parse_function_call(State* state, Token* token) {
         if (strcmp(token->value, ARG_SEPARATOR) != 0) {
             State value = parse_value(token);
             if (value.type == s_FUNCTIONCALL) {
-                skip_to_end(&token, FUNC_CLOSE);
+                skip_to_end_call(&token);
             }
             arguments[length++] = value;
         }
@@ -136,6 +155,14 @@ ss_Variable* create_variable(char* var_name, ParseObject var_states) {
     return variable;
 }
 
+/* create a reassignment operation */
+ss_Reassignment* create_reassignment(char* var_name, ParseObject var_states) {
+    ss_Reassignment* reassignment = (ss_Reassignment*)malloc(sizeof(ss_Reassignment));
+    strcpy(reassignment->variable_name, var_name);
+    reassignment->states = var_states;
+    return reassignment;
+}
+
 /* parses an entire scope */
 ParseObject parse(lex_Object object) {
     Token* current_token = object.tokens;
@@ -161,6 +188,17 @@ ParseObject parse(lex_Object object) {
             if (is_function_call(current_token)) {
                 State fcall = parse_value(current_token);
                 states[length++] = fcall;
+                skip_to_end(&current_token, EOS);
+            } else if (is_variable_reassignment(current_token)) {
+                /* FIXME: Repeated code from variable declaration */
+                Token* variable_name = ++current_token;
+                ++current_token;
+                Token* value = ++current_token;
+                ParseObject var_state = parse_statement(value);
+                ss_Reassignment* reassignment = create_reassignment(variable_name->value, var_state);
+
+                State reassignment_state = {&(*reassignment), s_REASSIGN};
+                states[length++] = reassignment_state;
                 skip_to_end(&current_token, EOS);
             }
         }

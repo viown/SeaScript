@@ -36,6 +36,7 @@ typedef enum {
     s_FUNCTION,
     s_FUNCTIONCALL,
     s_VARIABLE,
+    s_REASSIGN,
     s_LITERAL,
     s_OPERATOR,
     s_IDENTIFIER,
@@ -83,6 +84,11 @@ typedef struct {
     char variable_name[MAX_IDENTIFIER_SIZE];
     ParseObject states;
 } ss_Variable;
+
+typedef struct { /* variable reassignment */
+    char variable_name[MAX_IDENTIFIER_SIZE];
+    ParseObject states;
+} ss_Reassignment;
 
 typedef struct {
     ss_Number value; // TODO: ss_Object

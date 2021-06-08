@@ -8,7 +8,7 @@ void visualize_tokens(lex_Object* object) {
     }
 }
 
-void read_arguments(ss_FunctionCall fcall) {
+void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
     printf("%s(", fcall.function_name);
     for (size_t i = 0; i < fcall.arg_count; ++i) {
         State argument = fcall.arguments[i];
@@ -19,10 +19,14 @@ void read_arguments(ss_FunctionCall fcall) {
             }
         } else if (argument.type == s_FUNCTIONCALL) { /* function call as argument */
             ss_FunctionCall arg_call = get_functioncall(argument.state);
-            read_arguments(arg_call);
+            read_arguments(arg_call, true);
         }
     }
-    printf(")");
+    if (is_nested_call) {
+        printf("), ");
+    } else {
+        printf(")");
+    }
 }
 
 /* visualizes the parse object into a tree-like structure */
@@ -55,7 +59,7 @@ void visualize_states(ParseObject* object) {
             printf("\n");
         } else if (current.type == s_FUNCTIONCALL) {
             ss_FunctionCall fcall = get_functioncall(current.state);
-            read_arguments(fcall);
+            read_arguments(fcall, false);
             printf("\n");
         }
     }
