@@ -27,7 +27,9 @@
 #define MAX_IDENTIFIER_SIZE 31
 #define MAX_ARGUMENTS 253
 
+#define is_eq(x, y) (strcmp(x, y) == 0)
 #define is_math_op(x) (x == '+' || x == '-' || x == '*' || x == '/')
+#define is_comparison_op(x) (x == '>' || x == '<')
 #define is_literal(x) (x == ILITERAL || x == SLITERAL)
 
 /* dereference macros */
@@ -111,7 +113,9 @@ typedef struct {
 
 ss_Object to_object(Token token);
 
+bool variable_declared(Token* token, State* states, int length);
 ParseObject parse(lex_Object object);
+void parse_error(const char* error, ...);
 void free_ParseObject(ParseObject* object);
 
 #endif // SS_PARSER_H

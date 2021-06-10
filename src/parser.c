@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h> /* debug */
@@ -115,8 +116,14 @@ void parse_operator(State* state, Token* token) {
         op->op = &(*math_operator);
         state->state = &(*op);
         state->type = s_OPERATOR;
-    } else {
-        return; /* also do comparison and index operators */
+    } else if (is_comparison_op(token->value[0])) {
+        ss_Operator* op = (ss_Operator*)malloc(sizeof(ss_Operator));
+        Operator* comparison_op = (Operator*)malloc(sizeof(Operator));
+        *comparison_op = token->value[0];
+        op->type = COMPARISON;
+        op->op = &(*comparison_op);
+        state->state = &(*op);
+        state->type = s_OPERATOR;
     }
 }
 
@@ -135,13 +142,17 @@ State parse_value(Token* token) {
 }
 
 /* reads the tokens until an ';' is encountered */
-ParseObject parse_statement(Token* token) {
+ParseObject parse_statement(Token* token, size_t current_line) {
     ParseObject object;
     State* states = (State*)malloc(255 * sizeof(State));
     int used = 0;
     while (strcmp(token->value, EOS) != 0) {
         states[used++] = parse_value(token);
         token++;
+        if (token->token == NEWLINE || PREVIOUS_TOKEN(token).is_end) {
+            /* statement does not end with an EOS */
+            parse_error("expected '%s' after '%s' at line %d", EOS, PREVIOUS_TOKEN(token).value, current_line);
+        }
     }
     object.states = states;
     object.length = used;
@@ -163,21 +174,37 @@ ss_Reassignment* create_reassignment(char* var_name, ParseObject var_states) {
     return reassignment;
 }
 
+bool variable_declared(Token* token, State* states, int length) {
+    for (int i = 0; i < length; ++i) {
+        State state = states[i];
+        if (state.type == s_VARIABLE) {
+            ss_Variable variable = get_variable(state.state);
+            if (strcmp(variable.variable_name, token->value) == 0) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 /* parses an entire scope */
 ParseObject parse(lex_Object object) {
     Token* current_token = object.tokens;
     Token* end = &current_token[object.token_used];
     ParseObject parse_obj;
-    int size = 1000;
-    int length = 0;
+    size_t size = 1000;
+    size_t length = 0;
+    size_t current_line = 1;
     State* states = (State*)malloc(size * sizeof(State));
     while (current_token != end) {
-        if (current_token->token == KEYWORD) {
+        if (current_token->token == NEWLINE) {
+            current_line++;
+        } else if (current_token->token == KEYWORD) {
             if (is_variable_declaration(current_token + 1)) { /* variable declaration? */
                 Token* variable_name = ++current_token; /* name of variable */
                 ++current_token; /* skip assignment operator */
                 Token* value = ++current_token; /* pointer to first token */
-                ParseObject var_state = parse_statement(value);
+                ParseObject var_state = parse_statement(value, current_line);
                 ss_Variable* variable = create_variable(variable_name->value, var_state);
 
                 State variable_state = {&(*variable), s_VARIABLE};
@@ -192,9 +219,15 @@ ParseObject parse(lex_Object object) {
             } else if (is_variable_reassignment(current_token)) {
                 /* FIXME: Repeated code from variable declaration */
                 Token* variable_name = current_token;
+                if (!IS_START_TOKEN(variable_name) && PREVIOUS_TOKEN(variable_name).token == IDENTIFIER) {
+                    parse_error("Unknown identifier '%s' at line %d\n", PREVIOUS_TOKEN(variable_name).value, current_line);
+                } else if (!variable_declared(variable_name, states, length)) {
+                    /* reassignment attempt to a variable that doesn't exist */
+                    parse_error("variable undeclared '%s' at line %d\n", variable_name->value, current_line);
+                }
                 ++current_token;
                 Token* value = ++current_token;
-                ParseObject var_state = parse_statement(value);
+                ParseObject var_state = parse_statement(value, current_line);
                 ss_Reassignment* reassignment = create_reassignment(variable_name->value, var_state);
 
                 State reassignment_state = {&(*reassignment), s_REASSIGN};
@@ -211,6 +244,15 @@ ParseObject parse(lex_Object object) {
     parse_obj.states = states;
     parse_obj.length = length;
     return parse_obj;
+}
+
+void parse_error(const char* error, ...) {
+    va_list args;
+    va_start (args, error);
+    printf("PARSE_ERR: "); /* parser error */
+    vprintf(error, args);
+    va_end(args);
+    exit(EXIT_FAILURE);
 }
 
 void free_ParseObject(ParseObject* object) {

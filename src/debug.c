@@ -41,7 +41,9 @@ void print_variable(void* variable, StateType type) {
         if (st.type == s_IDENTIFIER) {
             printf("%s ", get_identifier(st.state).identifier);
         } else if (st.type == s_OPERATOR) {
-            printf("%c ", *(Operator*)get_operator(st.state).op);
+            ss_Operator s_OP = get_operator(st.state);
+            Operator op = *(Operator*)s_OP.op;
+            printf("%c ", op);
         } else if (st.type == s_LITERAL) {
             ss_Literal literal = get_literal(st.state);
             if (literal.type == l_INTEGER) {

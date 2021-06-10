@@ -127,7 +127,9 @@ void lex(lex_Object* lexObject) {
                 index = 0;
                 memset(current_token, 0, sizeof(current_token));
             }
-            if (is_operator(*lexObject->current) || is_punctuator(*lexObject->current)) {
+            if (IS_END_OF_LINE(*lexObject->current)) {
+                append_token(lexObject, create_token("", NEWLINE));
+            } else if (is_operator(*lexObject->current) || is_punctuator(*lexObject->current)) {
                 Token op;
                 memset(op.value, 0, sizeof(op.value));
                 op.token = is_operator(*lexObject->current) ? OPERATOR : PUNCTUATOR;

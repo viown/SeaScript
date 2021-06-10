@@ -46,6 +46,7 @@ typedef enum {
     PUNCTUATOR, /* (), {}, [], etc */
     GLOBAL, /* A reserved global, usually resolves into a certain value */
     COMMENT, /* like this */
+    NEWLINE, /* end of line */
 } TokenType;
 
 typedef struct {
