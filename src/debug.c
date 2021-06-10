@@ -15,18 +15,48 @@ void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
         if (argument.type == s_LITERAL) {
             ss_Literal arg_value = get_literal(argument.state);
             if (arg_value.type == l_INTEGER) {
-                printf("%f, ", arg_value.value);
+                if (i + 1 == fcall.arg_count) {
+                    printf("%f", arg_value.value);
+                } else {
+                    printf("%f, ", arg_value.value);
+                }
             }
         } else if (argument.type == s_FUNCTIONCALL) { /* function call as argument */
             ss_FunctionCall arg_call = get_functioncall(argument.state);
             read_arguments(arg_call, true);
         }
     }
-    if (is_nested_call) {
-        printf("), ");
+    printf(")");
+}
+
+void print_variable(void* variable, StateType type) {
+    ss_Variable var = get_variable(variable);
+    if (type == s_REASSIGN) {
+        printf("%s = ", var.variable_name);
     } else {
-        printf(")");
+        printf("global %s = ", var.variable_name);
     }
+    for (int i = 0; i < var.states.length; ++i) {
+        State st = var.states.states[i];
+        if (st.type == s_IDENTIFIER) {
+            printf("%s ", get_identifier(st.state).identifier);
+        } else if (st.type == s_OPERATOR) {
+            printf("%c ", *(Operator*)get_operator(st.state).op);
+        } else if (st.type == s_LITERAL) {
+            ss_Literal literal = get_literal(st.state);
+            if (literal.type == l_INTEGER) {
+                if (IS_INT(literal.value)) {
+                    int temp = (int)literal.value;
+                    printf("%d ", temp);
+                } else {
+                    printf("%f ", literal.value);
+                }
+            }
+        } else {
+            printf("<unknown> ");
+        }
+    }
+    printf("\n");
 }
 
 /* visualizes the parse object into a tree-like structure */
@@ -34,29 +64,9 @@ void visualize_states(ParseObject* object) {
     for (int i = 0; i < object->length; ++i) {
         State current = object->states[i];
         if (current.type == s_VARIABLE) {
-            ss_Variable var = get_variable(current.state);
-            printf("%s = ", var.variable_name);
-            for (int i = 0; i < var.states.length; ++i) {
-                State st = var.states.states[i];
-                if (st.type == s_IDENTIFIER) {
-                    printf("%s ", get_identifier(st.state).identifier);
-                } else if (st.type == s_OPERATOR) {
-                    printf("%c ", *(Operator*)get_operator(st.state).op);
-                } else if (st.type == s_LITERAL) {
-                    ss_Literal literal = get_literal(st.state);
-                    if (literal.type == l_INTEGER) {
-                        if (IS_INT(literal.value)) {
-                            int temp = (int)literal.value;
-                            printf("%d ", temp);
-                        } else {
-                            printf("%f ", literal.value);
-                        }
-                    }
-                } else {
-                    printf("<unknown> ");
-                }
-            }
-            printf("\n");
+            print_variable(current.state, s_VARIABLE);
+        } else if (current.type == s_REASSIGN) {
+            print_variable(current.state, s_REASSIGN);
         } else if (current.type == s_FUNCTIONCALL) {
             ss_FunctionCall fcall = get_functioncall(current.state);
             read_arguments(fcall, false);

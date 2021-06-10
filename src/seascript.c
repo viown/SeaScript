@@ -24,7 +24,7 @@ char* read_file(const char* path) {
 }
 
 int main() {
-    char* source = read_file("tests/function_call.ssc");
+    char* source = read_file("tests/parser_test.ssc");
     if (source != NULL ) {
         lex_Object object;
         lexObject_init(&object, source);

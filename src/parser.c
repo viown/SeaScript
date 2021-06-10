@@ -34,7 +34,7 @@ static inline bool is_variable_declaration(Token* current_token) {
 }
 
 static inline bool is_variable_reassignment(Token* current_token) {
-    bool is_assigning = current_token->token == IDENTIFIER && strcmp(NEXT_TOKEN(current_token).value, "=");
+    bool is_assigning = current_token->token == IDENTIFIER && strcmp(NEXT_TOKEN(current_token).value, ASSIGNMENT) == 0;
     if (!IS_START_TOKEN(current_token)) {
         return is_assigning && strcmp(PREVIOUS_TOKEN(current_token).value, "global") != 0;
     } else {
@@ -191,7 +191,7 @@ ParseObject parse(lex_Object object) {
                 skip_to_end(&current_token, EOS);
             } else if (is_variable_reassignment(current_token)) {
                 /* FIXME: Repeated code from variable declaration */
-                Token* variable_name = ++current_token;
+                Token* variable_name = current_token;
                 ++current_token;
                 Token* value = ++current_token;
                 ParseObject var_state = parse_statement(value);

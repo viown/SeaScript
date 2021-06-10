@@ -3,6 +3,7 @@
 #include "./lex.h"
 #include "./sstypes.h"
 
+/* symbols */
 #define SCOPE_OPEN "{"
 #define SCOPE_CLOSE "}"
 #define FUNC_OPEN "("
@@ -12,6 +13,14 @@
 #define INDEX_OPEN "["
 #define INDEX_CLOSE "]"
 #define ARG_SEPARATOR ","
+#define ASSIGNMENT "="
+/* comparison */
+#define GREATER_THAN ">"
+#define LESS_THAN "<"
+#define GREATER_THAN_OR_EQUAL_TO ">="
+#define LESS_THAN_OR_EQUAL_TO "<="
+#define EQUAL_TO "=="
+#define NOT_EQUAL_TO "!="
 /* end of statement */
 #define EOS ";"
 
@@ -27,6 +36,7 @@
 #define get_operator(state) (*(ss_Operator*)state)
 #define get_literal(state) (*(ss_Literal*)state)
 #define get_functioncall(state) (*(ss_FunctionCall*)state)
+#define get_reassignment(state) (*(ss_Reassignment*)state)
 
 typedef int64_t IndexValue;
 typedef char Operator;
@@ -37,6 +47,7 @@ typedef enum {
     s_FUNCTIONCALL,
     s_VARIABLE,
     s_REASSIGN,
+    s_PRECEDENCE,
     s_LITERAL,
     s_OPERATOR,
     s_IDENTIFIER,
@@ -53,7 +64,6 @@ typedef enum {
     l_STRING
 } LiteralType;
 
-
 typedef struct {
     void* state;
     StateType type;
@@ -64,10 +74,8 @@ typedef struct {
     size_t length;
 } ParseObject;
 
-typedef struct { /* not in use */
-    State* states;
-    size_t length;
-} Scope;
+typedef ParseObject ss_Scope;
+typedef ParseObject ss_Precedence;
 
 typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];
@@ -85,10 +93,7 @@ typedef struct {
     ParseObject states;
 } ss_Variable;
 
-typedef struct { /* variable reassignment */
-    char variable_name[MAX_IDENTIFIER_SIZE];
-    ParseObject states;
-} ss_Reassignment;
+typedef ss_Variable ss_Reassignment;
 
 typedef struct {
     ss_Number value; // TODO: ss_Object
