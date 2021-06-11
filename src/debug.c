@@ -15,15 +15,30 @@ void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
         if (argument.type == s_LITERAL) {
             ss_Literal arg_value = get_literal(argument.state);
             if (arg_value.type == l_INTEGER) {
+                double value = load_literal(arg_value);
                 if (i + 1 == fcall.arg_count) {
-                    printf("%f", arg_value.value);
+                    printf("%f", value);
                 } else {
-                    printf("%f, ", arg_value.value);
+                    printf("%f, ", value);
+                }
+            } else if (arg_value.type == l_STRING) {
+                char* str = (char*)arg_value.value;
+                if (i + 1 == fcall.arg_count) {
+                    printf("%s", str);
+                } else {
+                    printf("%s, ", str);
                 }
             }
         } else if (argument.type == s_FUNCTIONCALL) { /* function call as argument */
             ss_FunctionCall arg_call = get_functioncall(argument.state);
             read_arguments(arg_call, true);
+        } else if (argument.type == s_IDENTIFIER) {
+            ss_Identifier identifier = get_identifier(argument.state);
+            if (i + 1 == fcall.arg_count) {
+                printf("%s", identifier.identifier);
+            } else {
+                printf("%s, ", identifier.identifier);
+            }
         }
     }
     printf(")");
@@ -47,13 +62,18 @@ void print_variable(void* variable, StateType type) {
         } else if (st.type == s_LITERAL) {
             ss_Literal literal = get_literal(st.state);
             if (literal.type == l_INTEGER) {
-                if (IS_INT(literal.value)) {
-                    int temp = (int)literal.value;
-                    printf("%d ", temp);
-                } else {
-                    printf("%f ", literal.value);
+                double value = load_literal(literal);
+                if (literal.type == l_INTEGER) {
+                    printf("%f ", value);
                 }
+            } else if (literal.type == l_STRING) {
+                char* str = (char*)literal.value;
+                printf("%s", str);
             }
+        } else if (st.type == s_FUNCTIONCALL) {
+            ss_FunctionCall fcall = get_functioncall(st.state);
+            read_arguments(fcall, false);
+            printf(" ");
         } else {
             printf("<unknown> ");
         }

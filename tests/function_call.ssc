@@ -9,3 +9,25 @@ foo(hello, world); // -> foo()
 // Nested function calls
 
 foo(bar(foo(bar(foo())))); // ok
+
+// Storing return value in variable
+
+global var = foo(); // ok
+global var = foo(
+	5,
+	20,
+	30,
+); // ok
+
+// Expressions in arguments
+
+foo(5 * 5); // Something like this doesn't work due to the creator being too lazy.
+
+// Instead, you can do:
+
+global expression = 5 * 5;
+foo(expression);
+
+// Passing strings
+
+foo("hello, world!", 20, v()); // ok

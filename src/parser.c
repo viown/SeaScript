@@ -47,6 +47,10 @@ static inline bool is_array_index(Token* current_token) {
     return current_token->token == IDENTIFIER && (strcmp(NEXT_TOKEN(current_token).value, INDEX_OPEN) == 0);
 }
 
+static inline bool is_array(Token* current_token) {
+    return strcmp(current_token->value, ARRAY_OPEN) == 0 && strcmp(PREVIOUS_TOKEN(current_token).value, ASSIGNMENT) == 0;
+}
+
 /* skips to end of statement */
 void skip_to_end(Token** ptoken, const char* end) {
     while (strcmp((*ptoken)->value, end) != 0) {
@@ -71,6 +75,10 @@ void parse_function_call(State* state, Token* token) {
     State* arguments = (State*)malloc(MAX_ARGUMENTS * sizeof(State));
     size_t length = 0;
     while (strcmp(token->value, FUNC_CLOSE) != 0) {
+        if (token->token == NEWLINE) {
+            ++token;
+            continue;
+        }
         if (strcmp(token->value, ARG_SEPARATOR) != 0) {
             State value = parse_value(token);
             if (value.type == s_FUNCTIONCALL) {
@@ -89,15 +97,18 @@ void parse_function_call(State* state, Token* token) {
 }
 
 void parse_literal(State* state, Token* token) {
+    ss_Literal* literal = (ss_Literal*)malloc(sizeof(ss_Literal));
+    state->type = s_LITERAL;
     if (token->token == ILITERAL) {
-        ss_Literal* literal = (ss_Literal*)malloc(sizeof(ss_Literal));
-        literal->value = atof(token->value);
+        double* value = (double*)malloc(sizeof(double));
+        *value = atof(token->value);
+        literal->value = &(*value);
         literal->type = l_INTEGER;
-        state->state = &(*literal);
-        state->type = s_LITERAL;
     } else if (token->token == SLITERAL) {
-        /* todo */
+        literal->value = &token->value;
+        literal->type = l_STRING;
     }
+    state->state = &(*literal);
 }
 
 void parse_identifier(State* state, Token* token) {
@@ -117,6 +128,7 @@ void parse_operator(State* state, Token* token) {
         state->state = &(*op);
         state->type = s_OPERATOR;
     } else if (is_comparison_op(token->value[0])) {
+        /* incomplete */
         ss_Operator* op = (ss_Operator*)malloc(sizeof(ss_Operator));
         Operator* comparison_op = (Operator*)malloc(sizeof(Operator));
         *comparison_op = token->value[0];
@@ -148,6 +160,9 @@ ParseObject parse_statement(Token* token, size_t current_line) {
     int used = 0;
     while (strcmp(token->value, EOS) != 0) {
         states[used++] = parse_value(token);
+        if (is_function_call(token)) {
+            skip_to_end_call(&token);
+        }
         token++;
         if (token->token == NEWLINE || PREVIOUS_TOKEN(token).is_end) {
             /* statement does not end with an EOS */
@@ -202,6 +217,9 @@ ParseObject parse(lex_Object object) {
         } else if (current_token->token == KEYWORD) {
             if (is_variable_declaration(current_token + 1)) { /* variable declaration? */
                 Token* variable_name = ++current_token; /* name of variable */
+                if (variable_name->token == KEYWORD) {
+                    parse_error("line %d: variable name cannot be a reserved keyword", current_line);
+                }
                 ++current_token; /* skip assignment operator */
                 Token* value = ++current_token; /* pointer to first token */
                 ParseObject var_state = parse_statement(value, current_line);
@@ -220,10 +238,10 @@ ParseObject parse(lex_Object object) {
                 /* FIXME: Repeated code from variable declaration */
                 Token* variable_name = current_token;
                 if (!IS_START_TOKEN(variable_name) && PREVIOUS_TOKEN(variable_name).token == IDENTIFIER) {
-                    parse_error("Unknown identifier '%s' at line %d\n", PREVIOUS_TOKEN(variable_name).value, current_line);
+                    parse_error("line %d: Unknown identifier '%s'\n", current_line, PREVIOUS_TOKEN(variable_name).value);
                 } else if (!variable_declared(variable_name, states, length)) {
                     /* reassignment attempt to a variable that doesn't exist */
-                    parse_error("variable undeclared '%s' at line %d\n", variable_name->value, current_line);
+                    parse_error("line %d: variable undeclared '%s'\n", current_line, variable_name->value);
                 }
                 ++current_token;
                 Token* value = ++current_token;
@@ -255,6 +273,18 @@ void parse_error(const char* error, ...) {
     exit(EXIT_FAILURE);
 }
 
+void free_state(State* state) {
+    if (state->type == s_IDENTIFIER || state->type == s_LITERAL) {
+        free(state->state);
+    } else if (state->type == s_OPERATOR) {
+        ss_Operator obj_op = get_operator(state->state);
+        if (obj_op.type == MATH || obj_op.type == COMPARISON) {
+            free(obj_op.op);
+            free(state->state);
+        }
+    }
+}
+
 void free_ParseObject(ParseObject* object) {
     for (size_t i = 0; i < object->length; ++i) {
         State current = object->states[i];
@@ -262,12 +292,7 @@ void free_ParseObject(ParseObject* object) {
             ss_Variable var = get_variable(current.state);
             ParseObject states = var.states;
             for (int i = 0; i < states.length; ++i) {
-                if (states.states[i].type == s_IDENTIFIER) {
-                    free(&(get_identifier(states.states[i].state).identifier));
-                } else if (states.states[i].type == s_OPERATOR) {
-                    free(&(*(Operator*)get_operator(states.states[i].state).op));
-                    free(states.states[i].state);
-                }
+                free_state(&states.states[i]);
             }
             free(states.states);
         }

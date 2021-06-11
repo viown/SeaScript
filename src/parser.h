@@ -40,6 +40,8 @@
 #define get_functioncall(state) (*(ss_FunctionCall*)state)
 #define get_reassignment(state) (*(ss_Reassignment*)state)
 
+#define load_literal(literal) (*(double*)literal.value)
+
 typedef int64_t IndexValue;
 typedef char Operator;
 
@@ -98,7 +100,7 @@ typedef struct {
 typedef ss_Variable ss_Reassignment;
 
 typedef struct {
-    ss_Number value; // TODO: ss_Object
+    void* value;
     LiteralType type;
 } ss_Literal;
 
