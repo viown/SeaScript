@@ -46,37 +46,41 @@ void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
 
 void print_variable(void* variable, StateType type) {
     ss_Variable var = get_variable(variable);
-    if (type == s_REASSIGN) {
-        printf("%s = ", var.variable_name);
-    } else {
-        printf("global %s = ", var.variable_name);
-    }
-    for (int i = 0; i < var.states.length; ++i) {
-        State st = var.states.states[i];
-        if (st.type == s_IDENTIFIER) {
-            printf("%s ", get_identifier(st.state).identifier);
-        } else if (st.type == s_OPERATOR) {
-            ss_Operator s_OP = get_operator(st.state);
-            Operator op = *(Operator*)s_OP.op;
-            printf("%c ", op);
-        } else if (st.type == s_LITERAL) {
-            ss_Literal literal = get_literal(st.state);
-            if (literal.type == l_INTEGER) {
-                double value = load_literal(literal);
-                if (literal.type == l_INTEGER) {
-                    printf("%f ", value);
-                }
-            } else if (literal.type == l_STRING) {
-                char* str = (char*)literal.value;
-                printf("%s", str);
-            }
-        } else if (st.type == s_FUNCTIONCALL) {
-            ss_FunctionCall fcall = get_functioncall(st.state);
-            read_arguments(fcall, false);
-            printf(" ");
+    if (var.is_initialized) {
+        if (type == s_REASSIGN) {
+            printf("%s = ", var.variable_name);
         } else {
-            printf("<unknown> ");
+            printf("global %s = ", var.variable_name);
         }
+        for (int i = 0; i < var.states.length; ++i) {
+            State st = var.states.states[i];
+            if (st.type == s_IDENTIFIER) {
+                printf("%s ", get_identifier(st.state).identifier);
+            } else if (st.type == s_OPERATOR) {
+                ss_Operator s_OP = get_operator(st.state);
+                Operator op = *(Operator*)s_OP.op;
+                printf("%c ", op);
+            } else if (st.type == s_LITERAL) {
+                ss_Literal literal = get_literal(st.state);
+                if (literal.type == l_INTEGER) {
+                    double value = load_literal(literal);
+                    if (literal.type == l_INTEGER) {
+                        printf("%f ", value);
+                    }
+                } else if (literal.type == l_STRING) {
+                    char* str = (char*)literal.value;
+                    printf("%s", str);
+                }
+            } else if (st.type == s_FUNCTIONCALL) {
+                ss_FunctionCall fcall = get_functioncall(st.state);
+                read_arguments(fcall, false);
+                printf(" ");
+            } else {
+                printf("<unknown> ");
+            }
+        }
+    } else {
+        printf("global %s; /* uninitialized */", var.variable_name);
     }
     printf("\n");
 }

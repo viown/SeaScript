@@ -66,7 +66,11 @@ void append_token(lex_Object* object, Token token) {
 Token create_token(char* value, TokenType type) {
     Token token;
     token.token = type;
-    strcpy(token.value, value);
+    if (value != NULL ) {
+        strcpy(token.value, value);
+    } else {
+        strcpy(token.value, TOKEN_UNSET);
+    }
     return token;
 }
 
@@ -128,7 +132,7 @@ void lex(lex_Object* lexObject) {
                 memset(current_token, 0, sizeof(current_token));
             }
             if (IS_END_OF_LINE(*lexObject->current)) {
-                append_token(lexObject, create_token("", NEWLINE));
+                append_token(lexObject, create_token(NULL, NEWLINE));
             } else if (is_operator(*lexObject->current) || is_punctuator(*lexObject->current)) {
                 Token op;
                 memset(op.value, 0, sizeof(op.value));

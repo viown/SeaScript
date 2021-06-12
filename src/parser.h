@@ -95,9 +95,13 @@ typedef struct {
 typedef struct {
     char variable_name[MAX_IDENTIFIER_SIZE];
     ParseObject states;
+    bool is_initialized;
 } ss_Variable;
 
-typedef ss_Variable ss_Reassignment;
+typedef struct {
+    char variable_name[MAX_IDENTIFIER_SIZE];
+    ParseObject states;
+} ss_Reassignment;
 
 typedef struct {
     void* value;

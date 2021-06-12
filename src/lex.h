@@ -21,6 +21,7 @@
 #define IS_END_TOKEN(token) (token->is_end)
 
 #define MAX_VALUE_SIZE 1000
+#define TOKEN_UNSET ""
 
 static const char* const ss_keywords[] = {
     "if", "function", "while", "break",
