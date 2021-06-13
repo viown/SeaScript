@@ -1,3 +1,1 @@
-global a;
-
-a = 20;
+global a = 5;

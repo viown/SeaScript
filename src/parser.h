@@ -84,6 +84,7 @@ typedef ParseObject ss_Precedence;
 typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];
     ParseObject* scope;
+    bool is_lamda; /* function add(a, b) = a + b; */
 } ss_Function;
 
 typedef struct {
