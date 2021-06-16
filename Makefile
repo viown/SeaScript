@@ -3,8 +3,8 @@ OPTIMIZATION = -O2
 SEAVM = src/seavm
 EXE_NAME = seascript.exe
 
-output: setup seascript.o compiler.o debug.o lex.o parser.o seavm/bytecode.o seavm/stack.o seavm/vm.o
-	gcc -o build/$(EXE_NAME) build/seascript.o build/compiler.o build/debug.o build/lex.o build/parser.o build/bytecode.o build/stack.o build/vm.o -s
+output: setup seascript.o compiler.o debug.o lex.o parser.o ssfunctions.o seavm/bytecode.o seavm/stack.o seavm/vm.o
+	gcc -o build/$(EXE_NAME) build/seascript.o build/compiler.o build/debug.o build/lex.o build/parser.o build/ssfunctions.o build/bytecode.o build/stack.o build/vm.o -s
 	make clean
 	
 setup:
@@ -24,6 +24,9 @@ lex.o: src/lex.c
 	
 parser.o: src/parser.c
 	gcc -Wall $(OPTIMIZATION) -g $(GCC_VERSION) -c src/parser.c -o build/parser.o
+	
+ssfunctions.o: src/ssfunctions.c
+	gcc -Wall $(OPTIMIZATION) -g $(GCC_VERSION) -c src/ssfunctions.c -o build/ssfunctions.o
 	
 seavm/bytecode.o: src/seavm/bytecode.c
 	gcc -Wall $(OPTIMIZATION) -g $(GCC_VERSION) -c $(SEAVM)/bytecode.c -o build/bytecode.o

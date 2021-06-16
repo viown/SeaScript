@@ -6,6 +6,7 @@
 #include "./seavm/bytecode.h"
 #include "./seavm/vm.h"
 #include "./debug.h"
+#include "./ssfunctions.h"
 
 char* read_file(const char* path) {
     FILE *fp = fopen(path, "r");

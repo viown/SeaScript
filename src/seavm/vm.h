@@ -14,10 +14,15 @@
 typedef void (*vm_function)(Stack*);
 
 typedef struct {
+    char* name;
+    vm_function func;
+} ss_BaseFunction;
+
+typedef struct {
     Stack stack;
     int ip;
 
-    vm_function c_functions[255]; /* temporary 255 size for testing */
+    const ss_BaseFunction* c_functions;
     int func_used;
 
     int* globals;
@@ -25,9 +30,8 @@ typedef struct {
     int global_used;
 } Vm;
 
-void vm_init(Vm* vm, int global_size);
+void vm_init(Vm* vm, int global_size, const ss_BaseFunction* func_list);
 void vm_free(Vm* vm);
-void vm_register_function(Vm* vm, vm_function func);
 bool vm_execute(Vm* vm, Bytecode* bytecode);
 
 #endif // SEAVM_VM_H

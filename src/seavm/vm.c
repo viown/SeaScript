@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void vm_init(Vm* vm, int global_size) {
+void vm_init(Vm* vm, int global_size, const ss_BaseFunction* func_list) {
     vm->stack = create_stack();
     vm->ip = 0;
-    vm->func_used = 0;
+    vm->c_functions = func_list;
     vm->global_size = global_size;
     vm->global_used = 0;
     vm->globals = calloc(global_size, sizeof(int));
@@ -13,10 +13,6 @@ void vm_init(Vm* vm, int global_size) {
 
 void vm_free(Vm* vm) {
     free(vm->globals);
-}
-
-void vm_register_function(Vm* vm, vm_function func) {
-    vm->c_functions[vm->func_used++] = func;
 }
 
 bool vm_execute(Vm* vm, Bytecode* bytecode) {
@@ -110,7 +106,7 @@ bool vm_execute(Vm* vm, Bytecode* bytecode) {
             vm->ip = vm->globals[cinstr.args[0]] + 1; // Return to call function.
             break;
         case CALLC:
-            vm->c_functions[cinstr.args[0]](&vm->stack);
+            vm->c_functions[cinstr.args[0]].func(&vm->stack);
             vm->ip++;
             break;
         case IPRINT:
