@@ -5,7 +5,6 @@
 #include "./parser.h"
 #include "./seavm/bytecode.h"
 #include "./seavm/vm.h"
-
 #include "./debug.h"
 
 char* read_file(const char* path) {
@@ -29,6 +28,7 @@ int main() {
         lex_Object object;
         lexObject_init(&object, source);
         lex(&object);
+        //visualize_tokens(&object);
         ParseObject s = parse(object);
         visualize_states(&s);
         free_ParseObject(&s);

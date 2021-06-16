@@ -4,6 +4,7 @@
 #include <stdio.h> /* debug */
 #include "./parser.h"
 #include "./lex.h"
+#include "./debug.h"
 
 State parse_value(Token* token);
 
@@ -70,7 +71,7 @@ void skip_to_end(Token** ptoken, const char* end, size_t current_line) {
         }
         token++;
         if (token->token == NEWLINE || PREVIOUS_TOKEN(token).is_end) {
-            parse_error("expected '%s' after '%s' at line %lu", EOS, PREVIOUS_TOKEN(token).value, current_line);
+            ss_throw("expected '%s' after '%s' at line %lu", EOS, PREVIOUS_TOKEN(token).value, current_line);
         }
     }
 }
@@ -173,7 +174,7 @@ ParseObject parse_statement(Token* token, size_t current_line) {
         token++;
         if (token->token == NEWLINE || PREVIOUS_TOKEN(token).is_end) {
             /* statement does not end with an EOS */
-            parse_error("line %lu: expected '%s' after '%s'", current_line, EOS, PREVIOUS_TOKEN(token).value);
+            ss_throw("line %lu: expected '%s' after '%s'", current_line, EOS, PREVIOUS_TOKEN(token).value);
         }
     }
     object.states = states;
@@ -226,9 +227,9 @@ ParseObject parse(lex_Object object) {
             if (is_variable_declaration(current_token + 1)) { /* variable declaration? */
                 Token* variable_name = ++current_token; /* name of variable */
                 if (variable_name->token == KEYWORD) {
-                    parse_error("line %lu: variable name cannot be a reserved keyword", current_line);
+                    ss_throw("line %lu: variable name cannot be a reserved keyword", current_line);
                 } else if (variable_declared(variable_name, states, length)) {
-                    parse_error("line: %lu: attempted redeclaration of variable '%s'\n", current_line, variable_name->value);
+                    ss_throw("line: %lu: attempted redeclaration of variable '%s'\n", current_line, variable_name->value);
                 }
                 if (is_eq(NEXT_TOKEN(current_token).value, EOS)) { /* if declared but uninitialized */
                     ss_Variable* variable = (ss_Variable*)malloc(sizeof(ss_Variable));
@@ -256,10 +257,10 @@ ParseObject parse(lex_Object object) {
                 /* FIXME: Repeated code from variable declaration */
                 Token* variable_name = current_token;
                 if (!IS_START_TOKEN(variable_name) && PREVIOUS_TOKEN(variable_name).token == IDENTIFIER) {
-                    parse_error("line %lu: unknown keyword '%s'\n", current_line, PREVIOUS_TOKEN(variable_name).value);
+                    ss_throw("line %lu: unknown keyword '%s'\n", current_line, PREVIOUS_TOKEN(variable_name).value);
                 } else if (!variable_declared(variable_name, states, length)) {
                     /* reassignment attempt to a variable that doesn't exist */
-                    parse_error("line %lu: variable undeclared '%s'\n", current_line, variable_name->value);
+                    ss_throw("line %lu: variable undeclared '%s'\n", current_line, variable_name->value);
                 }
                 ++current_token;
                 Token* value = ++current_token;

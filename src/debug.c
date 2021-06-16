@@ -1,6 +1,16 @@
+#include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include "./compiler.h" // for IS_INT
 #include "./debug.h"
+
+void ss_throw(const char* error, ...) {
+    va_list args;
+    va_start(args, error);
+    vprintf(error, args);
+    va_end(args);
+    exit(1);
+}
 
 void visualize_tokens(lex_Object* object) {
     for (int i = 0; i < object->token_used; ++i) {
