@@ -5,6 +5,7 @@
 void vm_init(Vm* vm, int global_size) {
     vm->stack = create_stack();
     vm->ip = 0;
+    vm->func_used = 0;
     vm->global_size = global_size;
     vm->global_used = 0;
     vm->globals = calloc(global_size, sizeof(int));
@@ -12,6 +13,10 @@ void vm_init(Vm* vm, int global_size) {
 
 void vm_free(Vm* vm) {
     free(vm->globals);
+}
+
+void vm_register_function(Vm* vm, vm_function func) {
+    vm->c_functions[vm->func_used++] = func;
 }
 
 bool vm_execute(Vm* vm, Bytecode* bytecode) {
@@ -103,6 +108,10 @@ bool vm_execute(Vm* vm, Bytecode* bytecode) {
             break;
         case RETURN:
             vm->ip = vm->globals[cinstr.args[0]] + 1; // Return to call function.
+            break;
+        case CALLC:
+            vm->c_functions[cinstr.args[0]](&vm->stack);
+            vm->ip++;
             break;
         case IPRINT:
             printf("%f", *top_stack(&vm->stack));

@@ -122,7 +122,6 @@ ss_Object to_object(Token token);
 
 bool variable_declared(Token* token, State* states, int length);
 ParseObject parse(lex_Object object);
-void parse_error(const char* error, ...);
 void free_ParseObject(ParseObject* object);
 
 #endif // SS_PARSER_H

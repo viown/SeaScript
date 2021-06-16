@@ -1,0 +1,5 @@
+// Declaration of strings in SeaScript
+
+global str = "str1"
+global character = 'A' // Stores a character
+global character2 = 'ABC' // This works, but it doesn't make sense.

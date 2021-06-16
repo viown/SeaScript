@@ -148,8 +148,9 @@ void lex(lex_Object* lexObject) {
             if (is_collecting) {
                 current_token[index++] = *lexObject->current;
             } else {
-                if (!is_collecting_num)
+                if (!is_collecting_num) {
                     is_collecting_num = true;
+                }
                 lex_num(current_token, &index, &lexObject);
             }
         }

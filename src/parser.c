@@ -283,14 +283,6 @@ ParseObject parse(lex_Object object) {
     return parse_obj;
 }
 
-void parse_error(const char* error, ...) {
-    va_list args;
-    va_start (args, error);
-    vprintf(error, args);
-    va_end(args);
-    exit(EXIT_FAILURE);
-}
-
 void free_state(State* state) {
     if (state->type == s_IDENTIFIER || state->type == s_LITERAL) {
         free(state->state);

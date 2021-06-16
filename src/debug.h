@@ -3,6 +3,7 @@
 #include "./parser.h"
 
 #define ss_assert(condition) if (!(condition)) {ss_throw("%s:%d: %s: Assertion error '%s'", __FILE__, __LINE__, __func__, #condition);}
+#define test_call(condition, func) if (condition) {func;}
 
 void ss_throw(const char* error, ...);
 void visualize_tokens(lex_Object* object);
