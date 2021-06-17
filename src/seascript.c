@@ -29,11 +29,11 @@ int main() {
         lex_Object object;
         test_call(true, lexObject_init(&object, source));
         test_call(true, lex(&object));
-        test_call(true, visualize_tokens(&object));
+        test_call(false, visualize_tokens(&object));
         ParseObject s = parse(object);
-        test_call(false, visualize_states(&s));
-        test_call(false, free_ParseObject(&s));
-        test_call(false, lex_free(&object));
+        test_call(true, visualize_states(&s));
+        test_call(true, free_ParseObject(&s));
+        test_call(true, lex_free(&object));
     }
     free(source);
     return 0;

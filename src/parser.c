@@ -52,6 +52,10 @@ static inline bool is_array(Token* current_token) {
     return strcmp(current_token->value, ARRAY_OPEN) == 0 && strcmp(PREVIOUS_TOKEN(current_token).value, ASSIGNMENT) == 0;
 }
 
+static inline bool is_natural_identifier(Token* current_token) {
+    return !is_array_index(current_token) && !is_function_call(current_token) && !is_function_definition(current_token);
+}
+
 void skip_to_end_call(Token** ptoken) {
     while (strcmp((*ptoken)->value, FUNC_CLOSE) != 0) {
         (*ptoken)++;
@@ -198,6 +202,50 @@ ss_Reassignment* create_reassignment(char* var_name, ParseObject var_states) {
     return reassignment;
 }
 
+State parse_variable_declaration(Token* current_token, State* states, size_t current_line, size_t length) {
+    Token* variable_name = ++current_token; /* name of variable */
+    if (variable_name->token == KEYWORD) {
+        ss_throw("line %lu: variable name cannot be a reserved keyword", current_line);
+    } else if (variable_declared(variable_name, states, length)) {
+        ss_throw("line: %lu: attempted redeclaration of variable '%s'\n", current_line, variable_name->value);
+    }
+    State variable_state;
+    if (is_eq(NEXT_TOKEN(current_token).value, EOS)) { /* if declared but uninitialized */
+        ss_Variable* variable = (ss_Variable*)malloc(sizeof(ss_Variable));
+        strcpy(variable->variable_name, variable_name->value);
+        variable->is_initialized = false;
+
+        variable_state.state = &(*variable);
+        variable_state.type = s_VARIABLE;
+    } else {
+        ++current_token; /* skip assignment operator */
+        Token* value = ++current_token; /* pointer to first token */
+        ParseObject var_state = parse_statement(value, current_line);
+        ss_Variable* variable = create_variable(variable_name->value, var_state);
+
+        variable_state.state = &(*variable);
+        variable_state.type = s_VARIABLE;
+    }
+    return variable_state;
+}
+
+State parse_variable_reassignment(Token* current_token, State* states, size_t current_line, size_t length) {
+    Token* variable_name = current_token;
+    if (!IS_START_TOKEN(variable_name) && PREVIOUS_TOKEN(variable_name).token == IDENTIFIER) {
+        ss_throw("line %lu: unknown keyword '%s'\n", current_line, PREVIOUS_TOKEN(variable_name).value);
+    } else if (!variable_declared(variable_name, states, length)) {
+        /* reassignment attempt to a variable that doesn't exist */
+        ss_throw("line %lu: variable undeclared '%s'\n", current_line, variable_name->value);
+    }
+    ++current_token;
+    Token* value = ++current_token;
+    ParseObject var_state = parse_statement(value, current_line);
+    ss_Reassignment* reassignment = create_reassignment(variable_name->value, var_state);
+
+    State reassignment_state = {&(*reassignment), s_REASSIGN};
+    return reassignment_state;
+}
+
 bool variable_declared(Token* token, State* states, int length) {
     for (int i = 0; i < length; ++i) {
         State state = states[i];
@@ -225,28 +273,8 @@ ParseObject parse(lex_Object object) {
             current_line++;
         } else if (current_token->token == KEYWORD) {
             if (is_variable_declaration(current_token + 1)) { /* variable declaration? */
-                Token* variable_name = ++current_token; /* name of variable */
-                if (variable_name->token == KEYWORD) {
-                    ss_throw("line %lu: variable name cannot be a reserved keyword", current_line);
-                } else if (variable_declared(variable_name, states, length)) {
-                    ss_throw("line: %lu: attempted redeclaration of variable '%s'\n", current_line, variable_name->value);
-                }
-                if (is_eq(NEXT_TOKEN(current_token).value, EOS)) { /* if declared but uninitialized */
-                    ss_Variable* variable = (ss_Variable*)malloc(sizeof(ss_Variable));
-                    strcpy(variable->variable_name, variable_name->value);
-                    variable->is_initialized = false;
-
-                    State variable_state = {&(*variable), s_VARIABLE};
-                    states[length++] = variable_state;
-                } else {
-                    ++current_token; /* skip assignment operator */
-                    Token* value = ++current_token; /* pointer to first token */
-                    ParseObject var_state = parse_statement(value, current_line);
-                    ss_Variable* variable = create_variable(variable_name->value, var_state);
-
-                    State variable_state = {&(*variable), s_VARIABLE};
-                    states[length++] = variable_state;
-                }
+                State variable_state = parse_variable_declaration(current_token, states, current_line, length);
+                states[length++] = variable_state;
                 skip_to_end(&current_token, EOS, current_line);
             }
         } else if (current_token->token == IDENTIFIER) {
@@ -254,21 +282,8 @@ ParseObject parse(lex_Object object) {
                 states[length++] = parse_value(current_token);
                 skip_to_end(&current_token, EOS, current_line);
             } else if (is_variable_reassignment(current_token)) {
-                /* FIXME: Repeated code from variable declaration */
-                Token* variable_name = current_token;
-                if (!IS_START_TOKEN(variable_name) && PREVIOUS_TOKEN(variable_name).token == IDENTIFIER) {
-                    ss_throw("line %lu: unknown keyword '%s'\n", current_line, PREVIOUS_TOKEN(variable_name).value);
-                } else if (!variable_declared(variable_name, states, length)) {
-                    /* reassignment attempt to a variable that doesn't exist */
-                    ss_throw("line %lu: variable undeclared '%s'\n", current_line, variable_name->value);
-                }
-                ++current_token;
-                Token* value = ++current_token;
-                ParseObject var_state = parse_statement(value, current_line);
-                ss_Reassignment* reassignment = create_reassignment(variable_name->value, var_state);
-
-                State reassignment_state = {&(*reassignment), s_REASSIGN};
-                states[length++] = reassignment_state;
+                State variable_state = parse_variable_reassignment(current_token, states, current_line, length);
+                states[length++] = variable_state;
                 skip_to_end(&current_token, EOS, current_line);
             }
         }
