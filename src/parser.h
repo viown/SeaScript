@@ -74,6 +74,10 @@ typedef struct {
 } State;
 
 typedef struct {
+    char identifier[MAX_IDENTIFIER_SIZE];
+} ss_Identifier;
+
+typedef struct {
     State* states;
     size_t length;
 } ParseObject;
@@ -83,6 +87,7 @@ typedef ParseObject ss_Precedence;
 
 typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];
+    ss_Identifier* arguments;
     ParseObject* scope;
     bool is_lamda; /* function add(a, b) = a + b; */
 } ss_Function;
@@ -113,10 +118,6 @@ typedef struct {
     OperatorType type;
     void* op;
 } ss_Operator;
-
-typedef struct {
-    char identifier[MAX_IDENTIFIER_SIZE];
-} ss_Identifier;
 
 ss_Object to_object(Token token);
 

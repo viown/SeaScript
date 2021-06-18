@@ -67,16 +67,9 @@ void skip_to_end_call(Token** ptoken) {
 }
 
 /* skips to end of statement */
-void skip_to_end(Token** ptoken, const char* end, size_t current_line) {
-    Token* token = *ptoken;
-    while (strcmp(token->value, end) != 0) {
-        if (is_function_call(token)) {
-            skip_to_end_call(&token);
-        }
-        token++;
-        if (token->token == NEWLINE || PREVIOUS_TOKEN(token).is_end) {
-            ss_throw("expected '%s' after '%s' at line %lu", EOS, PREVIOUS_TOKEN(token).value, current_line);
-        }
+void skip_to_end(Token** ptoken, const char* end) {
+    while (strcmp((*ptoken)->value, end) != 0) {
+        (*ptoken)++;
     }
 }
 
@@ -275,16 +268,16 @@ ParseObject parse(lex_Object object) {
             if (is_variable_declaration(current_token + 1)) { /* variable declaration? */
                 State variable_state = parse_variable_declaration(current_token, states, current_line, length);
                 states[length++] = variable_state;
-                skip_to_end(&current_token, EOS, current_line);
+                skip_to_end(&current_token, EOS);
             }
         } else if (current_token->token == IDENTIFIER) {
             if (is_function_call(current_token)) {
                 states[length++] = parse_value(current_token);
-                skip_to_end(&current_token, EOS, current_line);
+                skip_to_end(&current_token, EOS);
             } else if (is_variable_reassignment(current_token)) {
                 State variable_state = parse_variable_reassignment(current_token, states, current_line, length);
                 states[length++] = variable_state;
-                skip_to_end(&current_token, EOS, current_line);
+                skip_to_end(&current_token, EOS);
             }
         }
         if (length >= size) {
@@ -299,13 +292,24 @@ ParseObject parse(lex_Object object) {
 }
 
 void free_state(State* state) {
-    if (state->type == s_IDENTIFIER || state->type == s_LITERAL) {
+    if (state->type == s_IDENTIFIER) {
+        free(state->state);
+    } else if (state->type == s_LITERAL) {
+        ss_Literal literal = get_literal(state->state);
+        if (literal.type == l_INTEGER) {
+            free(literal.value);
+        }
         free(state->state);
     } else if (state->type == s_OPERATOR) {
         ss_Operator obj_op = get_operator(state->state);
         if (obj_op.type == MATH || obj_op.type == COMPARISON) {
             free(obj_op.op);
             free(state->state);
+        }
+    } else if (state->type == s_FUNCTIONCALL) {
+        ss_FunctionCall call = get_functioncall(state->state);
+        for (int i = 0; i < call.arg_count; ++i) {
+            free_state(&call.arguments[i]);
         }
     }
 }
@@ -320,6 +324,8 @@ void free_ParseObject(ParseObject* object) {
                 free_state(&states.states[i]);
             }
             free(states.states);
+        } else if (current.type == s_FUNCTIONCALL) {
+            free_state(&current);
         }
     }
     free(object->states);
