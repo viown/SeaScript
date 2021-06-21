@@ -85,6 +85,9 @@ void print_variable(void* variable, StateType type) {
                 ss_FunctionCall fcall = get_functioncall(st.state);
                 read_arguments(fcall, false);
                 printf(" ");
+            } else if (st.type == s_INDEX) {
+                ss_IndexOperator index_operator = get_index(st.state);
+                printf("%s[...] ", index_operator.name);
             } else {
                 printf("<unknown> ");
             }

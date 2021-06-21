@@ -39,10 +39,10 @@
 #define get_literal(state) (*(ss_Literal*)state)
 #define get_functioncall(state) (*(ss_FunctionCall*)state)
 #define get_reassignment(state) (*(ss_Reassignment*)state)
+#define get_index(state) (*(ss_IndexOperator*)state)
 
 #define load_literal(literal) (*(double*)literal.value)
 
-typedef int64_t IndexValue;
 typedef char Operator;
 
 typedef enum {
@@ -54,13 +54,13 @@ typedef enum {
     s_PRECEDENCE,
     s_LITERAL,
     s_OPERATOR,
+    s_INDEX,
     s_IDENTIFIER,
 } StateType;
 
 typedef enum {
     MATH,
     COMPARISON,
-    INDEX
 } OperatorType;
 
 typedef enum {
@@ -118,6 +118,11 @@ typedef struct {
     OperatorType type;
     void* op;
 } ss_Operator;
+
+typedef struct {
+    char* name;
+    State* states;
+} ss_IndexOperator;
 
 ss_Object to_object(Token token);
 

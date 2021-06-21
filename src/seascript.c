@@ -23,7 +23,7 @@ char* read_file(const char* path) {
     }
 }
 
-int main() {
+void test_language() {
     char* source = read_file("tests/language/parser_test.ssc");
     if (source != NULL) {
         lex_Object object;
@@ -36,6 +36,18 @@ int main() {
         test_call(true, lex_free(&object));
     }
     free(source);
+}
+
+void test_vm() {
+
+}
+
+int main() {
+    char to_test = 'L'; /* L for language, V for vm */
+    if (to_test == 'L')
+        test_language();
+    else if (to_test == 'V')
+        test_vm();
     return 0;
 }
 

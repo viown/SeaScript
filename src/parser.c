@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
@@ -67,8 +68,11 @@ void skip_to_end_call(Token** ptoken) {
 }
 
 /* skips to end of statement */
-void skip_to_end(Token** ptoken, const char* end) {
+void skip_to_end(Token** ptoken, const char* end, size_t* current_line) {
     while (strcmp((*ptoken)->value, end) != 0) {
+        if ((*ptoken)->token == NEWLINE) {
+            (*current_line)++;
+        }
         (*ptoken)++;
     }
 }
@@ -107,19 +111,19 @@ void parse_literal(State* state, Token* token) {
     if (token->token == ILITERAL) {
         double* value = (double*)malloc(sizeof(double));
         *value = atof(token->value);
-        literal->value = &(*value);
+        literal->value = value;
         literal->type = l_INTEGER;
     } else if (token->token == SLITERAL) {
         literal->value = &token->value;
         literal->type = l_STRING;
     }
-    state->state = &(*literal);
+    state->state = literal;
 }
 
 void parse_identifier(State* state, Token* token) {
     ss_Identifier* identifier = (ss_Identifier*)malloc(sizeof(ss_Identifier));
     strcpy(identifier->identifier, token->value);
-    state->state = &(*identifier);
+    state->state = identifier;
     state->type = s_IDENTIFIER;
 }
 
@@ -129,8 +133,8 @@ void parse_operator(State* state, Token* token) {
         Operator* math_operator = (Operator*)malloc(sizeof(Operator));
         *math_operator = token->value[0];
         op->type = MATH;
-        op->op = &(*math_operator);
-        state->state = &(*op);
+        op->op = math_operator;
+        state->state = op;
         state->type = s_OPERATOR;
     } else if (is_comparison_op(token->value[0])) {
         /* incomplete */
@@ -138,16 +142,37 @@ void parse_operator(State* state, Token* token) {
         Operator* comparison_op = (Operator*)malloc(sizeof(Operator));
         *comparison_op = token->value[0];
         op->type = COMPARISON;
-        op->op = &(*comparison_op);
-        state->state = &(*op);
+        op->op = comparison_op;
+        state->state = op;
         state->type = s_OPERATOR;
     }
+}
+
+void parse_array_index(State* state, Token* token) {
+    Token* name = token;
+    token += 2;
+    State* states = (State*)malloc(255 * sizeof(State));
+    int used = 0;
+    while (strcmp(token->value, INDEX_CLOSE) != 0) {
+        states[used++] = parse_value(token);
+        if (is_function_call(token)) {
+            skip_to_end_call(&token);
+        }
+        token++;
+    }
+    ss_IndexOperator* op = (ss_IndexOperator*)malloc(sizeof(ss_IndexOperator));
+    op->name = name->value;
+    op->states = states;
+    state->type = s_INDEX;
+    state->state = op;
 }
 
 State parse_value(Token* token) {
     State state;
     if (is_function_call(token)) {
         parse_function_call(&state, token);
+    } else if (is_array_index(token)) {
+        parse_array_index(&state, token);
     } else if (is_literal(token->token)) {
         parse_literal(&state, token);
     } else if (token->token == IDENTIFIER) {
@@ -167,6 +192,8 @@ ParseObject parse_statement(Token* token, size_t current_line) {
         states[used++] = parse_value(token);
         if (is_function_call(token)) {
             skip_to_end_call(&token);
+        } else if (is_array_index(token)) {
+            skip_to_end(&token, INDEX_CLOSE, &current_line);
         }
         token++;
         if (token->token == NEWLINE || PREVIOUS_TOKEN(token).is_end) {
@@ -208,7 +235,7 @@ State parse_variable_declaration(Token* current_token, State* states, size_t cur
         strcpy(variable->variable_name, variable_name->value);
         variable->is_initialized = false;
 
-        variable_state.state = &(*variable);
+        variable_state.state = variable;
         variable_state.type = s_VARIABLE;
     } else {
         ++current_token; /* skip assignment operator */
@@ -216,7 +243,7 @@ State parse_variable_declaration(Token* current_token, State* states, size_t cur
         ParseObject var_state = parse_statement(value, current_line);
         ss_Variable* variable = create_variable(variable_name->value, var_state);
 
-        variable_state.state = &(*variable);
+        variable_state.state = variable;
         variable_state.type = s_VARIABLE;
     }
     return variable_state;
@@ -235,7 +262,7 @@ State parse_variable_reassignment(Token* current_token, State* states, size_t cu
     ParseObject var_state = parse_statement(value, current_line);
     ss_Reassignment* reassignment = create_reassignment(variable_name->value, var_state);
 
-    State reassignment_state = {&(*reassignment), s_REASSIGN};
+    State reassignment_state = {reassignment, s_REASSIGN};
     return reassignment_state;
 }
 
@@ -268,16 +295,20 @@ ParseObject parse(lex_Object object) {
             if (is_variable_declaration(current_token + 1)) { /* variable declaration? */
                 State variable_state = parse_variable_declaration(current_token, states, current_line, length);
                 states[length++] = variable_state;
-                skip_to_end(&current_token, EOS);
+                skip_to_end(&current_token, EOS, &current_line);
             }
         } else if (current_token->token == IDENTIFIER) {
             if (is_function_call(current_token)) {
                 states[length++] = parse_value(current_token);
-                skip_to_end(&current_token, EOS);
+                skip_to_end(&current_token, EOS, &current_line);
             } else if (is_variable_reassignment(current_token)) {
                 State variable_state = parse_variable_reassignment(current_token, states, current_line, length);
                 states[length++] = variable_state;
-                skip_to_end(&current_token, EOS);
+                skip_to_end(&current_token, EOS, &current_line);
+            } else if (is_array_index(current_token)) {
+                states[length++] = parse_value(current_token);
+                skip_to_end(&current_token, INDEX_CLOSE, &current_line);
+                //printf("Current: %s\n", )
             }
         }
         if (length >= size) {
@@ -311,6 +342,7 @@ void free_state(State* state) {
         for (int i = 0; i < call.arg_count; ++i) {
             free_state(&call.arguments[i]);
         }
+        free(state->state);
     }
 }
 

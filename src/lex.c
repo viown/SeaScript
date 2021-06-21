@@ -160,10 +160,6 @@ void lex(lex_Object* lexObject) {
     lexObject->tokens[lexObject->token_used - 1].is_end = true;
 }
 
-void analyze_syntax(lex_Object* lexObject) {
-    //TODO
-}
-
 void lex_free(lex_Object* lexObject) {
     free(lexObject->tokens);
 }

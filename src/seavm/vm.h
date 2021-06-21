@@ -5,9 +5,6 @@
 #include "./stack.h"
 #include "./bytecode.h"
 
-#define DEBUG
-//#undef DEBUG
-
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
@@ -21,10 +18,7 @@ typedef struct {
 typedef struct {
     Stack stack;
     int ip;
-
     const ss_BaseFunction* c_functions;
-    int func_used;
-
     int* globals;
     int global_size;
     int global_used;
