@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "./lex.h"
@@ -13,7 +12,7 @@ bool is_operator(char c) {
     case '*':
     case '/':
     case '=':
-    case ';': /* optional; but can be used to indicate the end of line. */
+    case ';':
         return true;
     default:
         return false;
@@ -77,7 +76,7 @@ Token create_token(char* value, TokenType type) {
 void lex_comment(char* current_token, lex_Object** plexObject) {
     int index = 0;
     lex_Object* lexObject = *plexObject;
-    while (NEXT_TOKEN(lexObject->current) != '\0' && !IS_END_OF_LINE(NEXT_TOKEN(lexObject->current))) { /* reached comment, loop through until end of line or end of code is reached. */
+    while (NEXT_TOKEN(lexObject->current) != '\0' && !IS_END_OF_LINE(NEXT_TOKEN(lexObject->current))) {
         current_token[index++] = *lexObject->current;
         lexObject->current++;
     }
@@ -109,7 +108,7 @@ void lex(lex_Object* lexObject) {
     char current_token[MAX_VALUE_SIZE];
     memset(current_token, 0, sizeof(current_token));
     int index = 0;
-    bool is_collecting = false; /* identifier or keyword, we just don't know yet. */
+    bool is_collecting = false;
     bool is_collecting_num = false;
     while (*lexObject->current != '\0') {
         if (*lexObject->current == '/' && NEXT_TOKEN(lexObject->current) == '/') {

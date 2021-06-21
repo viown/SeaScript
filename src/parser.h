@@ -1,7 +1,6 @@
 #ifndef SS_PARSER_H
 #define SS_PARSER_H
 #include "./lex.h"
-#include "./sstypes.h"
 
 /* symbols */
 #define SCOPE_OPEN "{"
@@ -89,7 +88,7 @@ typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];
     ss_Identifier* arguments;
     ParseObject* scope;
-    bool is_lamda; /* function add(a, b) = a + b; */
+    bool is_lamda;
 } ss_Function;
 
 typedef struct {
@@ -123,8 +122,6 @@ typedef struct {
     char* name;
     State* states;
 } ss_IndexOperator;
-
-ss_Object to_object(Token token);
 
 bool variable_declared(Token* token, State* states, int length);
 ParseObject parse(lex_Object object);

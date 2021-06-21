@@ -42,7 +42,7 @@ void save_to_file(Bytecode* bytecode, const char* path) {
     FILE* file = fopen(path, "wb");
     int cursor = 0;
     for (size_t i = 0; i < bytecode->length; ++i) {
-        stack_type buffer[4 /* * sizeof(stack_type) */] = {bytecode->raw_data[cursor], bytecode->raw_data[++cursor], bytecode->raw_data[++cursor], bytecode->raw_data[++cursor]};
+        stack_type buffer[4] = {bytecode->raw_data[cursor], bytecode->raw_data[++cursor], bytecode->raw_data[++cursor], bytecode->raw_data[++cursor]};
         cursor++;
         fwrite(buffer, sizeof(buffer), 1, file);
     }

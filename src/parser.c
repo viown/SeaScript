@@ -2,7 +2,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h> /* debug */
 #include "./parser.h"
 #include "./lex.h"
 #include "./debug.h"

@@ -68,13 +68,8 @@ typedef struct {
     int64_t token_used;
 } lex_Object;
 
-bool is_operator(char c);
-bool is_keyword(const char* c);
-bool is_punctuator(char c);
-
 void lexObject_init(lex_Object* object, char* source);
 void lex(lex_Object* lexObject);
-
 void lex_free(lex_Object* lexObject);
 
 #endif // SS_LEX_H

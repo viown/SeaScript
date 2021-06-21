@@ -4,11 +4,9 @@
 
 #define MAX_ARGS 3
 
-struct Instruction {
+typedef struct {
     Opcode op;
     int args[MAX_ARGS];
-};
-
-typedef struct Instruction Instruction;
+} Instruction;
 
 #endif // SEAVM_INSTRUCTION_H
