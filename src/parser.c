@@ -343,7 +343,7 @@ void free_state(State* state) {
         free(state->state);
     } else if (state->type == s_INDEX) {
         ss_IndexOperator op = get_index(state->state);
-        free(op->states);
+        free(op.states);
         free(state->state);
     }
 }
