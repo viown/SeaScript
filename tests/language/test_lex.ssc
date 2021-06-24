@@ -1,1 +1,12 @@
-global str = "hello, world"
+// Testing SeaScript's Lexer
+
+global val = 10;
+global val2          =        10;
+// same token output
+
+function add(a, b) {
+	return a + b;
+}
+
+function lamda_add(a, b) = a + b; // lamda, same as add().
+function div10(a, b) = a / 10; // == function div10(a, b) {return a / 10}

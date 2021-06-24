@@ -307,7 +307,6 @@ ParseObject parse(lex_Object object) {
             } else if (is_array_index(current_token)) {
                 states[length++] = parse_value(current_token);
                 skip_to_end(&current_token, INDEX_CLOSE, &current_line);
-                //printf("Current: %s\n", )
             }
         }
         if (length >= size) {
@@ -342,6 +341,10 @@ void free_state(State* state) {
             free_state(&call.arguments[i]);
         }
         free(state->state);
+    } else if (state->type == s_INDEX) {
+        ss_IndexOperator op = get_index(state->state);
+        free(op->states);
+        free(state->state);
     }
 }
 
@@ -355,6 +358,7 @@ void free_ParseObject(ParseObject* object) {
                 free_state(&states.states[i]);
             }
             free(states.states);
+            free(current.state);
         } else if (current.type == s_FUNCTIONCALL) {
             free_state(&current);
         }
