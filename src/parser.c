@@ -346,10 +346,11 @@ void free_state(State* state) {
         free(state->state);
     } else if (state->type == s_INDEX) {
         ss_IndexOperator op = get_index(state->state);
-        for (size_t i = 0; i < op.parse_object->length-1; ++i) {
-            free(&op.parse_object->states[i]);
+        for (size_t i = 0; i < op.parse_object->length; ++i) {
+            free_state(&op.parse_object->states[i]);
         }
         free(op.parse_object->states);
+        free(op.parse_object);
         free(state->state);
     }
 }
