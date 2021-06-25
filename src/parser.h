@@ -120,7 +120,7 @@ typedef struct {
 
 typedef struct {
     char* name;
-    State* states;
+    ParseObject* parse_object;
 } ss_IndexOperator;
 
 bool variable_declared(Token* token, State* states, int length);

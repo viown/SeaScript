@@ -160,8 +160,11 @@ void parse_array_index(State* state, Token* token) {
         token++;
     }
     ss_IndexOperator* op = (ss_IndexOperator*)malloc(sizeof(ss_IndexOperator));
+    ParseObject* parse_object = (ParseObject*)malloc(sizeof(ParseObject));
+    parse_object->length = used;
+    parse_object->states = states;
     op->name = name->value;
-    op->states = states;
+    op->parse_object = parse_object;
     state->type = s_INDEX;
     state->state = op;
 }
@@ -343,7 +346,10 @@ void free_state(State* state) {
         free(state->state);
     } else if (state->type == s_INDEX) {
         ss_IndexOperator op = get_index(state->state);
-        free(op.states);
+        for (size_t i = 0; i < op.parse_object->length-1; ++i) {
+            free(&op.parse_object->states[i]);
+        }
+        free(op.parse_object->states);
         free(state->state);
     }
 }
