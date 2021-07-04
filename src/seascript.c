@@ -23,7 +23,7 @@ char* read_file(const char* path) {
     }
 }
 
-void test_language() {
+bool test_language() {
     char* source = read_file("tests/language/parser_test.ssc");
     if (source != NULL) {
         lex_Object object;
@@ -36,18 +36,42 @@ void test_language() {
         test_call(true, lex_free(&object));
     }
     free(source);
+    return 0;
 }
 
-void test_vm() {
+bool test_vm() {
+    Instruction instructions[] = {
+        {
+            LOADCONST, {50}
+        },
+        {
+            LOADCONST, {50}
+        },
+        {
+            ADD, {}
+        },
+        {
+            IPRINT, {}
+        },
+        {
+            LOADCONST, {25}
+        },
+        {
+            CALLC, {0}
+        }
+    };
 
+    Vm vm;
+
+    vm_init(&vm, 100, ss_functions);
+    return vm_execute(&vm, instructions, LEN(instructions));
 }
 
 int main() {
-    char to_test = 'L'; /* L for language, V for vm */
+    char to_test = 'L';
     if (to_test == 'L')
-        test_language();
+        return test_language();
     else if (to_test == 'V')
-        test_vm();
-    return 0;
+        return test_vm();
 }
 

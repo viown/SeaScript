@@ -7,6 +7,13 @@
 #include <sys/stat.h>
 #endif // __linux__
 
+/*
+*   TODO:
+*   Currently, bytecode conversion will pad 3 bytes for each instruction with potential unoccupied bytes,
+*   this can be wasteful (especially in large programs) this can be resolved by
+*   specifying how many arguments each instruction takes and converting them accordingly.
+*/
+
 void to_bytecode(Bytecode* bytecode, Instruction* instructions, size_t length) {
     bytecode->length = length;
     stack_type* buffer = (stack_type*)malloc((length * 4) * sizeof(stack_type));

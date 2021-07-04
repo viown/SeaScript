@@ -1,1 +1,1 @@
-global a = array[20] * 50;
+global test = 1;

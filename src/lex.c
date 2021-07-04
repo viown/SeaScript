@@ -47,13 +47,13 @@ void lexObject_init(lex_Object* object, char* source) {
     object->source = source;
     object->current = object->source;
     object->length = strlen(object->source);
-    object->tokens = calloc(1000, sizeof(Token));
+    object->tokens = (Token*)malloc(1000 * sizeof(Token));
     object->token_size = 1000;
     object->token_used = 0;
 }
 
 void append_token(lex_Object* object, Token token) {
-    if (object->token_used >= object->token_size) {
+    if (object->token_used == object->token_size) {
         object->token_size *= 2;
         object->tokens = (Token*)realloc(object->tokens, object->token_size * sizeof(Token));
     }

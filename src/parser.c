@@ -6,6 +6,7 @@
 #include "./lex.h"
 #include "./debug.h"
 
+
 State parse_value(Token* token);
 
 /* check whether current identifier leads to a function call */
@@ -181,6 +182,8 @@ State parse_value(Token* token) {
         parse_identifier(&state, token);
     } else if (token->token == OPERATOR) {
         parse_operator(&state, token);
+    } else {
+        ss_unreachable("Unidentified token passed to parse_value: %d", token->token);
     }
     return state;
 }
@@ -343,6 +346,7 @@ void free_state(State* state) {
         for (int i = 0; i < call.arg_count; ++i) {
             free_state(&call.arguments[i]);
         }
+        free(call.arguments);
         free(state->state);
     } else if (state->type == s_INDEX) {
         ss_IndexOperator op = get_index(state->state);
@@ -361,6 +365,16 @@ void free_ParseObject(ParseObject* object) {
         if (current.type == s_VARIABLE) {
             ss_Variable var = get_variable(current.state);
             ParseObject states = var.states;
+            if (var.is_initialized) {
+                for (int i = 0; i < states.length; ++i) {
+                    free_state(&states.states[i]);
+                }
+                free(states.states);
+            }
+            free(current.state);
+        } else if (current.type == s_REASSIGN) {
+            ss_Reassignment reassignment = get_reassignment(current.state);
+            ParseObject states = reassignment.states;
             for (int i = 0; i < states.length; ++i) {
                 free_state(&states.states[i]);
             }

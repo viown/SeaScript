@@ -1,6 +1,7 @@
 #include "./vm.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
 
 void vm_init(Vm* vm, int global_size, const ss_BaseFunction* func_list) {
     vm->stack = create_stack();
@@ -15,22 +16,18 @@ void vm_free(Vm* vm) {
     free(vm->globals);
 }
 
-bool vm_execute(Vm* vm, Bytecode* bytecode) {
-    Instruction* instrs;
+bool vm_execute(Vm* vm, Instruction* instrs, size_t length) {
     Instruction cinstr;
-    instrs = to_instructions(bytecode);
 
     stack_type* top;
     stack_type f = 0;
     stack_type s = 0;
 
-    while (vm->ip != bytecode->length) {
+    while (vm->ip != length) {
         cinstr = instrs[vm->ip];
 
         switch (cinstr.op) {
         case EXIT:
-            free_bytecode(bytecode);
-            free(instrs);
             vm_free(vm);
             return !(cinstr.args[0] == EXIT_SUCCESS);
         case LOADCONST:
@@ -106,7 +103,7 @@ bool vm_execute(Vm* vm, Bytecode* bytecode) {
             vm->ip = vm->globals[cinstr.args[0]] + 1; // Return to call function.
             break;
         case CALLC:
-            vm->c_functions[cinstr.args[0]].func(&vm->stack);
+            vm->c_functions[cinstr.args[0]].func(vm);
             vm->ip++;
             break;
         case IPRINT:
@@ -121,9 +118,6 @@ bool vm_execute(Vm* vm, Bytecode* bytecode) {
             return EXIT_FAILURE;
         }
     }
-
-    free_bytecode(bytecode);
-    free(instrs);
     vm_free(vm);
     return EXIT_FAILURE; // Should exit properly through (EXIT 0)
 }

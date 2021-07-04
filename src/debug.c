@@ -34,9 +34,9 @@ void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
             } else if (arg_value.type == l_STRING) {
                 char* str = (char*)arg_value.value;
                 if (i + 1 == fcall.arg_count) {
-                    printf("%s", str);
+                    printf("\"%s\"", str);
                 } else {
-                    printf("%s, ", str);
+                    printf("\"%s, ", str);
                 }
             }
         } else if (argument.type == s_FUNCTIONCALL) { /* function call as argument */
@@ -54,46 +54,62 @@ void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
     printf(")");
 }
 
-void print_variable(void* variable, StateType type) {
+void print_state(State st) {
+    if (st.type == s_IDENTIFIER) {
+        printf("%s ", get_identifier(st.state).identifier);
+    } else if (st.type == s_OPERATOR) {
+        ss_Operator s_OP = get_operator(st.state);
+        Operator op = *(Operator*)s_OP.op;
+        printf("%c ", op);
+    } else if (st.type == s_LITERAL) {
+        ss_Literal literal = get_literal(st.state);
+        if (literal.type == l_INTEGER) {
+            double value = load_literal(literal);
+            if (literal.type == l_INTEGER) {
+                printf("%f ", value);
+            }
+        } else if (literal.type == l_STRING) {
+            char* str = (char*)literal.value;
+            printf("\"%s\"", str);
+        }
+    } else if (st.type == s_FUNCTIONCALL) {
+        ss_FunctionCall fcall = get_functioncall(st.state);
+        read_arguments(fcall, false);
+        printf(" ");
+    } else if (st.type == s_INDEX) {
+        ss_IndexOperator index_operator = get_index(st.state);
+        ParseObject* obj = index_operator.parse_object;
+        printf("%s[", index_operator.name);
+        for (int i = 0; i < obj->length; ++i) {
+            State st = obj->states[i];
+            print_state(st);
+        }
+        printf("] ");
+    } else {
+        printf("<unknown> ");
+    }
+}
+
+void print_variable(void* variable) {
     ss_Variable var = get_variable(variable);
     if (var.is_initialized) {
-        if (type == s_REASSIGN) {
-            printf("%s = ", var.variable_name);
-        } else {
-            printf("global %s = ", var.variable_name);
-        }
+        printf("global %s = ", var.variable_name);
         for (int i = 0; i < var.states.length; ++i) {
             State st = var.states.states[i];
-            if (st.type == s_IDENTIFIER) {
-                printf("%s ", get_identifier(st.state).identifier);
-            } else if (st.type == s_OPERATOR) {
-                ss_Operator s_OP = get_operator(st.state);
-                Operator op = *(Operator*)s_OP.op;
-                printf("%c ", op);
-            } else if (st.type == s_LITERAL) {
-                ss_Literal literal = get_literal(st.state);
-                if (literal.type == l_INTEGER) {
-                    double value = load_literal(literal);
-                    if (literal.type == l_INTEGER) {
-                        printf("%f ", value);
-                    }
-                } else if (literal.type == l_STRING) {
-                    char* str = (char*)literal.value;
-                    printf("%s", str);
-                }
-            } else if (st.type == s_FUNCTIONCALL) {
-                ss_FunctionCall fcall = get_functioncall(st.state);
-                read_arguments(fcall, false);
-                printf(" ");
-            } else if (st.type == s_INDEX) {
-                ss_IndexOperator index_operator = get_index(st.state);
-                printf("%s[...] ", index_operator.name);
-            } else {
-                printf("<unknown> ");
-            }
+            print_state(st);
         }
     } else {
         printf("global %s; /* uninitialized */", var.variable_name);
+    }
+    printf("\n");
+}
+
+void print_reassignment(void* reassignment) {
+    ss_Reassignment reassign = get_reassignment(reassignment);
+    printf("%s = ", reassign.variable_name);
+    for (int i = 0; i < reassign.states.length; ++i) {
+        State st = reassign.states.states[i];
+        print_state(st);
     }
     printf("\n");
 }
@@ -103,9 +119,9 @@ void visualize_states(ParseObject* object) {
     for (int i = 0; i < object->length; ++i) {
         State current = object->states[i];
         if (current.type == s_VARIABLE) {
-            print_variable(current.state, s_VARIABLE);
+            print_variable(current.state);
         } else if (current.type == s_REASSIGN) {
-            print_variable(current.state, s_REASSIGN);
+            print_reassignment(current.state);
         } else if (current.type == s_FUNCTIONCALL) {
             ss_FunctionCall fcall = get_functioncall(current.state);
             read_arguments(fcall, false);
