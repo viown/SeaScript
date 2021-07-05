@@ -1,4 +1,5 @@
 build/
+*.o
 *.cbp
 *.sln
 *.depend
