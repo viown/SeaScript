@@ -27,9 +27,9 @@ void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
             if (arg_value.type == l_INTEGER) {
                 double value = load_literal(arg_value);
                 if (i + 1 == fcall.arg_count) {
-                    printf("%f", value);
+                    printf("%g", value);
                 } else {
-                    printf("%f, ", value);
+                    printf("%g, ", value);
                 }
             } else if (arg_value.type == l_STRING) {
                 char* str = (char*)arg_value.value;
@@ -51,7 +51,7 @@ void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
             }
         }
     }
-    printf(")");
+    printf("), ");
 }
 
 void print_state(State st) {
@@ -66,7 +66,7 @@ void print_state(State st) {
         if (literal.type == l_INTEGER) {
             double value = load_literal(literal);
             if (literal.type == l_INTEGER) {
-                printf("%f ", value);
+                printf("%g ", value);
             }
         } else if (literal.type == l_STRING) {
             char* str = (char*)literal.value;

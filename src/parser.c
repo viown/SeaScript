@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "./parser.h"
 #include "./lex.h"
 #include "./debug.h"
@@ -103,6 +104,54 @@ void parse_function_call(State* state, Token* token) {
     func_call->arg_count = length;
     state->type = s_FUNCTIONCALL;
     state->state = func_call;
+}
+
+ArgumentCollection parse_function_arguments(Token** ptoken, size_t current_line) {
+    ArgumentCollection collection;
+    if (strcmp((*ptoken)->value, FUNC_OPEN) == 0)
+        (*ptoken)++; /* skip '(' */
+    ss_Identifier* arguments = (ss_Identifier*)malloc(MAX_ARGUMENTS * sizeof(ss_Identifier));
+    int used = 0;
+    while (strcmp((*ptoken)->value, FUNC_CLOSE) != 0) {
+        if ((*ptoken)->token == IDENTIFIER) {
+            ss_Identifier arg;
+            strcpy(arg.identifier, (*ptoken)->value);
+            arguments[used++] = arg;
+        } else if (strcmp((*ptoken)->value, ARG_SEPARATOR) != 0) {
+            ss_throw("line %lu: Invalid token in function arguments '%s'", current_line, (*ptoken)->value);
+        }
+        (*ptoken)++;
+    }
+    (*ptoken)++; /* move to SCOPE_OPEN */
+    if (strcmp((*ptoken)->value, SCOPE_OPEN) != 0) {
+        ss_throw("line %lu: Function doesn't lead to scope; missing '%s'", current_line, SCOPE_OPEN);
+    }
+
+    collection.length = used;
+    collection.arguments = arguments;
+    return collection;
+}
+
+lex_Object collect_tokens_from_scope(Token** ptoken, size_t* current_line) {
+    lex_Object object;
+    object.tokens = (Token*)malloc(1000 * sizeof(Token));
+    object.token_size = 1000;
+    object.token_used = 0;
+    if (strcmp((*ptoken)->value, SCOPE_OPEN) == 0)
+        (*ptoken)++; /* skip '{' */
+    while (strcmp((*ptoken)->value, SCOPE_CLOSE) != 0) {
+        object.tokens[object.token_used++] = **ptoken;
+        if (object.token_used == object.token_size) {
+            object.token_size *= 2;
+            object.tokens = (Token*)realloc(object.tokens, object.token_size * sizeof(Token));
+        }
+        if ((*ptoken)->token == NEWLINE)
+            (*current_line)++;
+        (*ptoken)++;
+    }
+    object.tokens[0].is_start = true;
+    object.tokens[object.token_used-1].is_end = true;
+    return object;
 }
 
 void parse_literal(State* state, Token* token) {
@@ -301,6 +350,23 @@ ParseObject parse(lex_Object object) {
                 State variable_state = parse_variable_declaration(current_token, states, current_line, length);
                 states[length++] = variable_state;
                 skip_to_end(&current_token, EOS, &current_line);
+            } else if (is_function_definition(current_token + 1)) {
+                /* FIXME: Nested functions throw a memory access violation */
+                /* TODO: Implement lambda support 'function foo(a, b) = a + b;' */
+                /* TODO: Free all this allocated mess */
+                ss_Function* function = (ss_Function*)malloc(sizeof(ss_Function));
+                Token* function_name = ++current_token;
+                ++current_token; /* move to '(' */
+                ArgumentCollection arguments = parse_function_arguments(&current_token, current_line);
+                lex_Object scopeTokens = collect_tokens_from_scope(&current_token, &current_line);
+                ParseObject scope = parse(scopeTokens);
+                lex_free(&scopeTokens);
+                strcpy(function->function_name, function_name->value);
+                function->arguments = arguments;
+                function->scope = scope;
+                function->is_lamda = false;
+                State state = {&function, s_FUNCTION};
+                states[length++] = state;
             }
         } else if (current_token->token == IDENTIFIER) {
             if (is_function_call(current_token)) {

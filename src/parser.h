@@ -67,6 +67,11 @@ typedef enum {
     l_STRING
 } LiteralType;
 
+typedef enum {
+    v_GLOBAL,
+    v_LOCAL
+} VariableType;
+
 typedef struct {
     void* state;
     StateType type;
@@ -75,6 +80,11 @@ typedef struct {
 typedef struct {
     char identifier[MAX_IDENTIFIER_SIZE];
 } ss_Identifier;
+
+typedef struct {
+    ss_Identifier* arguments;
+    int length;
+} ArgumentCollection;
 
 typedef struct {
     State* states;
@@ -86,8 +96,8 @@ typedef ParseObject ss_Precedence;
 
 typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];
-    ss_Identifier* arguments;
-    ParseObject* scope;
+    ArgumentCollection arguments;
+    ParseObject scope;
     bool is_lamda;
 } ss_Function;
 

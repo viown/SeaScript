@@ -137,6 +137,10 @@ void lex(lex_Object* lexObject) {
                 memset(op.value, 0, sizeof(op.value));
                 op.token = is_operator(*lexObject->current) ? OPERATOR : PUNCTUATOR;
                 op.value[0] = *lexObject->current;
+                if (NEXT_TOKEN(lexObject->current) == '=') {
+                    op.value[1] = '=';
+                    lexObject->current++;
+                }
                 append_token(lexObject, op);
             }
         } else if (IS_IDENTIFIER_CHAR(*lexObject->current)) {

@@ -1,4 +1,4 @@
-CC = clang
+CC = gcc
 CLFAGS = -Wall -std=c99 -O2
 FILES = $(wildcard src/*.c)
 FILES += $(wildcard src/*/*.c) 
