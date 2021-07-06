@@ -39,6 +39,8 @@
 #define get_functioncall(state) (*(ss_FunctionCall*)state)
 #define get_reassignment(state) (*(ss_Reassignment*)state)
 #define get_index(state) (*(ss_IndexOperator*)state)
+#define get_function(state) (*(ss_Function*)state)
+#define get_return(state) (*(ss_ReturnStatement*)state)
 
 #define load_literal(literal) (*(double*)literal.value)
 
@@ -55,6 +57,7 @@ typedef enum {
     s_OPERATOR,
     s_INDEX,
     s_IDENTIFIER,
+    s_RETURN
 } StateType;
 
 typedef enum {
@@ -93,6 +96,7 @@ typedef struct {
 
 typedef ParseObject ss_Scope;
 typedef ParseObject ss_Precedence;
+typedef ParseObject ss_ReturnStatement;
 
 typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];

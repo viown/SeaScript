@@ -1,5 +1,0 @@
-function add(a, b) {
-	global a = 10;
-	global ab = 20;
-	return a + ab;
-}

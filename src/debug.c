@@ -126,6 +126,26 @@ void visualize_states(ParseObject* object) {
             ss_FunctionCall fcall = get_functioncall(current.state);
             read_arguments(fcall, false);
             printf("\n");
+        } else if (current.type == s_RETURN) {
+            printf("return ");
+            ss_ReturnStatement return_states = get_return(current.state);
+            for (int i = 0; i < return_states.length; ++i) {
+                State st = return_states.states[i];
+                print_state(st);
+            }
+            printf("\n");
+        } else if (current.type == s_FUNCTION) {
+            ss_Function function = get_function(current.state);
+            printf("function %s(", function.function_name);
+            for (int i = 0; i < function.arguments.length; ++i) {
+                if ((i+1) == function.arguments.length)
+                    printf("%s", function.arguments.arguments[i].identifier);
+                else
+                    printf("%s, ", function.arguments.arguments[i].identifier);
+            }
+            printf(") {\n");
+            visualize_states(&function.scope);
+            printf("}\n");
         }
     }
     printf("\n");

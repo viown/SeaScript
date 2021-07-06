@@ -7,8 +7,17 @@
 #include "./lex.h"
 #include "./debug.h"
 
+/*
+    Yes, the current line is stored as a non-const global variable, who cares if it's bad practice?
+    Do you know how difficult it is to keep track of the current line through nested functions and all that?
+*/
+static size_t current_line = 1;
 
 State parse_value(Token* token);
+
+static inline bool is_keyword(Token* token, char* keyword) {
+    return strcmp(token->value, keyword) == 0;
+}
 
 /* check whether current identifier leads to a function call */
 static inline bool is_function_call(Token* current_token) {
@@ -59,7 +68,7 @@ static inline bool is_natural_identifier(Token* current_token) {
 }
 
 void skip_to_end_call(Token** ptoken) {
-    while (strcmp((*ptoken)->value, FUNC_CLOSE) != 0) {
+    while (strcmp((*ptoken)->value, FUNC_CLOSE)) {
         (*ptoken)++;
         if (is_function_call(*ptoken)) {
             skip_to_end_call(ptoken);
@@ -69,10 +78,10 @@ void skip_to_end_call(Token** ptoken) {
 }
 
 /* skips to end of statement */
-void skip_to_end(Token** ptoken, const char* end, size_t* current_line) {
-    while (strcmp((*ptoken)->value, end) != 0) {
+void skip_to_end(Token** ptoken, const char* end) {
+    while (strcmp((*ptoken)->value, end)) {
         if ((*ptoken)->token == NEWLINE) {
-            (*current_line)++;
+            current_line++;
         }
         (*ptoken)++;
     }
@@ -84,7 +93,7 @@ void parse_function_call(State* state, Token* token) {
     token += 2; /* skip '(' */
     State* arguments = (State*)malloc(MAX_ARGUMENTS * sizeof(State));
     size_t length = 0;
-    while (strcmp(token->value, FUNC_CLOSE) != 0) {
+    while (strcmp(token->value, FUNC_CLOSE)) {
         if (token->token == NEWLINE) {
             ++token;
             continue;
@@ -106,13 +115,13 @@ void parse_function_call(State* state, Token* token) {
     state->state = func_call;
 }
 
-ArgumentCollection parse_function_arguments(Token** ptoken, size_t current_line) {
+ArgumentCollection parse_function_arguments(Token** ptoken) {
     ArgumentCollection collection;
     if (strcmp((*ptoken)->value, FUNC_OPEN) == 0)
         (*ptoken)++; /* skip '(' */
     ss_Identifier* arguments = (ss_Identifier*)malloc(MAX_ARGUMENTS * sizeof(ss_Identifier));
     int used = 0;
-    while (strcmp((*ptoken)->value, FUNC_CLOSE) != 0) {
+    while (strcmp((*ptoken)->value, FUNC_CLOSE)) {
         if ((*ptoken)->token == IDENTIFIER) {
             ss_Identifier arg;
             strcpy(arg.identifier, (*ptoken)->value);
@@ -132,21 +141,31 @@ ArgumentCollection parse_function_arguments(Token** ptoken, size_t current_line)
     return collection;
 }
 
-lex_Object collect_tokens_from_scope(Token** ptoken, size_t* current_line) {
+lex_Object collect_tokens_from_scope(Token** ptoken) {
     lex_Object object;
     object.tokens = (Token*)malloc(1000 * sizeof(Token));
     object.token_size = 1000;
     object.token_used = 0;
     if (strcmp((*ptoken)->value, SCOPE_OPEN) == 0)
         (*ptoken)++; /* skip '{' */
-    while (strcmp((*ptoken)->value, SCOPE_CLOSE) != 0) {
+    int function_nest = 0;
+    while (!((*ptoken)->is_end)) {
         object.tokens[object.token_used++] = **ptoken;
+        if (strcmp((*ptoken)->value, SCOPE_OPEN) == 0) {
+            function_nest++;
+        } else if (strcmp((*ptoken)->value, SCOPE_CLOSE) == 0) {
+            if (function_nest != 0) {
+                function_nest--;
+            } else {
+                break;
+            }
+        }
         if (object.token_used == object.token_size) {
             object.token_size *= 2;
             object.tokens = (Token*)realloc(object.tokens, object.token_size * sizeof(Token));
         }
         if ((*ptoken)->token == NEWLINE)
-            (*current_line)++;
+            current_line++;
         (*ptoken)++;
     }
     object.tokens[0].is_start = true;
@@ -163,7 +182,9 @@ void parse_literal(State* state, Token* token) {
         literal->value = value;
         literal->type = l_INTEGER;
     } else if (token->token == SLITERAL) {
-        literal->value = &token->value;
+        char* literal_string = (char*)malloc((strlen(token->value) + 1) * sizeof(char));
+        strcpy(literal_string, token->value);
+        literal->value = literal_string;
         literal->type = l_STRING;
     }
     state->state = literal;
@@ -238,7 +259,7 @@ State parse_value(Token* token) {
 }
 
 /* reads the tokens until an ';' is encountered */
-ParseObject parse_statement(Token* token, size_t current_line) {
+ParseObject parse_statement(Token* token) {
     ParseObject object;
     State* states = (State*)malloc(255 * sizeof(State));
     int used = 0;
@@ -247,7 +268,7 @@ ParseObject parse_statement(Token* token, size_t current_line) {
         if (is_function_call(token)) {
             skip_to_end_call(&token);
         } else if (is_array_index(token)) {
-            skip_to_end(&token, INDEX_CLOSE, &current_line);
+            skip_to_end(&token, INDEX_CLOSE);
         }
         token++;
         if (token->token == NEWLINE || PREVIOUS_TOKEN(token).is_end) {
@@ -276,7 +297,7 @@ ss_Reassignment* create_reassignment(char* var_name, ParseObject var_states) {
     return reassignment;
 }
 
-State parse_variable_declaration(Token* current_token, State* states, size_t current_line, size_t length) {
+State parse_variable_declaration(Token* current_token, State* states, size_t length) {
     Token* variable_name = ++current_token; /* name of variable */
     if (variable_name->token == KEYWORD) {
         ss_throw("line %lu: variable name cannot be a reserved keyword", current_line);
@@ -294,7 +315,7 @@ State parse_variable_declaration(Token* current_token, State* states, size_t cur
     } else {
         ++current_token; /* skip assignment operator */
         Token* value = ++current_token; /* pointer to first token */
-        ParseObject var_state = parse_statement(value, current_line);
+        ParseObject var_state = parse_statement(value);
         ss_Variable* variable = create_variable(variable_name->value, var_state);
 
         variable_state.state = variable;
@@ -303,7 +324,7 @@ State parse_variable_declaration(Token* current_token, State* states, size_t cur
     return variable_state;
 }
 
-State parse_variable_reassignment(Token* current_token, State* states, size_t current_line, size_t length) {
+State parse_variable_reassignment(Token* current_token, State* states, size_t length) {
     Token* variable_name = current_token;
     if (!IS_START_TOKEN(variable_name) && PREVIOUS_TOKEN(variable_name).token == IDENTIFIER) {
         ss_throw("line %lu: unknown keyword '%s'\n", current_line, PREVIOUS_TOKEN(variable_name).value);
@@ -313,7 +334,7 @@ State parse_variable_reassignment(Token* current_token, State* states, size_t cu
     }
     ++current_token;
     Token* value = ++current_token;
-    ParseObject var_state = parse_statement(value, current_line);
+    ParseObject var_state = parse_statement(value);
     ss_Reassignment* reassignment = create_reassignment(variable_name->value, var_state);
 
     State reassignment_state = {reassignment, s_REASSIGN};
@@ -340,45 +361,49 @@ ParseObject parse(lex_Object object) {
     ParseObject parse_obj;
     size_t size = 1000;
     size_t length = 0;
-    size_t current_line = 1;
     State* states = (State*)malloc(size * sizeof(State));
     while (current_token != end) {
         if (current_token->token == NEWLINE) {
             current_line++;
         } else if (current_token->token == KEYWORD) {
             if (is_variable_declaration(current_token + 1)) { /* variable declaration? */
-                State variable_state = parse_variable_declaration(current_token, states, current_line, length);
+                State variable_state = parse_variable_declaration(current_token, states, length);
                 states[length++] = variable_state;
-                skip_to_end(&current_token, EOS, &current_line);
+                skip_to_end(&current_token, EOS);
             } else if (is_function_definition(current_token + 1)) {
-                /* FIXME: Nested functions throw a memory access violation */
                 /* TODO: Implement lambda support 'function foo(a, b) = a + b;' */
-                /* TODO: Free all this allocated mess */
+                /* TODO: Free all this allocated mess + (also the string allocated for literals) */
                 ss_Function* function = (ss_Function*)malloc(sizeof(ss_Function));
                 Token* function_name = ++current_token;
                 ++current_token; /* move to '(' */
-                ArgumentCollection arguments = parse_function_arguments(&current_token, current_line);
-                lex_Object scopeTokens = collect_tokens_from_scope(&current_token, &current_line);
+                ArgumentCollection arguments = parse_function_arguments(&current_token);
+                lex_Object scopeTokens = collect_tokens_from_scope(&current_token);
                 ParseObject scope = parse(scopeTokens);
                 lex_free(&scopeTokens);
                 strcpy(function->function_name, function_name->value);
                 function->arguments = arguments;
                 function->scope = scope;
                 function->is_lamda = false;
-                State state = {&function, s_FUNCTION};
+                State state = {function, s_FUNCTION};
+                states[length++] = state;
+            } else if (is_keyword(current_token, "return")) {
+                ss_ReturnStatement* return_statement = (ss_ReturnStatement*)malloc(sizeof(ss_ReturnStatement));
+                ParseObject statement = parse_statement(current_token+1);
+                *return_statement = (ss_ReturnStatement)statement;
+                State state = {return_statement, s_RETURN};
                 states[length++] = state;
             }
         } else if (current_token->token == IDENTIFIER) {
             if (is_function_call(current_token)) {
                 states[length++] = parse_value(current_token);
-                skip_to_end(&current_token, EOS, &current_line);
+                skip_to_end(&current_token, EOS);
             } else if (is_variable_reassignment(current_token)) {
-                State variable_state = parse_variable_reassignment(current_token, states, current_line, length);
+                State variable_state = parse_variable_reassignment(current_token, states, length);
                 states[length++] = variable_state;
-                skip_to_end(&current_token, EOS, &current_line);
+                skip_to_end(&current_token, EOS);
             } else if (is_array_index(current_token)) {
                 states[length++] = parse_value(current_token);
-                skip_to_end(&current_token, INDEX_CLOSE, &current_line);
+                skip_to_end(&current_token, INDEX_CLOSE);
             }
         }
         if (length >= size) {

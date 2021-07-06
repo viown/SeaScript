@@ -1,0 +1,9 @@
+// Example: Function Nesting
+
+function do_something() {
+	function add(a, b) {
+		return a + b;
+	}
+	
+	return add(100, 200);
+}
