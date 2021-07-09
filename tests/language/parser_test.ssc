@@ -1,5 +1,1 @@
-function e() {
-	global a = 10;
-}
-
 global a = 20;

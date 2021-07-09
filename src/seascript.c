@@ -63,48 +63,52 @@ char* read_file(const char* path) {
     }
 }
 
-bool test_language() {
-    char* source = read_file("tests/language/parser_test.ssc");
-    if (source != NULL) {
-        lex_Object object;
-        test_call(true, lexObject_init(&object, source));
-        test_call(true, lex(&object));
-        test_call(false, visualize_tokens(&object));
-        ParseObject s = parse(object);
-        test_call(true, visualize_states(&s));
-        test_call(true, free_ParseObject(&s));
-        test_call(true, lex_free(&object));
+void visualize_bytecode(char* path) {
+    Bytecode bytecode;
+    read_from_file(&bytecode, path);
+    Instruction* instructions = to_instructions(&bytecode);
+    for (int i = 0; i < bytecode.length; ++i) {
+        const char* instruction = instruction_to_string(instructions[i].op);
+        printf("%s ", instruction);
+        for (int j = 0; j < 3; ++j) {
+            if (instructions[i].args[j] == 0)
+                break;
+            printf("%d ", instructions[i].args[j]);
+        }
+        printf("\n");
     }
-    free(source);
-    return 0;
+    free(instructions);
 }
 
-bool test_vm() {
-    Instruction instructions[] = {
-        {
-            ICONST, {50}
-        },
-        {
-            ICONST, {50}
-        },
-        {
-            ADD, {}
-        },
-        {
-            IPRINT, {}
-        },
-        {
-            ICONST, {25}
-        },
-        {
-            CALLC, {0}
+int compile_and_run(CommandLineFlags flags, char* path) {
+    Vm virtual_machine;
+    vm_init(&virtual_machine, 500, ss_functions);
+    char* source_code = read_file(path);
+    lex_Object object;
+    lexObject_init(&object, source_code);
+    lex(&object);
+    if (flags.visualize_tokens) {
+        if (object.token_used > 2500) {
+            ss_throw("Tokens too big to visualize");
         }
-    };
-
-    Vm vm;
-
-    vm_init(&vm, 100, ss_functions);
-    return vm_execute(&vm, instructions, LEN(instructions));
+        visualize_tokens(&object);
+        return 0;
+    }
+    ParseObject s = parse(object);
+    if (flags.parser_print) {
+        visualize_states(&s);
+        return 0;
+    }
+    InstructionMap map = compile(&s);
+    if (flags.preserve_bytecode) {
+        Bytecode bytecode;
+        to_bytecode(&bytecode, map.instructions, map.length);
+        save_to_file(&bytecode, "test.ssb");
+        free_bytecode(&bytecode);
+    }
+    free_ParseObject(&s);
+    lex_free(&object);
+    return vm_execute(&virtual_machine, map.instructions, map.length);
 }
 
 int main(int argc, char** argv) {
@@ -132,47 +136,11 @@ int main(int argc, char** argv) {
                 if (!flags.is_view) {
                     /* TODO: Execute bytecode file */
                 } else {
-                    /* TODO: Visualize bytecode to instructions*/
-                    Bytecode bytecode;
-                    read_from_file(&bytecode, argv[1]);
-                    Instruction* instructions = to_instructions(&bytecode);
-                    for (int i = 0; i < bytecode.length; ++i) {
-                        const char* instruction = instruction_to_string(instructions[i].op);
-                        printf("%s ", instruction);
-                        for (int j = 0; j < 3; ++j) {
-                            if (instructions[i].args[j] == 0)
-                                break;
-                            printf("%d ", instructions[i].args[j]);
-                        }
-                        printf("\n");
-                    }
+                    visualize_bytecode(argv[1]);
+                    return 0;
                 }
             } else if (!strcmp(extension, ".ssc")) {
-                char* source_code = read_file(argv[1]);
-                lex_Object object;
-                lexObject_init(&object, source_code);
-                lex(&object);
-                if (flags.visualize_tokens) {
-                    if (object.token_used > 2500) {
-                        printf("Tokens too big to visualize");
-                        return 1;
-                    }
-                    visualize_tokens(&object);
-                    return 0;
-                }
-                ParseObject s = parse(object);
-                if (flags.parser_print) {
-                    visualize_states(&s);
-                    return 0;
-                }
-                InstructionMap map = compile(&s);
-                Bytecode bytecode;
-                to_bytecode(&bytecode, map.instructions, map.length);
-                if (flags.preserve_bytecode) {
-                    save_to_file(&bytecode, "test.ssb");
-                }
-                free_ParseObject(&s);
-                lex_free(&object);
+                return compile_and_run(flags, argv[1]);
             } else {
                 ss_throw("Bad Argument: Invalid extension '%s'", extension);
             }

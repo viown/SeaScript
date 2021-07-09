@@ -134,7 +134,6 @@ const char* instruction_to_string(Opcode op) {
         return "STORE";
     case LOAD:
         return "LOAD";
-        break;
     case ADD:
         return "ADD";
     case SUB:
