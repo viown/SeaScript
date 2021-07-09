@@ -5,7 +5,7 @@
 typedef unsigned char Opcode;
 
 #define EXIT        0x0
-#define LOADCONST   0x1
+#define ICONST      0x1
 #define POP         0x2
 #define STORE       0x3
 #define LOAD        0x4

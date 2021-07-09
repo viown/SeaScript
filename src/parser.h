@@ -1,5 +1,6 @@
 #ifndef SS_PARSER_H
 #define SS_PARSER_H
+#include <stddef.h>
 #include "./lex.h"
 
 /* symbols */

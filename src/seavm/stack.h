@@ -4,13 +4,25 @@
 typedef unsigned long stack_size;
 typedef double stack_type;
 
-struct Stack {
+typedef enum {
+    INT32,
+    INT64,
+    FLOAT,
+    DOUBLE,
+    STRING, /* can only be loaded from a constant pool or CALLC function */
+    ARRAY,
+} StackObjType;
+
+typedef struct {
+    void* object;
+    StackObjType type;
+} StackObject;
+
+typedef struct {
     stack_type* stack;
     stack_size total_size;
     stack_size allocated;
-};
-
-typedef struct Stack Stack;
+} Stack;
 
 Stack create_stack();
 void push_stack(Stack* stack, stack_type value);

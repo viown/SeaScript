@@ -28,6 +28,8 @@ struct Vm {
     int global_used;
 };
 
+const char* instruction_to_string(Opcode op);
+
 void vm_init(Vm* vm, int global_size, const ss_BaseFunction* func_list);
 void vm_free(Vm* vm);
 bool vm_execute(Vm* vm, Instruction* instrs, size_t length);

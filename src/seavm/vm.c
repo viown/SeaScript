@@ -30,7 +30,7 @@ bool vm_execute(Vm* vm, Instruction* instrs, size_t length) {
         case EXIT:
             vm_free(vm);
             return !(cinstr.args[0] == EXIT_SUCCESS);
-        case LOADCONST:
+        case ICONST:
             push_stack(&vm->stack, cinstr.args[0]);
             vm->ip++;
             break;
@@ -120,4 +120,48 @@ bool vm_execute(Vm* vm, Instruction* instrs, size_t length) {
     }
     vm_free(vm);
     return EXIT_FAILURE; // Should exit properly through (EXIT 0)
+}
+
+const char* instruction_to_string(Opcode op) {
+    switch (op) {
+    case EXIT:
+        return "EXIT";
+    case ICONST:
+        return "ICONST";
+    case POP:
+        return "POP";
+    case STORE:
+        return "STORE";
+    case LOAD:
+        return "LOAD";
+        break;
+    case ADD:
+        return "ADD";
+    case SUB:
+        return "SUB";
+    case MUL:
+        return "MUL";
+    case DIV:
+        return "DIV";
+    case EQ:
+        return "EQ";
+    case LT:
+        return "LT";
+    case GT:
+        return "GT";
+    case JUMP:
+        return "JUMP";
+    case CALL:
+        return "CALL";
+    case RETURN:
+        return "RETURN";
+    case CALLC:
+        return "CALLC";
+    case IPRINT:
+        return "IPRINT";
+    case CPRINT:
+        return "CPRINT";
+    default:
+        return "UNKNOWN";
+    }
 }
