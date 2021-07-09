@@ -16,6 +16,7 @@ typedef struct {
     bool preserve_bytecode;
     bool visualize_tokens;
     bool parser_print;
+    bool no_run;
 } CommandLineFlags;
 
 CommandLineFlags init_flags() {
@@ -24,6 +25,7 @@ CommandLineFlags init_flags() {
     flags.preserve_bytecode = false;
     flags.visualize_tokens = false;
     flags.parser_print = false;
+    flags.no_run = false;
     return flags;
 }
 
@@ -108,7 +110,12 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     }
     free_ParseObject(&s);
     lex_free(&object);
-    return vm_execute(&virtual_machine, map.instructions, map.length);
+    if (!flags.no_run) {
+        return vm_execute(&virtual_machine, map.instructions, map.length);
+    } else {
+        vm_free(&virtual_machine);
+        return 0;
+    }
 }
 
 int main(int argc, char** argv) {
@@ -122,6 +129,8 @@ int main(int argc, char** argv) {
             flags.visualize_tokens = true;
         else if (!strcmp(argv[i], "--parser-print"))
             flags.parser_print = true;
+        else if (!strcmp(argv[i], "--norun"))
+            flags.no_run = true;
         else if (argv[i][0] == '-' && argv[i][1] == '-')
             ss_throw("Invalid flag '%s'", argv[i]);
     }
@@ -134,7 +143,16 @@ int main(int argc, char** argv) {
             get_extension(argv[1], extension);
             if (strcmp(extension, ".ssb") == 0) {
                 if (!flags.is_view) {
-                    /* TODO: Execute bytecode file */
+                    Vm virtual_machine;
+                    vm_init(&virtual_machine, 500, ss_functions);
+                    Bytecode bytecode;
+                    read_from_file(&bytecode, argv[1]);
+                    Instruction* instructions = to_instructions(&bytecode);
+                    int exec = vm_execute(&virtual_machine, instructions, bytecode.length);
+                    free_bytecode(&bytecode);
+                    vm_free(&virtual_machine);
+                    free(instructions);
+                    return exec;
                 } else {
                     visualize_bytecode(argv[1]);
                     return 0;
