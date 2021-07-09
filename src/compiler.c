@@ -4,6 +4,15 @@
 #include <stdint.h>
 #include <malloc.h>
 
+Instruction create_instruction(Opcode op) {
+    Instruction instruction;
+    instruction.op = op;
+    instruction.args[0] = 0;
+    instruction.args[1] = 0;
+    instruction.args[2] = 0;
+    return instruction;
+}
+
 /* Push a constant onto the stack */
 void push_constant(InstructionMap* map, int32_t constant) {
     Instruction instruction;
@@ -13,9 +22,7 @@ void push_constant(InstructionMap* map, int32_t constant) {
 }
 
 void push_argless_instruction(InstructionMap* map, Opcode op) {
-    Instruction instruction;
-    instruction.op = op;
-    map->instructions[map->length++] = instruction;
+    map->instructions[map->length++] = create_instruction(op);
 }
 
 void push_instruction1(InstructionMap* map, Opcode op, int arg) {

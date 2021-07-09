@@ -47,6 +47,7 @@ void get_extension(char* file_name, char* modify) {
             extension_start++;
         }
     }
+    extension[len++] = '\0';
     strcpy(modify, extension);
 }
 
@@ -150,7 +151,6 @@ int main(int argc, char** argv) {
                     Instruction* instructions = to_instructions(&bytecode);
                     int exec = vm_execute(&virtual_machine, instructions, bytecode.length);
                     free_bytecode(&bytecode);
-                    vm_free(&virtual_machine);
                     free(instructions);
                     return exec;
                 } else {
