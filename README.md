@@ -10,7 +10,7 @@ example.ssc:
     
     print(a);
 
-To run this program:
+To run this code:
 
     ./SeaScript.exe example.ssc
 
@@ -21,7 +21,7 @@ You can also generate a bytecode file like this:
 This will create a file `example.ssb` storing the bytecode which can be executed directly:
 
     ./SeaScript.exe example.ssb
-   Which is faster as it doesn't have to parse the source code each time you wish to run it.
+   Which is faster as it doesn't have to recompile the source code each time you wish to run it.
 
 # Flags
 

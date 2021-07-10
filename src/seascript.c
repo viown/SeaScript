@@ -100,6 +100,8 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     Vm virtual_machine;
     vm_init(&virtual_machine, 500, ss_functions);
     char* source_code = read_file(path);
+    if (source_code == NULL)
+        ss_throw("File '%s' could not be found", path);
     lex_Object object;
     lexObject_init(&object, source_code);
     lex(&object);
@@ -119,7 +121,9 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     if (flags.preserve_bytecode) {
         Bytecode bytecode;
         to_bytecode(&bytecode, map.instructions, map.length);
-        save_to_file(&bytecode, "test.ssb");
+        char* bytecode_path = path;
+        bytecode_path[strlen(bytecode_path)-1] = 'b'; /* change extension from .ssc to .ssb */
+        save_to_file(&bytecode, bytecode_path);
         free_bytecode(&bytecode);
     }
     free_ParseObject(&s);
@@ -149,7 +153,34 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
     }
 }
 
+int vm_test() {
+    Instruction instructions[] = {
+        {
+            ICONST, {100}
+        },
+        {
+            LCONST, {100}
+        },
+        {
+            EQ, {}
+        },
+        {
+            IPRINT, {}
+        },
+        {
+            EXIT, {0}
+        }
+    };
+	Vm vm;
+
+	vm_init(&vm, 100, ss_functions);
+
+	return vm_execute(&vm, instructions, LEN(instructions));
+}
+
 int main(int argc, char** argv) {
+    return vm_test();
+
     CommandLineFlags flags = init_flags();
     read_flags(&flags, argc, argv);
     if (argc >= 2) {

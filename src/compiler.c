@@ -40,7 +40,7 @@ int push_variable(InstructionMap* map, State* state) {
     ss_Literal value = get_literal(variable.states.states[0].state); /* warning: assumes first value is a literal (could also be a function) */
     if (value.type == l_INTEGER) {
         push_instruction1(map, ICONST, load_literal(value));
-        push_instruction1(map, STORE, map->global_counter++);
+        //push_instruction1(map, STORE, map->global_counter++);
         return map->global_counter;
     } else {
         ss_throw("Strings not supported yet");

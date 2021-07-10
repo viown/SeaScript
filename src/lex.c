@@ -149,7 +149,16 @@ void lex(lex_Object* lexObject) {
             current_token[index++] = *lexObject->current;
         } else if (IS_NUM(*lexObject->current) || IS_DECIMAL_POINT(*lexObject->current)) {
             if (is_collecting) {
-                current_token[index++] = *lexObject->current;
+                if (*lexObject->current == '.') {
+                    is_collecting = false;
+                    Token token = create_token(current_token, is_keyword(current_token) ? KEYWORD : IDENTIFIER);
+                    append_token(lexObject, token);
+                    index = 0;
+                    memset(current_token, 0, sizeof(current_token));
+                    append_token(lexObject, create_token(".", OPERATOR));
+                } else {
+                    current_token[index++] = *lexObject->current;
+                }
             } else {
                 if (!is_collecting_num) {
                     is_collecting_num = true;

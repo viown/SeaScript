@@ -6,15 +6,12 @@ Stack create_stack() {
     Stack stack;
     stack.total_size = 10;
     stack.allocated = 0;
-    stack.stack = (stack_type*)malloc(stack.total_size * sizeof(stack_type));
-    for (size_t i = 0; i < stack.total_size; ++i) {
-        stack.stack[i] = 0;
-    }
+    stack.stack = (StackObject*)malloc(stack.total_size * sizeof(StackObject));
     return stack;
 }
 
-bool resize_stack(Stack* stack, stack_size new_size) {
-    stack->stack = (stack_type*)realloc(stack->stack, new_size * sizeof(stack_type));
+bool resize_stack(Stack* stack, unsigned long new_size) {
+    stack->stack = (StackObject*)realloc(stack->stack, new_size * sizeof(StackObject));
     if (stack->stack != 0) {
         stack->total_size = new_size;
         return 1;
@@ -23,7 +20,7 @@ bool resize_stack(Stack* stack, stack_size new_size) {
     }
 }
 
-inline void push_stack(Stack* stack, stack_type value) {
+inline void push_stack(Stack* stack, StackObject value) {
     if (stack->allocated == stack->total_size) {
         resize_stack(stack, stack->total_size * 2);
     }
@@ -31,15 +28,23 @@ inline void push_stack(Stack* stack, stack_type value) {
 }
 
 inline void pop_stack(Stack* stack) {
-    stack->stack[--stack->allocated] = 0;
+    free_stackobject(&stack->stack[--stack->allocated]);
 }
 
-inline stack_type* top_stack(Stack* stack) {
+inline StackObject* top_stack(Stack* stack) {
     if (stack->allocated == 0)
         return &stack->stack[0];
     return &stack->stack[stack->allocated-1];
 }
 
 void terminate_stack(Stack* stack) {
+    for (int i = 0; i < stack->allocated; ++i) {
+        free_stackobject(&stack->stack[i]);
+    }
     free(stack->stack);
+}
+
+void free_stackobject(StackObject* object) {
+    free(object->object);
+    object->object = NULL;
 }

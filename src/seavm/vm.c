@@ -9,19 +9,137 @@ void vm_init(Vm* vm, int global_size, const ss_BaseFunction* func_list) {
     vm->c_functions = func_list;
     vm->global_size = global_size;
     vm->global_used = 0;
-    vm->globals = calloc(global_size, sizeof(int));
+    vm->globals = (void**)malloc(global_size * sizeof(void*));
 }
 
 void vm_free(Vm* vm) {
     free(vm->globals);
+    terminate_stack(&vm->stack);
 }
 
-bool vm_execute(Vm* vm, Instruction* instrs, size_t length) {
-    Instruction cinstr;
+/* casts a 32-bit integer to a different type */
+void cast_32bit(StackObject* object, StackObjType type) {
+    int32_t* num = (int32_t*)object->object;
+    switch (type) {
+    case INT32:
+        return;
+    case INT64: {
+        int64_t* int64 = (int64_t*)malloc(sizeof(int64_t));
+        *int64 = (int64_t)*num;
+        free(object->object);
+        object->object = (void*)int64;
+        object->type = INT64;
+        break;
+    }
+    case DOUBLE: {
+        double* dbl = (double*)malloc(sizeof(double));
+        *dbl = (double)*num;
+        free(object->object);
+        object->object = (void*)dbl;
+        object->type = DOUBLE;
+        break;
+    }
+    default:
+        return;
+    }
+}
 
-    stack_type* top;
-    stack_type f = 0;
-    stack_type s = 0;
+void cast_long(StackObject* object, StackObjType type) {
+    long long* num = (long long*)object->object;
+    switch (type) {
+    case INT32: {
+        int32_t* int32 = (int32_t*)malloc(sizeof(int32_t));
+        *int32 = (int32_t)*num;
+        free(object->object);
+        object->object = (void*)int32;
+        object->type = INT32;
+        break;
+    }
+    case INT64: {
+        return;
+    }
+    case DOUBLE: {
+        double* dbl = (double*)malloc(sizeof(double));
+        *dbl = (double)*num;
+        free(object->object);
+        object->object = (void*)dbl;
+        object->type = DOUBLE;
+        break;
+    }
+    default:
+        return;
+    }
+}
+
+void cast_double(StackObject* object, StackObjType type) {
+    double* num = (double*)object->object;
+    switch (type) {
+    case INT32: {
+        int32_t* int32 = (int32_t*)malloc(sizeof(int32_t));
+        *int32 = (int32_t)*num;
+        free(object->object);
+        object->object = (void*)int32;
+        object->type = INT32;
+        break;
+    }
+    case INT64: {
+        int64_t* int64 = (int64_t*)malloc(sizeof(int64_t));
+        *int64 = (int64_t)*num;
+        free(object->object);
+        object->object = (void*)int64;
+        object->type = INT64;
+        break;
+    }
+    case DOUBLE: {
+        return;
+    }
+    default:
+        return;
+    }
+}
+
+/* casts an object to a different type */
+void perform_cast(StackObject* object, StackObjType type) {
+    if (object->type == type)
+        return;
+    switch (object->type) {
+    case INT32:
+        cast_32bit(object, type);
+        break;
+    case INT64:
+        cast_long(object, type);
+        break;
+    case DOUBLE:
+        cast_double(object, type);
+        break;
+    default:
+        return;
+    }
+    return; /* TODO */
+}
+
+bool is_equal(StackObject* a, StackObject* b) {
+    StackObjType highest_type = (a->type > b->type) ? a->type : b->type;
+    switch (highest_type) {
+    case INT32:
+        perform_cast(a, INT32);
+        perform_cast(b, INT32);
+        return *(int32_t*)a->object == *(int32_t*)b->object;
+    case INT64:
+        perform_cast(a, INT64);
+        perform_cast(b, INT64);
+        return *(long long*)a->object == *(long long*)b->object;
+    case DOUBLE:
+        perform_cast(a, DOUBLE);
+        perform_cast(b, DOUBLE);
+        return *(double*)a->object == *(double*)b->object;
+    default:
+        return 0;
+    }
+}
+
+int vm_execute(Vm* vm, Instruction* instrs, uint64_t length) {
+    Instruction cinstr;
 
     while (vm->ip != length) {
         cinstr = instrs[vm->ip];
@@ -29,100 +147,67 @@ bool vm_execute(Vm* vm, Instruction* instrs, size_t length) {
         switch (cinstr.op) {
         case EXIT:
             vm_free(vm);
-            return !(cinstr.args[0] == EXIT_SUCCESS);
-        case ICONST:
-            push_stack(&vm->stack, cinstr.args[0]);
+            return !(cinstr.args[0] == VM_EXIT_SUCCESS);
+        case ICONST: {
+            int32_t* num = (int32_t*)malloc(sizeof(int32_t));
+            *num = cinstr.args[0];
+            StackObject object = {(void*)num, INT32};
+            push_stack(&vm->stack, object);
             vm->ip++;
             break;
-        case POP:
-            pop_stack(&vm->stack);
-            vm->ip++;
-        case STORE:
-            vm->globals[cinstr.args[0]] = *top_stack(&vm->stack);
-            vm->global_used++;
-            vm->ip++;
-            break;
-        case LOAD:
-            push_stack(&vm->stack, vm->globals[cinstr.args[0]]);
+        }
+        case LCONST: {
+            long long* num = (long long*)malloc(sizeof(long long));
+            *num = cinstr.args[0];
+            StackObject object = {(void*)num, INT64};
+            push_stack(&vm->stack, object);
             vm->ip++;
             break;
-        case ADD:
-            top = top_stack(&vm->stack);
-            f = *(top--);
-            s = *(top--);
-            push_stack(&vm->stack, f + s);
+        }
+        case DCONST: {
+            double* num = (double*)malloc(sizeof(double));
+            *num = cinstr.args[0];
+            StackObject object = {(void*)num, DOUBLE};
+            push_stack(&vm->stack, object);
             vm->ip++;
             break;
-        case SUB:
-            top = top_stack(&vm->stack);
-            f = *(top--);
-            s = *(top--);
-            push_stack(&vm->stack, f - s);
+        }
+        case CAST: {
+            StackObjType to_cast = (StackObjType)cinstr.args[0];
+            StackObject* top = top_stack(&vm->stack);
+            perform_cast(top, to_cast);
             vm->ip++;
             break;
-        case MUL:
-            top = top_stack(&vm->stack);
-            f = *(top--);
-            s = *(top--);
-            push_stack(&vm->stack, f * s);
+        }
+        case EQ: {
+            StackObject* a = top_stack(&vm->stack);
+            StackObject* b = a - 1;
+            StackObject result;
+            bool* is_eq = (bool*)malloc(sizeof(bool));
+            *is_eq = is_equal(a, b);
+            result.object = (void*)is_eq;
+            result.type = BOOL;
+            push_stack(&vm->stack, result);
             vm->ip++;
             break;
-        case DIV:
-            top = top_stack(&vm->stack);
-            f = *(top--);
-            s = *(top--);
-            push_stack(&vm->stack, f / s);
+        }
+        case IPRINT: {
+            /* for testing */
+            StackObject* top = top_stack(&vm->stack);
+            printf("%d", *(bool*)top->object);
             vm->ip++;
             break;
-        case EQ:
-            top = top_stack(&vm->stack);
-            f = *(top--);
-            s = *(top--);
-            vm->ip = (f == s) ? cinstr.args[0] : vm->ip + 1;
-            break;
-        case LT:
-            top = top_stack(&vm->stack);
-            f = *(top--);
-            s = *(top--);
-            vm->ip = (f < s) ? cinstr.args[0] : vm->ip + 1;
-            break;
-        case GT:
-            top = top_stack(&vm->stack);
-            f = *(top--);
-            s = *(top--);
-            vm->ip = (f > s) ? cinstr.args[0] : vm->ip + 1;
-            break;
-        case JUMP:
-            vm->ip = cinstr.args[0];
-            break;
-        case CALL:
-            push_stack(&vm->stack, vm->ip); // Push return address
-            vm->ip = cinstr.args[0]; // Jump to function
-            break;
-        case RETURN:
-            vm->ip = vm->globals[cinstr.args[0]] + 1; // Return to call function.
-            break;
-        case CALLC:
-            vm->c_functions[cinstr.args[0]].func(vm);
-            vm->ip++;
-            break;
-        case IPRINT:
-            printf("%f", *top_stack(&vm->stack));
-            vm->ip++;
-            break;
-        case CPRINT:
-            printf("%c", (char)*top_stack(&vm->stack));
-            vm->ip++;
-            break;
+        }
         default:
-            return EXIT_FAILURE;
+            return VM_INVALID_INSTRUCTION;
         }
     }
     vm_free(vm);
-    return EXIT_FAILURE; // Should exit properly through (EXIT 0)
+    return VM_EXIT_FAILURE; // Should exit properly through (EXIT 0)
 }
 
 const char* instruction_to_string(Opcode op) {
+    /*
     switch (op) {
     case EXIT:
         return "EXIT";
@@ -163,4 +248,6 @@ const char* instruction_to_string(Opcode op) {
     default:
         return "UNKNOWN";
     }
+    */
+    return "";
 }

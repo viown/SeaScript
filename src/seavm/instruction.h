@@ -6,7 +6,7 @@
 
 typedef struct {
     Opcode op;
-    int args[MAX_ARGS];
+    long long args[MAX_ARGS];
 } Instruction;
 
 #endif // SEAVM_INSTRUCTION_H
