@@ -3,6 +3,13 @@
 #include <stdio.h>
 #include <stddef.h>
 
+#define cast_object(regType, enumType) \
+    regType* number = (regType*)malloc(sizeof(regType)); \
+    *number = (regType)*num; \
+    free(object->object); \
+    object->object = (void*)number; \
+    object->type = enumType;
+
 void vm_init(Vm* vm, int global_size, const ss_BaseFunction* func_list) {
     vm->stack = create_stack();
     vm->ip = 0;
@@ -18,25 +25,15 @@ void vm_free(Vm* vm) {
 }
 
 /* casts a 32-bit integer to a different type */
-void cast_32bit(StackObject* object, StackObjType type) {
+void cast_int(StackObject* object, StackObjType type) {
     int32_t* num = (int32_t*)object->object;
     switch (type) {
-    case INT32:
-        return;
     case INT64: {
-        int64_t* int64 = (int64_t*)malloc(sizeof(int64_t));
-        *int64 = (int64_t)*num;
-        free(object->object);
-        object->object = (void*)int64;
-        object->type = INT64;
+        cast_object(long long, INT64);
         break;
     }
     case DOUBLE: {
-        double* dbl = (double*)malloc(sizeof(double));
-        *dbl = (double)*num;
-        free(object->object);
-        object->object = (void*)dbl;
-        object->type = DOUBLE;
+        cast_object(double, DOUBLE);
         break;
     }
     default:
@@ -48,22 +45,11 @@ void cast_long(StackObject* object, StackObjType type) {
     long long* num = (long long*)object->object;
     switch (type) {
     case INT32: {
-        int32_t* int32 = (int32_t*)malloc(sizeof(int32_t));
-        *int32 = (int32_t)*num;
-        free(object->object);
-        object->object = (void*)int32;
-        object->type = INT32;
+        cast_object(int32_t, INT32);
         break;
     }
-    case INT64: {
-        return;
-    }
     case DOUBLE: {
-        double* dbl = (double*)malloc(sizeof(double));
-        *dbl = (double)*num;
-        free(object->object);
-        object->object = (void*)dbl;
-        object->type = DOUBLE;
+        cast_object(double, DOUBLE);
         break;
     }
     default:
@@ -75,23 +61,12 @@ void cast_double(StackObject* object, StackObjType type) {
     double* num = (double*)object->object;
     switch (type) {
     case INT32: {
-        int32_t* int32 = (int32_t*)malloc(sizeof(int32_t));
-        *int32 = (int32_t)*num;
-        free(object->object);
-        object->object = (void*)int32;
-        object->type = INT32;
+        cast_object(int32_t, INT32);
         break;
     }
     case INT64: {
-        int64_t* int64 = (int64_t*)malloc(sizeof(int64_t));
-        *int64 = (int64_t)*num;
-        free(object->object);
-        object->object = (void*)int64;
-        object->type = INT64;
+        cast_object(long long, INT64);
         break;
-    }
-    case DOUBLE: {
-        return;
     }
     default:
         return;
@@ -104,7 +79,7 @@ void perform_cast(StackObject* object, StackObjType type) {
         return;
     switch (object->type) {
     case INT32:
-        cast_32bit(object, type);
+        cast_int(object, type);
         break;
     case INT64:
         cast_long(object, type);
@@ -182,11 +157,9 @@ int vm_execute(Vm* vm, Instruction* instrs, uint64_t length) {
         case EQ: {
             StackObject* a = top_stack(&vm->stack);
             StackObject* b = a - 1;
-            StackObject result;
             bool* is_eq = (bool*)malloc(sizeof(bool));
             *is_eq = is_equal(a, b);
-            result.object = (void*)is_eq;
-            result.type = BOOL;
+            StackObject result = {(void*)is_eq, BOOL};
             push_stack(&vm->stack, result);
             vm->ip++;
             break;
