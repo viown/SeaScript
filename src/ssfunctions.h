@@ -3,8 +3,8 @@
 #include "./seavm/stack.h"
 #include "./seavm/vm.h"
 
-void ss_f_exit(Vm* vm);
-void ss_f_abs(Vm* vm);
+void ss_f_exit(VirtualMachine* vm);
+void ss_f_abs(VirtualMachine* vm);
 
 static const ss_BaseFunction ss_functions[] = {
     {"exit", &ss_f_exit},

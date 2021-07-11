@@ -422,9 +422,7 @@ void free_state(State* state) {
         free(state->state);
     } else if (state->type == s_LITERAL) {
         ss_Literal literal = get_literal(state->state);
-        if (literal.type == l_INTEGER) {
-            free(literal.value);
-        }
+        free(literal.value);
         free(state->state);
     } else if (state->type == s_OPERATOR) {
         ss_Operator obj_op = get_operator(state->state);

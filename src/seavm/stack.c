@@ -27,24 +27,16 @@ inline void push_stack(Stack* stack, StackObject value) {
     stack->stack[stack->allocated++] = value;
 }
 
-inline void pop_stack(Stack* stack) {
-    free_stackobject(&stack->stack[--stack->allocated]);
+inline StackObject* pop_stack(Stack* stack) {
+    return &stack->stack[--stack->allocated];
 }
 
 inline StackObject* top_stack(Stack* stack) {
     if (stack->allocated == 0)
-        return &stack->stack[0];
+        return NULL;
     return &stack->stack[stack->allocated-1];
 }
 
 void terminate_stack(Stack* stack) {
-    for (int i = 0; i < stack->allocated; ++i) {
-        free_stackobject(&stack->stack[i]);
-    }
     free(stack->stack);
-}
-
-void free_stackobject(StackObject* object) {
-    free(object->object);
-    object->object = NULL;
 }

@@ -1,20 +1,30 @@
 #ifndef SEAVM_STACK_H
 #define SEAVM_STACK_H
+#include <stdbool.h>
 #include <stdint.h>
 
 typedef double stack_type;
+typedef char* string;
 
 typedef enum {
+    BOOL,
     INT32,
     INT64,
     DOUBLE,
     STRING, /* can only be loaded from a constant pool or CALLC function */
     ARRAY,
-    BOOL,
 } StackObjType;
 
+typedef union {
+    bool m_bool;
+    int32_t m_int32;
+    int64_t m_int64;
+    double m_double;
+    string m_string;
+} DataObject;
+
 typedef struct {
-    void* object;
+    DataObject object;
     StackObjType type;
 } StackObject;
 
@@ -26,9 +36,8 @@ typedef struct {
 
 Stack create_stack();
 void push_stack(Stack* stack, StackObject value);
-void pop_stack(Stack* stack);
+StackObject* pop_stack(Stack* stack);
 StackObject* top_stack(Stack* stack);
 void terminate_stack(Stack* stack);
-void free_stackobject(StackObject* object);
 
 #endif // SEAVM_STACK_H

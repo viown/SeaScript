@@ -85,7 +85,7 @@ int visualize_bytecode(char* path) {
 }
 
 int execute_bytecode(char* path) {
-    Vm virtual_machine;
+    VirtualMachine virtual_machine;
     vm_init(&virtual_machine, 500, ss_functions);
     Bytecode bytecode;
     read_from_file(&bytecode, path);
@@ -97,7 +97,7 @@ int execute_bytecode(char* path) {
 }
 
 int compile_and_run(CommandLineFlags flags, char* path) {
-    Vm virtual_machine;
+    VirtualMachine virtual_machine;
     vm_init(&virtual_machine, 500, ss_functions);
     char* source_code = read_file(path);
     if (source_code == NULL)
@@ -156,31 +156,38 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
 int vm_test() {
     Instruction instructions[] = {
         {
-            ICONST, {100}
-        },
-        {
-            LCONST, {100}
-        },
-        {
-            EQ, {}
+            CALL, {3}
         },
         {
             IPRINT, {}
         },
         {
             EXIT, {0}
-        }
+        },
+        {
+            ICONST, {100}
+        },
+        {
+            ICONST, {150}
+        },
+        {
+            IADD, {}
+        },
+        {
+            RET, {}
+        },
     };
-	Vm vm;
+	VirtualMachine vm;
 
 	vm_init(&vm, 100, ss_functions);
 
+	Bytecode bytecode;
+	to_bytecode(&bytecode, instructions, LEN(instructions));
+	save_to_file(&bytecode, "test.ssb");
+
 	return vm_execute(&vm, instructions, LEN(instructions));
 }
-
 int main(int argc, char** argv) {
-    return vm_test();
-
     CommandLineFlags flags = init_flags();
     read_flags(&flags, argc, argv);
     if (argc >= 2) {
