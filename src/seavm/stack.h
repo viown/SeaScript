@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define MAX_STACK_SIZE 4080
+
 typedef double stack_type;
 typedef char* string;
 
@@ -36,7 +38,7 @@ typedef struct {
 
 Stack create_stack();
 void push_stack(Stack* stack, StackObject value);
-StackObject* pop_stack(Stack* stack);
+StackObject pop_stack(Stack* stack);
 StackObject* top_stack(Stack* stack);
 void terminate_stack(Stack* stack);
 

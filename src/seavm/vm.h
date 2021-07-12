@@ -31,11 +31,22 @@ struct VirtualMachine {
     Stack stack;
     int ip;
     const ss_BaseFunction* c_functions;
+
     StackObject* globals;
     int global_size;
     int global_used;
+
     int return_addresses[255]; /* stack for return addresses */
     int ret_sp; /* stack pointer for return addresses */
+
+    /*
+    *   A label is an address that is usually resolved before the VM executes the instructions
+    *   A label address is defined by the 'LBL' instruction.
+    *   It only exists to prevent the headache from having the compiler figure out the address location of a function (which would change everytime a new instruction is pushed)
+    */
+    int* label_addresses;
+    int label_addr_size;
+    int label_addr_used;
 };
 
 const char* instruction_to_string(Opcode op);

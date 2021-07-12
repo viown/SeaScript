@@ -156,22 +156,19 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
 int vm_test() {
     Instruction instructions[] = {
         {
-            CALL, {3}
+            CALL, {0}
         },
         {
-            IPRINT, {}
+            IPRINT, {0}
         },
         {
             EXIT, {0}
         },
         {
-            ICONST, {100}
+            LBL, {0}
         },
         {
-            ICONST, {150}
-        },
-        {
-            IADD, {}
+            ICONST, {3001}
         },
         {
             RET, {}
@@ -181,13 +178,15 @@ int vm_test() {
 
 	vm_init(&vm, 100, ss_functions);
 
-	Bytecode bytecode;
-	to_bytecode(&bytecode, instructions, LEN(instructions));
-	save_to_file(&bytecode, "test.ssb");
+	//Bytecode bytecode;
+	//to_bytecode(&bytecode, instructions, LEN(instructions));
+	//save_to_file(&bytecode, "test.ssb");
 
 	return vm_execute(&vm, instructions, LEN(instructions));
 }
 int main(int argc, char** argv) {
+    return vm_test();
+
     CommandLineFlags flags = init_flags();
     read_flags(&flags, argc, argv);
     if (argc >= 2) {

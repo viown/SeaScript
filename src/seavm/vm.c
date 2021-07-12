@@ -23,7 +23,7 @@
 
 #define perform_32bitarithmetic(stack, first, op, second)                                   \
     StackObject object;                                                                     \
-    object.object.m_int64 = (int64_t)(second->object.m_int32 op first->object.m_int32);     \
+    object.object.m_int64 = (int64_t)(second.object.m_int32 op first.object.m_int32);       \
     object.type = INT64;                                                                    \
     push_stack(&stack, object);
 
@@ -32,10 +32,13 @@ void vm_init(VirtualMachine* vm, int global_size, const ss_BaseFunction* func_li
     vm->stack = create_stack();
     vm->ip = 0;
     vm->c_functions = func_list;
+    vm->globals = (StackObject*)malloc(global_size * sizeof(StackObject));
     vm->global_size = global_size;
     vm->global_used = 0;
-    vm->globals = (StackObject*)malloc(global_size * sizeof(StackObject));
     vm->ret_sp = 0;
+    vm->label_addresses = (int*)malloc(500 * sizeof(int));
+    vm->label_addr_size = 500;
+    vm->label_addr_used = 0;
 }
 
 void vm_free(VirtualMachine* vm) {
@@ -136,19 +139,28 @@ static inline StackObject create_bool(bool n) {
     return object;
 }
 
+void resolve_labels(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
+    for (unsigned int i = 0; i < length; ++i) {
+        if (instrs[i].op == LBL) {
+            vm->label_addresses[instrs[i].args[0]] = i;
+        }
+    }
+}
+
 int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
     Instruction cinstr;
 
     StackObject* top;
     StackObject object;
 
+    resolve_labels(vm, instrs, length);
     while (vm->ip != length) {
         cinstr = instrs[vm->ip];
 
         switch (cinstr.op) {
         case EXIT:
             vm_free(vm);
-            return !(cinstr.args[0] == VM_EXIT_SUCCESS);
+            return cinstr.args[0];
         case LOADBOOL:
             object.object.m_bool = (bool)cinstr.args[0];
             object.type = BOOL;
@@ -247,33 +259,29 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             vm->ip++;
             break;
         case IADD: {
-            StackObject* first = top_stack(&vm->stack);
-            StackObject* second = first - 1;
-            perform_32bitarithmetic(vm->stack, first, +, second);
+            perform_32bitarithmetic(vm->stack, pop_stack(&vm->stack), +, pop_stack(&vm->stack));
             vm->ip++;
             break;
         }
         case ISUB: {
-            StackObject* first = top_stack(&vm->stack);
-            StackObject* second = first - 1;
+            StackObject first = pop_stack(&vm->stack);
+            StackObject second = pop_stack(&vm->stack);
             perform_32bitarithmetic(vm->stack, first, -, second);
             vm->ip++;
             break;
         }
         case IMUL: {
-            StackObject* first = top_stack(&vm->stack);
-            StackObject* second = first - 1;
-            perform_32bitarithmetic(vm->stack, first, *, second);
+            perform_32bitarithmetic(vm->stack, pop_stack(&vm->stack), *, pop_stack(&vm->stack));
             vm->ip++;
             break;
         }
         case IDIV: {
-            StackObject* first = top_stack(&vm->stack);
-            StackObject* second = first - 1;
-            if (second->object.m_int32 == 0)
+            StackObject first = pop_stack(&vm->stack);
+            StackObject second = pop_stack(&vm->stack);
+            if (second.object.m_int32 == 0)
                 return VM_DIVBYZERO;
             StackObject object;
-            object.object.m_double = (double)second->object.m_int32 / (double)first->object.m_int32;
+            object.object.m_double = (double)second.object.m_int32 / (double)first.object.m_int32;
             object.type = DOUBLE;
             push_stack(&vm->stack, object);
             vm->ip++;
@@ -281,14 +289,36 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
         }
         case CALL:
             vm->return_addresses[vm->ret_sp++] = vm->ip; /* store return address in stack */
-            vm->ip = cinstr.args[0]; /* jump to the (assumed) function */
+            vm->ip = vm->label_addresses[cinstr.args[0]]; /* jump to the (assumed) function */
             break;
         case RET:
             vm->ip = vm->return_addresses[--vm->ret_sp] + 1;
             break;
         case CALLC:
-            /* todo */
+            vm->c_functions[cinstr.args[0]].func(vm);
             vm->ip++;
+            break;
+        case STORE:
+            vm->globals[vm->global_used++] = pop_stack(&vm->stack);
+            vm->ip++;
+            break;
+        case LOAD:
+            push_stack(&vm->stack, vm->globals[cinstr.args[0]]);
+            vm->ip++;
+            break;
+        case LBL:
+            /* Labels are handled by the address resolver */
+            vm->ip++;
+            break;
+        case LBLJMP:
+            vm->ip = vm->label_addresses[cinstr.args[0]];
+            break;
+        case LBLJMPIF:
+            top = top_stack(&vm->stack);
+            if (top->object.m_bool)
+                vm->ip = vm->label_addresses[cinstr.args[0]];
+            else
+                vm->ip++;
             break;
         case IPRINT:
             top = top_stack(&vm->stack);

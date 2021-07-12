@@ -6,7 +6,7 @@ Stack create_stack() {
     Stack stack;
     stack.total_size = 10;
     stack.allocated = 0;
-    stack.stack = (StackObject*)malloc(stack.total_size * sizeof(StackObject));
+    stack.stack = (StackObject*)malloc(MAX_STACK_SIZE);
     return stack;
 }
 
@@ -21,14 +21,11 @@ bool resize_stack(Stack* stack, unsigned long new_size) {
 }
 
 inline void push_stack(Stack* stack, StackObject value) {
-    if (stack->allocated == stack->total_size) {
-        resize_stack(stack, stack->total_size * 2);
-    }
     stack->stack[stack->allocated++] = value;
 }
 
-inline StackObject* pop_stack(Stack* stack) {
-    return &stack->stack[--stack->allocated];
+inline StackObject pop_stack(Stack* stack) {
+    return stack->stack[--stack->allocated];
 }
 
 inline StackObject* top_stack(Stack* stack) {

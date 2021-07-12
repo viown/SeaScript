@@ -23,10 +23,16 @@ typedef unsigned char Opcode;
 #define ISUB        16
 #define IMUL        17
 #define IDIV        18
-#define CALL        19
-#define RET         20
-#define CALLC       21
-#define IPRINT      22
+/* 19-26 reserved for future use */
+#define CALL        27
+#define RET         28
+#define CALLC       29
+#define STORE       30
+#define LOAD        31
+#define LBL         32
+#define LBLJMP      33
+#define LBLJMPIF    34
+#define IPRINT      35
 
 
 #endif // SEAVM_OPCODES_H
