@@ -112,7 +112,6 @@ void perform_cast(StackObject* object, StackObjType type) {
     default:
         return;
     }
-    return; /* TODO */
 }
 
 /* test for a == b */
@@ -140,7 +139,7 @@ static inline StackObject create_bool(bool n) {
 }
 
 void resolve_labels(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
-    for (unsigned int i = 0; i < length; ++i) {
+    for (uint64_t i = 0; i < length; ++i) {
         if (instrs[i].op == LBL) {
             vm->label_addresses[instrs[i].args[0]] = i;
         }
@@ -399,6 +398,16 @@ const char* instruction_to_string(Opcode op) {
         return "RET";
     case CALLC:
         return "CALLC";
+    case STORE:
+        return "STORE";
+    case LOAD:
+        return "LOAD";
+    case LBL:
+        return "LBL";
+    case LBLJMP:
+        return "LBLJMP";
+    case LBLJMPIF:
+        return "LBLJMPIF";
     case IPRINT:
         return "IPRINT";
     default:

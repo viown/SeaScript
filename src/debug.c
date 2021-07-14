@@ -4,6 +4,8 @@
 #include "./compiler.h" // for IS_INT
 #include "./debug.h"
 
+void print_state(State st);
+
 void ss_throw(const char* error, ...) {
     va_list args;
     va_start(args, error);
@@ -20,53 +22,33 @@ void visualize_tokens(lex_Object* object) {
 
 void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
     printf("%s(", fcall.function_name);
+    ParseObject* arguments = fcall.arguments;
     for (size_t i = 0; i < fcall.arg_count; ++i) {
-        State argument = fcall.arguments[i];
-        if (argument.type == s_LITERAL) {
-            ss_Literal arg_value = get_literal(argument.state);
-            if (arg_value.type == l_INTEGER) {
-                double value = load_literal(arg_value);
-                if (i + 1 == fcall.arg_count) {
-                    printf("%g", value);
-                } else {
-                    printf("%g, ", value);
-                }
-            } else if (arg_value.type == l_STRING) {
-                char* str = (char*)arg_value.value;
-                if (i + 1 == fcall.arg_count) {
-                    printf("\"%s\"", str);
-                } else {
-                    printf("\"%s, ", str);
-                }
-            }
-        } else if (argument.type == s_FUNCTIONCALL) { /* function call as argument */
-            ss_FunctionCall arg_call = get_functioncall(argument.state);
-            read_arguments(arg_call, true);
-        } else if (argument.type == s_IDENTIFIER) {
-            ss_Identifier identifier = get_identifier(argument.state);
-            if (i + 1 == fcall.arg_count) {
-                printf("%s", identifier.identifier);
-            } else {
-                printf("%s, ", identifier.identifier);
-            }
+        ParseObject argument = fcall.arguments[i];
+        for (int j = 0; j < argument.length; ++j) {
+            print_state(argument.states[j]);
         }
+        printf(",");
     }
-    printf("), ");
+    if (is_nested_call)
+        printf("), ");
+    else
+        printf(")\n");
 }
 
 void print_state(State st) {
     if (st.type == s_IDENTIFIER) {
-        printf("%s ", get_identifier(st.state).identifier);
+        printf("%s", get_identifier(st.state).identifier);
     } else if (st.type == s_OPERATOR) {
         ss_Operator s_OP = get_operator(st.state);
         Operator op = *(Operator*)s_OP.op;
-        printf("%c ", op);
+        printf("%c", op);
     } else if (st.type == s_LITERAL) {
         ss_Literal literal = get_literal(st.state);
         if (literal.type == l_INTEGER) {
             double value = load_literal(literal);
             if (literal.type == l_INTEGER) {
-                printf("%g ", value);
+                printf("%g", value);
             }
         } else if (literal.type == l_STRING) {
             char* str = (char*)literal.value;

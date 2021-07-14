@@ -70,7 +70,11 @@ int visualize_bytecode(char* path) {
     Bytecode bytecode;
     read_from_file(&bytecode, path);
     Instruction* instructions = to_instructions(&bytecode);
+
     for (int i = 0; i < bytecode.length; ++i) {
+        if (instructions[i].op == LBL) {
+            printf("\n");
+        }
         const char* instruction = instruction_to_string(instructions[i].op);
         printf("%s ", instruction);
         for (int j = 0; j < 3; ++j) {
@@ -107,14 +111,18 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     lex(&object);
     if (flags.visualize_tokens) {
         if (object.token_used > 2500) {
+            lex_free(&object);
             ss_throw("Tokens too big to visualize");
         }
         visualize_tokens(&object);
+        lex_free(&object);
         return 0;
     }
     ParseObject s = parse(object);
     if (flags.parser_print) {
         visualize_states(&s);
+        free_ParseObject(&s);
+        lex_free(&object);
         return 0;
     }
     InstructionMap map = compile(&s);
@@ -122,7 +130,7 @@ int compile_and_run(CommandLineFlags flags, char* path) {
         Bytecode bytecode;
         to_bytecode(&bytecode, map.instructions, map.length);
         char* bytecode_path = path;
-        bytecode_path[strlen(bytecode_path)-1] = 'b'; /* change extension from .ssc to .ssb */
+        bytecode_path[strlen(bytecode_path)-1] = 'b';
         save_to_file(&bytecode, bytecode_path);
         free_bytecode(&bytecode);
     }
@@ -156,37 +164,32 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
 int vm_test() {
     Instruction instructions[] = {
         {
-            CALL, {0}
+            ICONST, {10}
         },
         {
-            IPRINT, {0}
+            ICONST, {30}
+        },
+        {
+            ICONST, {35}
+        },
+        {
+            IADD, {}
+        },
+
+        {
+            IPRINT, {}
         },
         {
             EXIT, {0}
-        },
-        {
-            LBL, {0}
-        },
-        {
-            ICONST, {3001}
-        },
-        {
-            RET, {}
         },
     };
 	VirtualMachine vm;
 
 	vm_init(&vm, 100, ss_functions);
 
-	//Bytecode bytecode;
-	//to_bytecode(&bytecode, instructions, LEN(instructions));
-	//save_to_file(&bytecode, "test.ssb");
-
 	return vm_execute(&vm, instructions, LEN(instructions));
 }
 int main(int argc, char** argv) {
-    return vm_test();
-
     CommandLineFlags flags = init_flags();
     read_flags(&flags, argc, argv);
     if (argc >= 2) {

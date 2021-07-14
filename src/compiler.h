@@ -10,9 +10,15 @@
 
 typedef struct {
     Instruction* instructions;
+    size_t size;
     size_t length;
     int global_counter;
 } InstructionMap;
+
+typedef struct {
+    char* var_name;
+    int var_reference;
+} VariableReference;
 
 InstructionMap compile(ParseObject* object);
 void map_free(InstructionMap* map);

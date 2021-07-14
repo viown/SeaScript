@@ -81,6 +81,7 @@ void read_from_file(Bytecode* bytecode, const char* path) {
     stack_type* raw_data = (stack_type*)malloc(file_size);
     memcpy(raw_data, buffer, file_size);
     bytecode->raw_data = raw_data;
+    fclose(file);
 }
 
 void free_bytecode(Bytecode* bytecode) {

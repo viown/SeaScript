@@ -91,20 +91,31 @@ void skip_to_end(Token** ptoken, const char* end) {
 void parse_function_call(State* state, Token* token) {
     Token* call_identifier = token;
     token += 2; /* skip '(' */
-    State* arguments = (State*)malloc(MAX_ARGUMENTS * sizeof(State));
+    ParseObject* arguments = (ParseObject*)malloc(MAX_ARGUMENTS * sizeof(ParseObject));
     size_t length = 0;
-    while (strcmp(token->value, FUNC_CLOSE)) {
-        if (token->token == NEWLINE) {
-            ++token;
-            continue;
-        }
-        if (strcmp(token->value, ARG_SEPARATOR) != 0) {
+    bool is_looping = true;
+    while (is_looping) {
+        ParseObject object;
+        State* states = malloc(255 * sizeof(State));
+        int used = 0;
+        while (!is_eq(token->value, ARG_SEPARATOR)) {
+            if (is_eq(token->value, FUNC_CLOSE)) {
+                is_looping = false;
+                break;
+            } else if (token->token == NEWLINE) {
+                ++token;
+                continue;
+            }
             State value = parse_value(token);
             if (value.type == s_FUNCTIONCALL) {
                 skip_to_end_call(&token);
             }
-            arguments[length++] = value;
+            states[used++] = value;
+            ++token;
         }
+        object.length = used;
+        object.states = states;
+        arguments[length++] = object;
         ++token;
     }
     ss_FunctionCall* func_call = (ss_FunctionCall*)malloc(sizeof(ss_FunctionCall));
@@ -173,6 +184,24 @@ lex_Object collect_tokens_from_scope(Token** ptoken) {
     return object;
 }
 
+State parse_function_definition(Token** current_token) {
+    /* TODO: Implement lambda support 'function foo(a, b) = a + b;' */
+    /* TODO: Free all this allocated mess + (also the string allocated for literals) */
+    ss_Function* function = (ss_Function*)malloc(sizeof(ss_Function));
+    Token* function_name = ++(*current_token);
+    ++(*current_token); /* move to '(' */
+    ArgumentCollection arguments = parse_function_arguments(current_token);
+    lex_Object scopeTokens = collect_tokens_from_scope(current_token);
+    ParseObject scope = parse(scopeTokens);
+    lex_free(&scopeTokens);
+    strcpy(function->function_name, function_name->value);
+    function->arguments = arguments;
+    function->scope = scope;
+    function->is_lamda = false;
+    State state = {function, s_FUNCTION};
+    return state;
+}
+
 void parse_literal(State* state, Token* token) {
     ss_Literal* literal = (ss_Literal*)malloc(sizeof(ss_Literal));
     state->type = s_LITERAL;
@@ -182,7 +211,7 @@ void parse_literal(State* state, Token* token) {
         literal->value = value;
         literal->type = l_INTEGER;
     } else if (token->token == SLITERAL) {
-        char* literal_string = (char*)malloc((strlen(token->value) + 1) * sizeof(char));
+        char* literal_string = (char*)malloc(strlen(token->value) + 1);
         strcpy(literal_string, token->value);
         literal->value = literal_string;
         literal->type = l_STRING;
@@ -371,21 +400,7 @@ ParseObject parse(lex_Object object) {
                 states[length++] = variable_state;
                 skip_to_end(&current_token, EOS);
             } else if (is_function_definition(current_token + 1)) {
-                /* TODO: Implement lambda support 'function foo(a, b) = a + b;' */
-                /* TODO: Free all this allocated mess + (also the string allocated for literals) */
-                ss_Function* function = (ss_Function*)malloc(sizeof(ss_Function));
-                Token* function_name = ++current_token;
-                ++current_token; /* move to '(' */
-                ArgumentCollection arguments = parse_function_arguments(&current_token);
-                lex_Object scopeTokens = collect_tokens_from_scope(&current_token);
-                ParseObject scope = parse(scopeTokens);
-                lex_free(&scopeTokens);
-                strcpy(function->function_name, function_name->value);
-                function->arguments = arguments;
-                function->scope = scope;
-                function->is_lamda = false;
-                State state = {function, s_FUNCTION};
-                states[length++] = state;
+                states[length++] = parse_function_definition(&current_token);
             } else if (is_keyword(current_token, "return")) {
                 ss_ReturnStatement* return_statement = (ss_ReturnStatement*)malloc(sizeof(ss_ReturnStatement));
                 ParseObject statement = parse_statement(current_token+1);
@@ -433,7 +448,10 @@ void free_state(State* state) {
     } else if (state->type == s_FUNCTIONCALL) {
         ss_FunctionCall call = get_functioncall(state->state);
         for (int i = 0; i < call.arg_count; ++i) {
-            free_state(&call.arguments[i]);
+            ParseObject argument = call.arguments[i];
+            for (int j = 0; j < argument.length; ++j) {
+                free_state(&argument.states[j]);
+            }
         }
         free(call.arguments);
         free(state->state);

@@ -1,1 +1,3 @@
 global a = 20;
+
+print(50032);

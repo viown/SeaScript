@@ -108,7 +108,7 @@ typedef struct {
 
 typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];
-    State* arguments;
+    ParseObject* arguments;
     size_t arg_count;
 } ss_FunctionCall;
 
