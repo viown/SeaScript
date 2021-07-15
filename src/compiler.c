@@ -57,7 +57,7 @@ int push_variable(InstructionMap* map, State* state) {
 
 int get_reference_by_name(char* name, VariableReference* references, int ref_used) {
     for (int i = 0; i < ref_used; ++i) {
-        if (strcmp(references[i].var_name, name) == 0)
+        if (!strcmp(references[i].var_name, name))
             return references[i].var_reference;
     }
     return -1;

@@ -12,11 +12,12 @@
 #define VERSION "1.0.0"
 
 typedef struct {
-    bool is_view;
-    bool preserve_bytecode;
-    bool visualize_tokens;
-    bool parser_print;
-    bool no_run;
+    bool is_view : 1;
+    bool preserve_bytecode : 1;
+    bool visualize_tokens : 1;
+    bool parser_print : 1;
+    bool no_run : 1;
+    bool check_version : 1;
 } CommandLineFlags;
 
 CommandLineFlags init_flags() {
@@ -26,6 +27,7 @@ CommandLineFlags init_flags() {
     flags.visualize_tokens = false;
     flags.parser_print = false;
     flags.no_run = false;
+    flags.check_version = false;
     return flags;
 }
 
@@ -67,8 +69,7 @@ char* read_file(const char* path) {
 }
 
 int visualize_bytecode(char* path) {
-    Bytecode bytecode;
-    read_from_file(&bytecode, path);
+    Bytecode bytecode = read_from_file(path);
     Instruction* instructions = to_instructions(&bytecode);
 
     for (int i = 0; i < bytecode.length; ++i) {
@@ -85,14 +86,14 @@ int visualize_bytecode(char* path) {
         printf("\n");
     }
     free(instructions);
+    free_bytecode(&bytecode);
     return 0;
 }
 
 int execute_bytecode(char* path) {
     VirtualMachine virtual_machine;
     vm_init(&virtual_machine, 500, ss_functions);
-    Bytecode bytecode;
-    read_from_file(&bytecode, path);
+    Bytecode bytecode = read_from_file(path);
     Instruction* instructions = to_instructions(&bytecode);
     int exec = vm_execute(&virtual_machine, instructions, bytecode.length);
     free_bytecode(&bytecode);
@@ -112,10 +113,14 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     if (flags.visualize_tokens) {
         if (object.token_used > 2500) {
             lex_free(&object);
+            vm_free(&virtual_machine);
+            free(source_code);
             ss_throw("Tokens too big to visualize");
         }
         visualize_tokens(&object);
         lex_free(&object);
+        vm_free(&virtual_machine);
+        free(source_code);
         return 0;
     }
     ParseObject s = parse(object);
@@ -123,6 +128,8 @@ int compile_and_run(CommandLineFlags flags, char* path) {
         visualize_states(&s);
         free_ParseObject(&s);
         lex_free(&object);
+        free(source_code);
+        vm_free(&virtual_machine);
         return 0;
     }
     InstructionMap map = compile(&s);
@@ -136,9 +143,14 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     }
     free_ParseObject(&s);
     lex_free(&object);
+    free(source_code);
     if (!flags.no_run) {
-        return vm_execute(&virtual_machine, map.instructions, map.length);
+        int ret = vm_execute(&virtual_machine, map.instructions, map.length);
+        map_free(&map);
+        vm_free(&virtual_machine);
+        return ret;
     } else {
+        map_free(&map);
         vm_free(&virtual_machine);
         return 0;
     }
@@ -156,6 +168,8 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
             flags->parser_print = true;
         else if (!strcmp(argv[i], "--norun"))
             flags->no_run = true;
+        else if (!strcmp(argv[i], "--version"))
+            flags->check_version = true;
         else if (argv[i][0] == '-' && argv[i][1] == '-')
             ss_throw("Invalid flag '%s'", argv[i]);
     }
@@ -164,18 +178,14 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
 int vm_test() {
     Instruction instructions[] = {
         {
-            ICONST, {10}
+            ICONST, {5}
         },
         {
-            ICONST, {30}
-        },
-        {
-            ICONST, {35}
+            ICONST, {3}
         },
         {
             IADD, {}
         },
-
         {
             IPRINT, {}
         },
@@ -193,8 +203,8 @@ int main(int argc, char** argv) {
     CommandLineFlags flags = init_flags();
     read_flags(&flags, argc, argv);
     if (argc >= 2) {
-        if (strcmp(argv[1], "--version") == 0) {
-            printf("V%s", VERSION);
+        if (flags.check_version) {
+            printf("V%s\n", VERSION);
             return 0;
         } else {
             char extension[255];
@@ -214,4 +224,3 @@ int main(int argc, char** argv) {
     }
     return 0;
 }
-

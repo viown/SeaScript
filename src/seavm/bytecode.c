@@ -72,16 +72,18 @@ long get_file_size(const char* path) {
 #endif
 }
 
-void read_from_file(Bytecode* bytecode, const char* path) {
+Bytecode read_from_file(const char* path) {
+    Bytecode bytecode;
     FILE* file = fopen(path, "rb");
     long file_size = get_file_size(path);
     stack_type buffer[file_size / sizeof(stack_type)];
     fread(buffer, sizeof(buffer), 1, file);
-    bytecode->length = ((file_size) / sizeof(stack_type)) / 4;
+    bytecode.length = ((file_size) / sizeof(stack_type)) / 4;
     stack_type* raw_data = (stack_type*)malloc(file_size);
     memcpy(raw_data, buffer, file_size);
-    bytecode->raw_data = raw_data;
+    bytecode.raw_data = raw_data;
     fclose(file);
+    return bytecode;
 }
 
 void free_bytecode(Bytecode* bytecode) {

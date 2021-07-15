@@ -21,7 +21,7 @@
         return 0;                                               \
     }
 
-#define perform_32bitarithmetic(stack, first, op, second)                                   \
+#define compute(stack, first, op, second)                                                   \
     StackObject object;                                                                     \
     object.object.m_int64 = (int64_t)(second.object.m_int32 op first.object.m_int32);       \
     object.type = INT64;                                                                    \
@@ -43,6 +43,7 @@ void vm_init(VirtualMachine* vm, int global_size, const ss_BaseFunction* func_li
 
 void vm_free(VirtualMachine* vm) {
     free(vm->globals);
+    free(vm->label_addresses);
     terminate_stack(&vm->stack);
 }
 
@@ -147,45 +148,44 @@ void resolve_labels(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
 }
 
 int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
-    Instruction cinstr;
+    Instruction* cinstr;
 
     StackObject* top;
     StackObject object;
 
     resolve_labels(vm, instrs, length);
     while (vm->ip != length) {
-        cinstr = instrs[vm->ip];
+        cinstr = &instrs[vm->ip];
 
-        switch (cinstr.op) {
+        switch (cinstr->op) {
         case EXIT:
-            vm_free(vm);
-            return cinstr.args[0];
+            return cinstr->args[0];
         case LOADBOOL:
-            object.object.m_bool = (bool)cinstr.args[0];
+            object.object.m_bool = (bool)cinstr->args[0];
             object.type = BOOL;
             push_stack(&vm->stack, object);
             vm->ip++;
             break;
         case ICONST:
-            object.object.m_int32 = cinstr.args[0];
+            object.object.m_int32 = cinstr->args[0];
             object.type = INT32;
             push_stack(&vm->stack, object);
             vm->ip++;
             break;
         case LCONST:
-            object.object.m_int64 = cinstr.args[0];
+            object.object.m_int64 = cinstr->args[0];
             object.type = INT64;
             push_stack(&vm->stack, object);
             vm->ip++;
             break;
         case DCONST:
-            object.object.m_double = cinstr.args[0];
+            object.object.m_double = cinstr->args[0];
             object.type = DOUBLE;
             push_stack(&vm->stack, object);
             vm->ip++;
             break;
         case CAST:
-            perform_cast(top_stack(&vm->stack), (StackObjType)cinstr.args[0]);
+            perform_cast(top_stack(&vm->stack), (StackObjType)cinstr->args[0]);
             vm->ip++;
             break;
         case POP:
@@ -242,12 +242,12 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             vm->ip++;
             break;
         case JUMP:
-            vm->ip = cinstr.args[0];
+            vm->ip = cinstr->args[0];
             break;
         case JUMPIF:
             top = top_stack(&vm->stack);
             if (top->object.m_bool) {
-                vm->ip = cinstr.args[0];
+                vm->ip = cinstr->args[0];
             } else {
                 vm->ip++;
             }
@@ -258,19 +258,19 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             vm->ip++;
             break;
         case IADD: {
-            perform_32bitarithmetic(vm->stack, pop_stack(&vm->stack), +, pop_stack(&vm->stack));
+            compute(vm->stack, pop_stack(&vm->stack), +, pop_stack(&vm->stack));
             vm->ip++;
             break;
         }
         case ISUB: {
             StackObject first = pop_stack(&vm->stack);
             StackObject second = pop_stack(&vm->stack);
-            perform_32bitarithmetic(vm->stack, first, -, second);
+            compute(vm->stack, first, -, second);
             vm->ip++;
             break;
         }
         case IMUL: {
-            perform_32bitarithmetic(vm->stack, pop_stack(&vm->stack), *, pop_stack(&vm->stack));
+            compute(vm->stack, pop_stack(&vm->stack), *, pop_stack(&vm->stack));
             vm->ip++;
             break;
         }
@@ -288,13 +288,13 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
         }
         case CALL:
             vm->return_addresses[vm->ret_sp++] = vm->ip; /* store return address in stack */
-            vm->ip = vm->label_addresses[cinstr.args[0]]; /* jump to the (assumed) function */
+            vm->ip = vm->label_addresses[cinstr->args[0]]; /* jump to the (assumed) function */
             break;
         case RET:
             vm->ip = vm->return_addresses[--vm->ret_sp] + 1;
             break;
         case CALLC:
-            vm->c_functions[cinstr.args[0]].func(vm);
+            vm->c_functions[cinstr->args[0]].func(vm);
             vm->ip++;
             break;
         case STORE:
@@ -302,7 +302,7 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             vm->ip++;
             break;
         case LOAD:
-            push_stack(&vm->stack, vm->globals[cinstr.args[0]]);
+            push_stack(&vm->stack, vm->globals[cinstr->args[0]]);
             vm->ip++;
             break;
         case LBL:
@@ -310,12 +310,12 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             vm->ip++;
             break;
         case LBLJMP:
-            vm->ip = vm->label_addresses[cinstr.args[0]];
+            vm->ip = vm->label_addresses[cinstr->args[0]];
             break;
         case LBLJMPIF:
             top = top_stack(&vm->stack);
             if (top->object.m_bool)
-                vm->ip = vm->label_addresses[cinstr.args[0]];
+                vm->ip = vm->label_addresses[cinstr->args[0]];
             else
                 vm->ip++;
             break;
@@ -331,7 +331,7 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
                 printf("%d", top->object.m_int32);
                 break;
             case INT64:
-                printf("%lld", top->object.m_int64);
+                printf("%ld", top->object.m_int64);
                 break;
             case DOUBLE:
                 printf("%f", top->object.m_double);
@@ -348,7 +348,6 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             return VM_INVALID_INSTRUCTION;
         }
     }
-    vm_free(vm);
     return VM_EXIT_FAILURE; // Should exit properly through (EXIT 0)
 }
 

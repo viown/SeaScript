@@ -9,7 +9,7 @@ release: $(REQUIREMENTS)
 	$(CC) -o $(EXE_NAME) $(TRGT) -s
 
 debug: $(REQUIREMENTS)
-	$(CC) -o $(EXE_NAME) $(TRGT) -g
+	$(CC) -o $(EXE_NAME) -fsanitize=address -static-libasan $(TRGT) -g
 
 setup:
 	if test -d build; then 										\

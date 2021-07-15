@@ -1,3 +1,1 @@
-global a = 20;
-
-print(50032);
+global a = 100;

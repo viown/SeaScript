@@ -6,7 +6,8 @@
 #define MAX_STACK_SIZE 4080
 
 typedef double stack_type;
-typedef char* string;
+
+typedef char* t_string;
 
 typedef enum {
     BOOL,
@@ -22,7 +23,7 @@ typedef union {
     int32_t m_int32;
     int64_t m_int64;
     double m_double;
-    string m_string;
+    t_string m_string;
 } DataObject;
 
 typedef struct {

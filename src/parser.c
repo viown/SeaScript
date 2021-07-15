@@ -98,6 +98,7 @@ void parse_function_call(State* state, Token* token) {
         ParseObject object;
         State* states = malloc(255 * sizeof(State));
         int used = 0;
+        /* TODO: Use parse_statement here instead */
         while (!is_eq(token->value, ARG_SEPARATOR)) {
             if (is_eq(token->value, FUNC_CLOSE)) {
                 is_looping = false;
@@ -452,6 +453,7 @@ void free_state(State* state) {
             for (int j = 0; j < argument.length; ++j) {
                 free_state(&argument.states[j]);
             }
+            free(argument.states);
         }
         free(call.arguments);
         free(state->state);
