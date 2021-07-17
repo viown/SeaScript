@@ -65,7 +65,7 @@ int get_reference_by_name(char* name, VariableReference* references, int ref_use
 
 void push_function_call(InstructionMap* map, State* state, VariableReference* references, int ref_used) {
     ss_assert(state->type == s_FUNCTIONCALL);
-    ss_FunctionCall fcall = get_functioncall(state->state);
+    //ss_FunctionCall fcall = get_functioncall(state->state);
 }
 
 void init_map(InstructionMap* map) {

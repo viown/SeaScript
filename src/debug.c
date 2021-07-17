@@ -33,7 +33,7 @@ void read_arguments(ss_FunctionCall fcall, bool is_nested_call) {
     printf("%s(", fcall.function_name);
     ParseObject* arguments = fcall.arguments;
     for (size_t i = 0; i < fcall.arg_count; ++i) {
-        ParseObject argument = fcall.arguments[i];
+        ParseObject argument = arguments[i];
         for (int j = 0; j < argument.length; ++j) {
             print_state(argument.states[j]);
         }
