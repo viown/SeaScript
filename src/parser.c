@@ -435,16 +435,16 @@ ParseObject parse(lex_Object object) {
 
 void free_state(State* state) {
     if (state->type == s_IDENTIFIER) {
-        free(state->state);
+        free_and_null(state->state);
     } else if (state->type == s_LITERAL) {
         ss_Literal literal = get_literal(state->state);
-        free(literal.value);
-        free(state->state);
+        free_and_null(literal.value);
+        free_and_null(state->state);
     } else if (state->type == s_OPERATOR) {
         ss_Operator obj_op = get_operator(state->state);
         if (obj_op.type == MATH || obj_op.type == COMPARISON) {
-            free(obj_op.op);
-            free(state->state);
+            free_and_null(obj_op.op);
+            free_and_null(state->state);
         }
     } else if (state->type == s_FUNCTIONCALL) {
         ss_FunctionCall call = get_functioncall(state->state);
@@ -453,18 +453,18 @@ void free_state(State* state) {
             for (int j = 0; j < argument.length; ++j) {
                 free_state(&argument.states[j]);
             }
-            free(argument.states);
+            free_and_null(argument.states);
         }
-        free(call.arguments);
-        free(state->state);
+        free_and_null(call.arguments);
+        free_and_null(state->state);
     } else if (state->type == s_INDEX) {
         ss_IndexOperator op = get_index(state->state);
         for (size_t i = 0; i < op.parse_object->length; ++i) {
             free_state(&op.parse_object->states[i]);
         }
-        free(op.parse_object->states);
-        free(op.parse_object);
-        free(state->state);
+        free_and_null(op.parse_object->states);
+        free_and_null(op.parse_object);
+        free_and_null(state->state);
     }
 }
 
@@ -478,20 +478,20 @@ void free_ParseObject(ParseObject* object) {
                 for (int i = 0; i < states.length; ++i) {
                     free_state(&states.states[i]);
                 }
-                free(states.states);
+                free_and_null(states.states);
             }
-            free(current.state);
+            free_and_null(current.state);
         } else if (current.type == s_REASSIGN) {
             ss_Reassignment reassignment = get_reassignment(current.state);
             ParseObject states = reassignment.states;
             for (int i = 0; i < states.length; ++i) {
                 free_state(&states.states[i]);
             }
-            free(states.states);
-            free(current.state);
+            free_and_null(states.states);
+            free_and_null(current.state);
         } else if (current.type == s_FUNCTIONCALL) {
             free_state(&current);
         }
     }
-    free(object->states);
+    free_and_null(object->states);
 }

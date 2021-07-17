@@ -11,6 +11,7 @@
 
 #define VERSION "1.0.0"
 
+
 typedef struct {
     bool is_view : 1;
     bool preserve_bytecode : 1;
@@ -120,7 +121,7 @@ int compile_and_run(CommandLineFlags flags, char* path) {
         visualize_tokens(&object);
         lex_free(&object);
         vm_free(&virtual_machine);
-        free(source_code);
+        free_and_null(source_code);
         return 0;
     }
     ParseObject s = parse(object);
@@ -128,7 +129,7 @@ int compile_and_run(CommandLineFlags flags, char* path) {
         visualize_states(&s);
         free_ParseObject(&s);
         lex_free(&object);
-        free(source_code);
+        free_and_null(source_code);
         vm_free(&virtual_machine);
         return 0;
     }
@@ -143,7 +144,7 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     }
     free_ParseObject(&s);
     lex_free(&object);
-    free(source_code);
+    free_and_null(source_code);
     if (!flags.no_run) {
         int ret = vm_execute(&virtual_machine, map.instructions, map.length);
         map_free(&map);

@@ -1,3 +1,4 @@
+#include "../debug.h"
 #include "./stack.h"
 #include <stdbool.h>
 #include <stdlib.h>
@@ -35,5 +36,5 @@ inline StackObject* top_stack(Stack* stack) {
 }
 
 void terminate_stack(Stack* stack) {
-    free(stack->stack);
+    free_and_null(stack->stack);
 }

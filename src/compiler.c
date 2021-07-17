@@ -100,5 +100,5 @@ InstructionMap compile(ParseObject* object) {
 
 
 void map_free(InstructionMap* map) {
-    free(map->instructions);
+    free_and_null(map->instructions);
 }

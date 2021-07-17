@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include "./debug.h"
 #include "./lex.h"
 
 bool is_operator(char c) {
@@ -173,5 +174,5 @@ void lex(lex_Object* lexObject) {
 }
 
 void lex_free(lex_Object* lexObject) {
-    free(lexObject->tokens);
+    free_and_null(lexObject->tokens);
 }

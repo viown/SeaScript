@@ -1,3 +1,4 @@
+#include "../debug.h"
 #include "./vm.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -42,8 +43,8 @@ void vm_init(VirtualMachine* vm, int global_size, const ss_BaseFunction* func_li
 }
 
 void vm_free(VirtualMachine* vm) {
-    free(vm->globals);
-    free(vm->label_addresses);
+    free_and_null(vm->globals);
+    free_and_null(vm->label_addresses);
     terminate_stack(&vm->stack);
 }
 
