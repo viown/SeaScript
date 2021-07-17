@@ -6,6 +6,14 @@
 
 void print_state(State st);
 
+void* ss_malloc(size_t size) {
+    void* mem = malloc(size);
+    if (mem == NULL) {
+        ss_throw("fatal: memory allocation failed, program halted.\n");
+    }
+    return mem;
+}
+
 void ss_throw(const char* error, ...) {
     va_list args;
     va_start(args, error);
@@ -13,6 +21,7 @@ void ss_throw(const char* error, ...) {
     va_end(args);
     exit(1);
 }
+
 
 void visualize_tokens(lex_Object* object) {
     for (int i = 0; i < object->token_used; ++i) {

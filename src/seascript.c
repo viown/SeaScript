@@ -57,7 +57,7 @@ void get_extension(char* file_name, char* modify) {
 char* read_file(const char* path) {
     FILE *fp = fopen(path, "r");
     long file_size = get_file_size(path);
-    char* source = (char*)malloc(file_size + 2);
+    char* source = (char*)ss_malloc(file_size + 2);
     if (fp != NULL) {
         size_t len = fread(source, sizeof(char), file_size, fp);
         source[len++] = ' '; /* closing whitespace */
@@ -86,7 +86,7 @@ int visualize_bytecode(char* path) {
         }
         printf("\n");
     }
-    free(instructions);
+    free_and_null(instructions);
     free_bytecode(&bytecode);
     return 0;
 }
@@ -98,7 +98,7 @@ int execute_bytecode(char* path) {
     Instruction* instructions = to_instructions(&bytecode);
     int exec = vm_execute(&virtual_machine, instructions, bytecode.length);
     free_bytecode(&bytecode);
-    free(instructions);
+    free_and_null(instructions);
     return exec;
 }
 
@@ -115,7 +115,7 @@ int compile_and_run(CommandLineFlags flags, char* path) {
         if (object.token_used > 2500) {
             lex_free(&object);
             vm_free(&virtual_machine);
-            free(source_code);
+            free_and_null(source_code);
             ss_throw("Tokens too big to visualize");
         }
         visualize_tokens(&object);

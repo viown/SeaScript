@@ -33,11 +33,11 @@ void vm_init(VirtualMachine* vm, int global_size, const ss_BaseFunction* func_li
     vm->stack = create_stack();
     vm->ip = 0;
     vm->c_functions = func_list;
-    vm->globals = (StackObject*)malloc(global_size * sizeof(StackObject));
+    vm->globals = (StackObject*)ss_malloc(global_size * sizeof(StackObject));
     vm->global_size = global_size;
     vm->global_used = 0;
     vm->ret_sp = 0;
-    vm->label_addresses = (int*)malloc(500 * sizeof(int));
+    vm->label_addresses = (int*)ss_malloc(500 * sizeof(int));
     vm->label_addr_size = 500;
     vm->label_addr_used = 0;
 }

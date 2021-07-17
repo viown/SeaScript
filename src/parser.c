@@ -91,12 +91,12 @@ void skip_to_end(Token** ptoken, const char* end) {
 void parse_function_call(State* state, Token* token) {
     Token* call_identifier = token;
     token += 2; /* skip '(' */
-    ParseObject* arguments = (ParseObject*)malloc(MAX_ARGUMENTS * sizeof(ParseObject));
+    ParseObject* arguments = (ParseObject*)ss_malloc(MAX_ARGUMENTS * sizeof(ParseObject));
     size_t length = 0;
     bool is_looping = true;
     while (is_looping) {
         ParseObject object;
-        State* states = malloc(255 * sizeof(State));
+        State* states = ss_malloc(255 * sizeof(State));
         int used = 0;
         /* TODO: Use parse_statement here instead */
         while (!is_eq(token->value, ARG_SEPARATOR)) {
@@ -119,7 +119,7 @@ void parse_function_call(State* state, Token* token) {
         arguments[length++] = object;
         ++token;
     }
-    ss_FunctionCall* func_call = (ss_FunctionCall*)malloc(sizeof(ss_FunctionCall));
+    ss_FunctionCall* func_call = (ss_FunctionCall*)ss_malloc(sizeof(ss_FunctionCall));
     strcpy(func_call->function_name, call_identifier->value);
     func_call->arguments = arguments;
     func_call->arg_count = length;
@@ -131,7 +131,7 @@ ArgumentCollection parse_function_arguments(Token** ptoken) {
     ArgumentCollection collection;
     if (strcmp((*ptoken)->value, FUNC_OPEN) == 0)
         (*ptoken)++; /* skip '(' */
-    ss_Identifier* arguments = (ss_Identifier*)malloc(MAX_ARGUMENTS * sizeof(ss_Identifier));
+    ss_Identifier* arguments = (ss_Identifier*)ss_malloc(MAX_ARGUMENTS * sizeof(ss_Identifier));
     int used = 0;
     while (strcmp((*ptoken)->value, FUNC_CLOSE)) {
         if ((*ptoken)->token == IDENTIFIER) {
@@ -155,7 +155,7 @@ ArgumentCollection parse_function_arguments(Token** ptoken) {
 
 lex_Object collect_tokens_from_scope(Token** ptoken) {
     lex_Object object;
-    object.tokens = (Token*)malloc(1000 * sizeof(Token));
+    object.tokens = (Token*)ss_malloc(1000 * sizeof(Token));
     object.token_size = 1000;
     object.token_used = 0;
     if (strcmp((*ptoken)->value, SCOPE_OPEN) == 0)
@@ -188,7 +188,7 @@ lex_Object collect_tokens_from_scope(Token** ptoken) {
 State parse_function_definition(Token** current_token) {
     /* TODO: Implement lambda support 'function foo(a, b) = a + b;' */
     /* TODO: Free all this allocated mess + (also the string allocated for literals) */
-    ss_Function* function = (ss_Function*)malloc(sizeof(ss_Function));
+    ss_Function* function = (ss_Function*)ss_malloc(sizeof(ss_Function));
     Token* function_name = ++(*current_token);
     ++(*current_token); /* move to '(' */
     ArgumentCollection arguments = parse_function_arguments(current_token);
@@ -204,15 +204,15 @@ State parse_function_definition(Token** current_token) {
 }
 
 void parse_literal(State* state, Token* token) {
-    ss_Literal* literal = (ss_Literal*)malloc(sizeof(ss_Literal));
+    ss_Literal* literal = (ss_Literal*)ss_malloc(sizeof(ss_Literal));
     state->type = s_LITERAL;
     if (token->token == ILITERAL) {
-        double* value = (double*)malloc(sizeof(double));
+        double* value = (double*)ss_malloc(sizeof(double));
         *value = atof(token->value);
         literal->value = value;
         literal->type = l_INTEGER;
     } else if (token->token == SLITERAL) {
-        char* literal_string = (char*)malloc(strlen(token->value) + 1);
+        char* literal_string = (char*)ss_malloc(strlen(token->value) + 1);
         strcpy(literal_string, token->value);
         literal->value = literal_string;
         literal->type = l_STRING;
@@ -221,7 +221,7 @@ void parse_literal(State* state, Token* token) {
 }
 
 void parse_identifier(State* state, Token* token) {
-    ss_Identifier* identifier = (ss_Identifier*)malloc(sizeof(ss_Identifier));
+    ss_Identifier* identifier = (ss_Identifier*)ss_malloc(sizeof(ss_Identifier));
     strcpy(identifier->identifier, token->value);
     state->state = identifier;
     state->type = s_IDENTIFIER;
@@ -229,8 +229,8 @@ void parse_identifier(State* state, Token* token) {
 
 void parse_operator(State* state, Token* token) {
     if (is_math_op(token->value[0])) {
-        ss_Operator* op = (ss_Operator*)malloc(sizeof(ss_Operator));
-        Operator* math_operator = (Operator*)malloc(sizeof(Operator));
+        ss_Operator* op = (ss_Operator*)ss_malloc(sizeof(ss_Operator));
+        Operator* math_operator = (Operator*)ss_malloc(sizeof(Operator));
         *math_operator = token->value[0];
         op->type = MATH;
         op->op = math_operator;
@@ -238,8 +238,8 @@ void parse_operator(State* state, Token* token) {
         state->type = s_OPERATOR;
     } else if (is_comparison_op(token->value[0])) {
         /* incomplete */
-        ss_Operator* op = (ss_Operator*)malloc(sizeof(ss_Operator));
-        Operator* comparison_op = (Operator*)malloc(sizeof(Operator));
+        ss_Operator* op = (ss_Operator*)ss_malloc(sizeof(ss_Operator));
+        Operator* comparison_op = (Operator*)ss_malloc(sizeof(Operator));
         *comparison_op = token->value[0];
         op->type = COMPARISON;
         op->op = comparison_op;
@@ -251,7 +251,7 @@ void parse_operator(State* state, Token* token) {
 void parse_array_index(State* state, Token* token) {
     Token* name = token;
     token += 2;
-    State* states = (State*)malloc(255 * sizeof(State));
+    State* states = (State*)ss_malloc(255 * sizeof(State));
     int used = 0;
     while (strcmp(token->value, INDEX_CLOSE) != 0) {
         states[used++] = parse_value(token);
@@ -260,8 +260,8 @@ void parse_array_index(State* state, Token* token) {
         }
         token++;
     }
-    ss_IndexOperator* op = (ss_IndexOperator*)malloc(sizeof(ss_IndexOperator));
-    ParseObject* parse_object = (ParseObject*)malloc(sizeof(ParseObject));
+    ss_IndexOperator* op = (ss_IndexOperator*)ss_malloc(sizeof(ss_IndexOperator));
+    ParseObject* parse_object = (ParseObject*)ss_malloc(sizeof(ParseObject));
     parse_object->length = used;
     parse_object->states = states;
     op->name = name->value;
@@ -291,7 +291,7 @@ State parse_value(Token* token) {
 /* reads the tokens until an ';' is encountered */
 ParseObject parse_statement(Token* token) {
     ParseObject object;
-    State* states = (State*)malloc(255 * sizeof(State));
+    State* states = (State*)ss_malloc(255 * sizeof(State));
     int used = 0;
     while (strcmp(token->value, EOS) != 0) {
         states[used++] = parse_value(token);
@@ -312,7 +312,7 @@ ParseObject parse_statement(Token* token) {
 }
 
 ss_Variable* create_variable(char* var_name, ParseObject var_states) {
-    ss_Variable* variable = (ss_Variable*)malloc(sizeof(ss_Variable));
+    ss_Variable* variable = (ss_Variable*)ss_malloc(sizeof(ss_Variable));
     strcpy(variable->variable_name, var_name);
     variable->states = var_states;
     variable->is_initialized = true;
@@ -321,7 +321,7 @@ ss_Variable* create_variable(char* var_name, ParseObject var_states) {
 
 /* create a reassignment operation */
 ss_Reassignment* create_reassignment(char* var_name, ParseObject var_states) {
-    ss_Reassignment* reassignment = (ss_Reassignment*)malloc(sizeof(ss_Reassignment));
+    ss_Reassignment* reassignment = (ss_Reassignment*)ss_malloc(sizeof(ss_Reassignment));
     strcpy(reassignment->variable_name, var_name);
     reassignment->states = var_states;
     return reassignment;
@@ -336,7 +336,7 @@ State parse_variable_declaration(Token* current_token, State* states, size_t len
     }
     State variable_state;
     if (is_eq(NEXT_TOKEN(current_token).value, EOS)) { /* if declared but uninitialized */
-        ss_Variable* variable = (ss_Variable*)malloc(sizeof(ss_Variable));
+        ss_Variable* variable = (ss_Variable*)ss_malloc(sizeof(ss_Variable));
         strcpy(variable->variable_name, variable_name->value);
         variable->is_initialized = false;
 
@@ -391,7 +391,7 @@ ParseObject parse(lex_Object object) {
     ParseObject parse_obj;
     size_t size = 1000;
     size_t length = 0;
-    State* states = (State*)malloc(size * sizeof(State));
+    State* states = (State*)ss_malloc(size * sizeof(State));
     while (current_token != end) {
         if (current_token->token == NEWLINE) {
             current_line++;
@@ -403,7 +403,7 @@ ParseObject parse(lex_Object object) {
             } else if (is_function_definition(current_token + 1)) {
                 states[length++] = parse_function_definition(&current_token);
             } else if (is_keyword(current_token, "return")) {
-                ss_ReturnStatement* return_statement = (ss_ReturnStatement*)malloc(sizeof(ss_ReturnStatement));
+                ss_ReturnStatement* return_statement = (ss_ReturnStatement*)ss_malloc(sizeof(ss_ReturnStatement));
                 ParseObject statement = parse_statement(current_token+1);
                 *return_statement = (ss_ReturnStatement)statement;
                 State state = {return_statement, s_RETURN};

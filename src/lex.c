@@ -48,7 +48,7 @@ void lexObject_init(lex_Object* object, char* source) {
     object->source = source;
     object->current = object->source;
     object->length = strlen(object->source);
-    object->tokens = (Token*)malloc(1000 * sizeof(Token));
+    object->tokens = (Token*)ss_malloc(1000 * sizeof(Token));
     object->token_size = 1000;
     object->token_used = 0;
 }

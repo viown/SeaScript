@@ -69,7 +69,7 @@ void push_function_call(InstructionMap* map, State* state, VariableReference* re
 }
 
 void init_map(InstructionMap* map) {
-    map->instructions = (Instruction*)malloc(1000 * sizeof(Instruction));
+    map->instructions = (Instruction*)ss_malloc(1000 * sizeof(Instruction));
     map->size = 1000;
     map->length = 0;
     map->global_counter = 0;
@@ -78,7 +78,7 @@ void init_map(InstructionMap* map) {
 InstructionMap compile(ParseObject* object) {
     InstructionMap map;
     init_map(&map);
-    VariableReference variable_references[1000];
+    VariableReference variable_references[1000]; /* todo */
     int var_ref_used = 0;
     State* current_state = &object->states[0];
     State* end_state = &object->states[object->length];
