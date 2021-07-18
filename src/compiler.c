@@ -8,9 +8,9 @@
 Instruction create_instruction(Opcode op) {
     Instruction instruction;
     instruction.op = op;
-    instruction.args[0] = 0;
-    instruction.args[1] = 0;
-    instruction.args[2] = 0;
+    for (int i = 0; i < MAX_ARGS; ++i) {
+        instruction.args[i] = 0;
+    }
     return instruction;
 }
 

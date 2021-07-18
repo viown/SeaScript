@@ -70,35 +70,33 @@ char* read_file(const char* path) {
 }
 
 int visualize_bytecode(char* path) {
-    Bytecode bytecode = read_from_file(path);
-    Instruction* instructions = to_instructions(&bytecode);
+    InstructionHolder instructionHolder = read_from_file(path);
+    Instruction* instructions = instructionHolder.instructions;
 
-    for (int i = 0; i < bytecode.length; ++i) {
+    for (int i = 0; i < instructionHolder.length; ++i) {
         if (instructions[i].op == LBL) {
             printf("\n");
         }
         const char* instruction = instruction_to_string(instructions[i].op);
-        printf("%s ", instruction);
-        for (int j = 0; j < 3; ++j) {
-            if (instructions[i].args[j] == 0)
+        printf("%s\t", instruction);
+        for (int j = 0; j < MAX_ARGS; ++j) {
+            if (instructions[i].args[j] == 0 || get_reader(instructions[i].op)->bytes_to_read == 0)
                 break;
             printf("%d ", instructions[i].args[j]);
         }
         printf("\n");
     }
     free_and_null(instructions);
-    free_bytecode(&bytecode);
+    free_holder(&instructionHolder);
     return 0;
 }
 
 int execute_bytecode(char* path) {
     VirtualMachine virtual_machine;
     vm_init(&virtual_machine, 500, ss_functions);
-    Bytecode bytecode = read_from_file(path);
-    Instruction* instructions = to_instructions(&bytecode);
-    int exec = vm_execute(&virtual_machine, instructions, bytecode.length);
-    free_bytecode(&bytecode);
-    free_and_null(instructions);
+    InstructionHolder holder = read_from_file(path);
+    int exec = vm_execute(&virtual_machine, holder.instructions, holder.length);
+    free_holder(&holder);
     return exec;
 }
 
@@ -135,12 +133,9 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     }
     InstructionMap map = compile(&s);
     if (flags.preserve_bytecode) {
-        Bytecode bytecode;
-        to_bytecode(&bytecode, map.instructions, map.length);
         char* bytecode_path = path;
         bytecode_path[strlen(bytecode_path)-1] = 'b';
-        save_to_file(&bytecode, bytecode_path);
-        free_bytecode(&bytecode);
+        save_to_file(map.instructions, map.length, bytecode_path);
     }
     free_ParseObject(&s);
     lex_free(&object);
@@ -179,27 +174,25 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
 int vm_test() {
     Instruction instructions[] = {
         {
-            ICONST, {5}
+            ICONST, {150}
         },
         {
-            ICONST, {3}
-        },
-        {
-            IADD, {}
-        },
-        {
-            IPRINT, {}
+            LCONST, {250}
         },
         {
             EXIT, {0}
         },
     };
-	VirtualMachine vm;
 
-	vm_init(&vm, 100, ss_functions);
+    VirtualMachine vm;
+
+    vm_init(&vm, 100, ss_functions);
+
+    save_to_file(instructions, LEN(instructions), "lol.ssb");
 
 	return vm_execute(&vm, instructions, LEN(instructions));
 }
+
 int main(int argc, char** argv) {
     CommandLineFlags flags = init_flags();
     read_flags(&flags, argc, argv);

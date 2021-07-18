@@ -7,10 +7,6 @@
 #include "./lex.h"
 #include "./debug.h"
 
-/*
-    Yes, the current line is stored as a non-const global variable, who cares if it's bad practice?
-    Do you know how difficult it is to keep track of the current line through nested functions and all that?
-*/
 static size_t current_line = 1;
 
 State parse_value(Token* token);
