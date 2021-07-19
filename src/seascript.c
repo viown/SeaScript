@@ -82,11 +82,10 @@ int visualize_bytecode(char* path) {
         for (int j = 0; j < MAX_ARGS; ++j) {
             if (instructions[i].args[j] == 0 || get_reader(instructions[i].op)->bytes_to_read == 0)
                 break;
-            printf("%d ", instructions[i].args[j]);
+            printf("%lld ", instructions[i].args[j]);
         }
         printf("\n");
     }
-    free_and_null(instructions);
     free_holder(&instructionHolder);
     return 0;
 }
@@ -97,6 +96,7 @@ int execute_bytecode(char* path) {
     InstructionHolder holder = read_from_file(path);
     int exec = vm_execute(&virtual_machine, holder.instructions, holder.length);
     free_holder(&holder);
+    vm_free(&virtual_machine);
     return exec;
 }
 
@@ -180,6 +180,12 @@ int vm_test() {
             LCONST, {250}
         },
         {
+            IADD, {}
+        },
+        {
+            IPRINT, {}
+        },
+        {
             EXIT, {0}
         },
     };
@@ -188,9 +194,11 @@ int vm_test() {
 
     vm_init(&vm, 100, ss_functions);
 
-    save_to_file(instructions, LEN(instructions), "lol.ssb");
+    //save_to_file(instructions, LEN(instructions), "lol.ssb");
 
-	return vm_execute(&vm, instructions, LEN(instructions));
+	int ret = vm_execute(&vm, instructions, LEN(instructions));
+	vm_free(&vm);
+	return ret;
 }
 
 int main(int argc, char** argv) {

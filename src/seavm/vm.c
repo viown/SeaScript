@@ -48,7 +48,7 @@ void vm_free(VirtualMachine* vm) {
     terminate_stack(&vm->stack);
 }
 
-/* casts a 32-bit integer to a different type */
+
 void cast_int(StackObject* object, StackObjType type) {
     int32_t num = object->object.m_int32;
     switch (type) {
@@ -97,7 +97,7 @@ void cast_double(StackObject* object, StackObjType type) {
     }
 }
 
-/* casts an object to a different type */
+
 void perform_cast(StackObject* object, StackObjType type) {
     if (object->type == type)
         return;
@@ -116,13 +116,12 @@ void perform_cast(StackObject* object, StackObjType type) {
     }
 }
 
-/* test for a == b */
 bool is_equal(StackObject* a, StackObject* b) {
     StackObjType highest_type = (a->type > b->type) ? a->type : b->type;
     compare_objects(a, ==, b);
 }
 
-/* tests for a < b */
+
 bool is_lt(StackObject* a, StackObject* b) {
     StackObjType highest_type = (a->type > b->type) ? a->type : b->type;
     compare_objects(a, <, b);

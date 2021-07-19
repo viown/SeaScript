@@ -29,7 +29,7 @@ typedef struct {
 
 struct VirtualMachine {
     Stack stack;
-    int ip;
+    size_t ip;
     const ss_BaseFunction* c_functions;
 
     StackObject* globals;

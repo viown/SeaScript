@@ -85,8 +85,8 @@ InstructionHolder read_from_file(const char* path) {
         for (int i = 0; i < bytes_to_read; ++i) {
             bytes[i] = bytecode[cursor++];
         }
-        arg_type argument; /* TODO: Support for multiple arguments, but for now we don't need them. */
-        memcpy(&argument, bytes, sizeof(arg_type));
+        arg_type argument = 0; /* TODO: Support for multiple arguments, but for now we don't need them. */
+        memcpy(&argument, bytes, bytes_to_read);
         instruction.args[0] = argument;
         push_holder_instruction(&holder, instruction);
     }
