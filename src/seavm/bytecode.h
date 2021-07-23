@@ -14,7 +14,7 @@ typedef struct {
 } OpcodeReader;
 
 static const OpcodeReader reader_map[] = {
-    {EXIT, 1},
+    {EXIT, sizeof(int)},
     {LOADBOOL, sizeof(bool)},
     {ICONST, sizeof(int32_t)},
     {LCONST, sizeof(int64_t)},

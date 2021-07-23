@@ -92,7 +92,7 @@ int visualize_bytecode(char* path) {
 
 int execute_bytecode(char* path) {
     VirtualMachine virtual_machine;
-    vm_init(&virtual_machine, 500, ss_functions);
+    vm_init(&virtual_machine, ss_functions);
     InstructionHolder holder = read_from_file(path);
     int exec = vm_execute(&virtual_machine, holder.instructions, holder.length);
     free_holder(&holder);
@@ -102,7 +102,7 @@ int execute_bytecode(char* path) {
 
 int compile_and_run(CommandLineFlags flags, char* path) {
     VirtualMachine virtual_machine;
-    vm_init(&virtual_machine, 500, ss_functions);
+    vm_init(&virtual_machine, ss_functions);
     char* source_code = read_file(path);
     if (source_code == NULL)
         ss_throw("File '%s' could not be found", path);
@@ -131,22 +131,22 @@ int compile_and_run(CommandLineFlags flags, char* path) {
         vm_free(&virtual_machine);
         return 0;
     }
-    InstructionMap map = compile(&s);
+    ReferenceTable reftable = compile(&s);
     if (flags.preserve_bytecode) {
         char* bytecode_path = path;
         bytecode_path[strlen(bytecode_path)-1] = 'b';
-        save_to_file(map.instructions, map.length, bytecode_path);
+        save_to_file(reftable.map->instructions, reftable.map->length, bytecode_path);
     }
     free_ParseObject(&s);
     lex_free(&object);
     free_and_null(source_code);
     if (!flags.no_run) {
-        int ret = vm_execute(&virtual_machine, map.instructions, map.length);
-        map_free(&map);
+        int ret = vm_execute(&virtual_machine, reftable.map->instructions, reftable.map->length);
+        reftable_free(&reftable);
         vm_free(&virtual_machine);
         return ret;
     } else {
-        map_free(&map);
+        reftable_free(&reftable);
         vm_free(&virtual_machine);
         return 0;
     }
@@ -192,7 +192,7 @@ int vm_test() {
 
     VirtualMachine vm;
 
-    vm_init(&vm, 100, ss_functions);
+    vm_init(&vm, ss_functions);
 
     //save_to_file(instructions, LEN(instructions), "lol.ssb");
 

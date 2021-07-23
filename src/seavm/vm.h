@@ -25,6 +25,7 @@ typedef void (*vm_function)(VirtualMachine*);
 typedef struct {
     char* name;
     vm_function func;
+    int arg_count;
 } ss_BaseFunction;
 
 struct VirtualMachine {
@@ -33,25 +34,24 @@ struct VirtualMachine {
     const ss_BaseFunction* c_functions;
 
     StackObject* globals;
-    int global_size;
-    int global_used;
+    size_t global_size;
+    size_t global_used;
 
     int return_addresses[255]; /* stack for return addresses */
-    int ret_sp; /* stack pointer for return addresses */
+    int ret_sp;
 
-    /*
-    *   A label is an address that is usually resolved before the VM executes the instructions
-    *   A label address is defined by the 'LBL' instruction.
-    *   It only exists to prevent the headache from having the compiler figure out the address location of a function (which would change everytime a new instruction is pushed)
-    */
     int* label_addresses;
-    int label_addr_size;
-    int label_addr_used;
+    size_t label_addr_size;
+    size_t label_addr_used;
+
+    void** heap_table;
+    size_t heap_table_size;
+    size_t heap_table_used;
 };
 
 const char* instruction_to_string(Opcode op);
 
-void vm_init(VirtualMachine* vm, int global_size, const ss_BaseFunction* func_list);
+void vm_init(VirtualMachine* vm, const ss_BaseFunction* func_list);
 void vm_free(VirtualMachine* vm);
 int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length);
 

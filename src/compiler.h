@@ -20,7 +20,14 @@ typedef struct {
     int var_reference;
 } VariableReference;
 
-InstructionMap compile(ParseObject* object);
-void map_free(InstructionMap* map);
+typedef struct {
+    InstructionMap* map;
+    VariableReference* variable_references;
+    size_t var_reference_size;
+    size_t var_reference_length;
+} ReferenceTable;
+
+ReferenceTable compile(ParseObject* object);
+void reftable_free(ReferenceTable* table);
 
 #endif // SS_COMPILER_H

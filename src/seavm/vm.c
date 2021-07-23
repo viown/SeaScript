@@ -29,22 +29,45 @@
     push_stack(&stack, object);
 
 
-void vm_init(VirtualMachine* vm, int global_size, const ss_BaseFunction* func_list) {
+void vm_init(VirtualMachine* vm, const ss_BaseFunction* func_list) {
     vm->stack = create_stack();
     vm->ip = 0;
     vm->c_functions = func_list;
-    vm->globals = (StackObject*)ss_malloc(global_size * sizeof(StackObject));
-    vm->global_size = global_size;
+    vm->globals = (StackObject*)ss_malloc(50 * sizeof(StackObject));
+    vm->global_size = 50;
     vm->global_used = 0;
     vm->ret_sp = 0;
     vm->label_addresses = (int*)ss_malloc(500 * sizeof(int));
     vm->label_addr_size = 500;
     vm->label_addr_used = 0;
+    vm->heap_table = (void**)ss_malloc(50 * sizeof(void*));
+    vm->heap_table_size = 50;
+    vm->heap_table_used = 0;
+}
+
+void push_global(VirtualMachine* vm, StackObject object) {
+    if (vm->global_used == vm->global_size) {
+        vm->global_size *= 2;
+        vm->globals = (StackObject*)realloc(vm->globals, vm->global_size * sizeof(StackObject));
+    }
+    vm->globals[vm->global_used++] = object;
+}
+
+void push_heap_object(VirtualMachine* vm, void* mem_block) {
+    if (vm->heap_table_used == vm->heap_table_size) {
+        vm->heap_table_size += 50;
+        vm->heap_table = (void**)realloc(vm->heap_table, vm->heap_table_size * sizeof(void*));
+    }
+    vm->heap_table[vm->heap_table_used++] = mem_block;
 }
 
 void vm_free(VirtualMachine* vm) {
     free_and_null(vm->globals);
     free_and_null(vm->label_addresses);
+    for (size_t i = 0; i < vm->heap_table_used; ++i) {
+        free_and_null(vm->heap_table[i]);
+    }
+    free_and_null(vm->heap_table);
     terminate_stack(&vm->stack);
 }
 
@@ -298,7 +321,7 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             vm->ip++;
             break;
         case STORE:
-            vm->globals[vm->global_used++] = pop_stack(&vm->stack);
+            push_global(vm, pop_stack(&vm->stack));
             vm->ip++;
             break;
         case LOAD:
