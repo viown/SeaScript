@@ -5,4 +5,5 @@ build/
 *.layout
 *.ssb
 .vscode
-.exe
+*.exe
+*.txt
