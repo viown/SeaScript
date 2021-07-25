@@ -1,0 +1,8 @@
+// As of the time this was written, SeaScript cannot directly reference strings like "Hello, World!"
+// So we have to use the global function `to_string` to convert an integer to a string.
+
+global var = to_string(150); // -> "150"
+
+var = 100; // set var, which was previously a string to an integer
+
+print(var); // -> 100

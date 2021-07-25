@@ -1,0 +1,38 @@
+// NOTE: test_add() is a test function which adds up two numbers.
+// This code was written during a time where SeaScript does not support arithmetic operators, or well, any operators. (sucks but hopefully will change soon)
+// But it does support function calls, but you can't define your own functions.
+// Alright, why am I talking too much? The code is below.
+
+global val = 100;
+
+val = test_add(val, 200); // referencing 'val' which is 100.
+
+// val = 300
+
+
+// Since operators are an important feature for a language to have, let's talk about how to implement it.
+//
+// Ok so, first we'd need to be able to parse expressions, expressions are important and are everywhere in a language.
+// They are what's after the variable declaration
+//
+// global a = [expression]
+// They are in function arguments:
+// func([expression], [expression], ...);
+//
+// They are in if/while/for statements:
+// if [expression] {
+// for [expression] in [expression] {
+// while [expression] {
+//
+// So yeah, pretty important.
+// Here is an example of an expression:
+// global expr = 1 + 2 * 3 / 4;
+// While this seems simple enough, and can definitely be implemented with ease, there comes precedence problems.
+// So an easy and lazy solution is just ignore precedence and follow left-to-right operations.
+// So for the expression above, we'd first add 1 + 2 which is 3, then muliply it by 3, then divide the final result by 4.
+// Which gives us 2.25 instead of 2.5 (if we were to follow precedence).
+//
+// A user would be able to force precedence using nested expressions like so:
+// 1 + 2 * (3 / 4)
+// Those parenthesis will be parsed as a separate expression on its own, then the final result will be operated on.
+// Yeah, that works. I'll just do that.

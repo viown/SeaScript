@@ -80,9 +80,14 @@ int visualize_bytecode(char* path) {
         const char* instruction = instruction_to_string(instructions[i].op);
         printf("%s\t", instruction);
         for (int j = 0; j < MAX_ARGS; ++j) {
-            if (instructions[i].args[j] == 0 || get_reader(instructions[i].op)->bytes_to_read == 0)
+            if (get_reader(instructions[i].op)->bytes_to_read == 0)
                 break;
             printf("%lld ", instructions[i].args[j]);
+        }
+        if (instructions[i].op == CALLC) {
+            int func_id = (int)instructions[i].args[0];
+            ss_BaseFunction f = ss_functions[func_id];
+            printf("\t; function: %s", f.name);
         }
         printf("\n");
     }
@@ -156,7 +161,7 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
     for (int i = 0; i < argc; ++i) {
         if (strcmp(argv[i], "--view") == 0)
             flags->is_view = true;
-        else if (!strcmp(argv[i], "--preserve-bytecode"))
+        else if (!strcmp(argv[i], "--preserve"))
             flags->preserve_bytecode = true;
         else if (!strcmp(argv[i], "--visualize-tokens"))
             flags->visualize_tokens = true;
@@ -174,13 +179,22 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
 int vm_test() {
     Instruction instructions[] = {
         {
-            ICONST, {150}
+            ICONST, {250.50}
         },
         {
-            LCONST, {250}
+            STORE, {0}
         },
         {
-            IADD, {}
+            ICONST, {100}
+        },
+        {
+            STORE, {0}
+        },
+        {
+            ICONST, {25}
+        },
+        {
+            LOAD, {0}
         },
         {
             IPRINT, {}

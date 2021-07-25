@@ -38,3 +38,31 @@ inline StackObject* top_stack(Stack* stack) {
 void terminate_stack(Stack* stack) {
     free_and_null(stack->stack);
 }
+
+StackObject create_bool(bool val) {
+    StackObject object;
+    object.object.m_bool = val;
+    object.type = BOOL;
+    return object;
+}
+
+StackObject create_int32(int32_t val) {
+    StackObject object;
+    object.object.m_int32 = val;
+    object.type = INT32;
+    return object;
+}
+
+StackObject create_int64(int64_t val) {
+    StackObject object;
+    object.object.m_int64 = val;
+    object.type = INT64;
+    return object;
+}
+
+StackObject create_string(t_string val) {
+    StackObject object;
+    object.object.m_string = val;
+    object.type = STRING;
+    return object;
+}

@@ -1,0 +1,7 @@
+global a; // uninitialized variable, by default is set to false
+
+print(a); // false
+
+a = 20;
+
+print(a); // 20

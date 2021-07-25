@@ -53,6 +53,14 @@ void push_global(VirtualMachine* vm, StackObject object) {
     vm->globals[vm->global_used++] = object;
 }
 
+void set_global(VirtualMachine* vm, StackObject object, long long int id) {
+    if (id >= vm->global_size) {
+        vm->global_size *= 2;
+        vm->globals = (StackObject*)realloc(vm->globals, vm->global_size * sizeof(StackObject));
+    }
+    vm->globals[id] = object;
+}
+
 void push_heap_object(VirtualMachine* vm, void* mem_block) {
     if (vm->heap_table_used == vm->heap_table_size) {
         vm->heap_table_size += 50;
@@ -155,17 +163,10 @@ bool is_gt(StackObject* a, StackObject* b) {
     compare_objects(a, >, b);
 }
 
-static inline StackObject create_bool(bool n) {
-    StackObject object;
-    object.object.m_bool = n;
-    object.type = BOOL;
-    return object;
-}
-
 void resolve_labels(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
     for (uint64_t i = 0; i < length; ++i) {
         if (instrs[i].op == LBL) {
-            vm->label_addresses[instrs[i].args[0]] = i;
+            vm->label_addresses[(long long int)instrs[i].args[0]] = i;
         }
     }
 }
@@ -184,9 +185,7 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
         case EXIT:
             return cinstr->args[0];
         case LOADBOOL:
-            object.object.m_bool = (bool)cinstr->args[0];
-            object.type = BOOL;
-            push_stack(&vm->stack, object);
+            push_stack(&vm->stack, create_bool((bool)cinstr->args[0]));
             vm->ip++;
             break;
         case ICONST:
@@ -321,7 +320,7 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             vm->ip++;
             break;
         case STORE:
-            push_global(vm, pop_stack(&vm->stack));
+            set_global(vm, pop_stack(&vm->stack), cinstr->args[0]);
             vm->ip++;
             break;
         case LOAD:

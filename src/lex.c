@@ -66,7 +66,7 @@ void append_token(lex_Object* object, Token token) {
 Token create_token(char* value, TokenType type) {
     Token token;
     token.token = type;
-    if (value != NULL ) {
+    if (value != NULL) {
         strcpy(token.value, value);
     } else {
         strcpy(token.value, TOKEN_UNSET);

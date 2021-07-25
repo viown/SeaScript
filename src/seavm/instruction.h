@@ -6,7 +6,7 @@
 
 #define MAX_ARGS 1
 
-typedef long long arg_type;
+typedef long long int arg_type;
 
 typedef struct {
     Opcode op;

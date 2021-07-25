@@ -3,6 +3,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/*
+**  MAJOR TODO:
+**  The lexer desperately needs a rewrite, not because it allocates 1000*1000 bytes of memory of which 97% goes unused (while that is a problem),
+**  it's mainly because I can't read this code anymore and it has become a mess.
+*/
+
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
 
 #define IS_WHITESPACE(x) (x == '\t' || x == ' ')

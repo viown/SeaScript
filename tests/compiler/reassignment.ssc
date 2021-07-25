@@ -1,0 +1,5 @@
+global a = 100;
+
+a = 200; // reassign
+
+print(a);

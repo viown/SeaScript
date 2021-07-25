@@ -43,4 +43,9 @@ StackObject pop_stack(Stack* stack);
 StackObject* top_stack(Stack* stack);
 void terminate_stack(Stack* stack);
 
+StackObject create_bool(bool val);
+StackObject create_int32(int32_t val);
+StackObject create_int64(int64_t val);
+StackObject create_string(t_string val);
+
 #endif // SEAVM_STACK_H

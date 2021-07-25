@@ -68,6 +68,7 @@ typedef enum {
 
 typedef enum {
     l_INTEGER,
+    l_DOUBLE, /* todo */
     l_STRING
 } LiteralType;
 
@@ -96,8 +97,9 @@ typedef struct {
 } ParseObject;
 
 typedef ParseObject ss_Scope;
-typedef ParseObject ss_Precedence;
+typedef ParseObject ss_Precedence; /* TODO: Change to nested expression */
 typedef ParseObject ss_ReturnStatement;
+typedef ParseObject ss_Expression;
 
 typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];
@@ -114,7 +116,7 @@ typedef struct {
 
 typedef struct {
     char variable_name[MAX_IDENTIFIER_SIZE];
-    ParseObject states;
+    ss_Expression states;
     bool is_initialized;
 } ss_Variable;
 
