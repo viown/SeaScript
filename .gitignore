@@ -1,6 +1,5 @@
 build/
 *.o
-*.cbp
 *.sln
 *.depend
 *.layout

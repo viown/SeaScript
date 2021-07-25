@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="SeaScript" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="../build/Debug/SeaScript" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../build/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="test.ssc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="../build/Release/SeaScript" prefix_auto="1" extension_auto="1" />
+				<Option object_output="../build/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="../src/compiler.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/compiler.h" />
+		<Unit filename="../src/debug.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/debug.h" />
+		<Unit filename="../src/lex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/lex.h" />
+		<Unit filename="../src/parser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/parser.h" />
+		<Unit filename="../src/seascript.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/seavm/bytecode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/seavm/bytecode.h" />
+		<Unit filename="../src/seavm/instruction.h" />
+		<Unit filename="../src/seavm/opcodes.h" />
+		<Unit filename="../src/seavm/stack.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/seavm/stack.h" />
+		<Unit filename="../src/seavm/vm.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/seavm/vm.h" />
+		<Unit filename="../src/ssfunctions.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/ssfunctions.h" />
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
