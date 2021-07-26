@@ -3,31 +3,26 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-/*
-**  MAJOR TODO:
-**  The lexer desperately needs a rewrite, not because it allocates 1000*1000 bytes of memory of which 97% goes unused (while that is a problem),
-**  it's mainly because I can't read this code anymore and it has become a mess.
-*/
-
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
 
-#define IS_WHITESPACE(x) (x == '\t' || x == ' ')
-#define IS_END_OF_LINE(x) (x == '\n')
-#define IS_CHAR(x) ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z'))
-#define IS_NUM(x) (x >= '0' && x <= '9')
-#define IS_IDENTIFIER_CHAR(x) (IS_CHAR(x) || x == '_')
-#define IS_DECIMAL_POINT(x) (x == '.')
+#define is_whitespace(x) (x == '\t' || x == ' ')
+#define is_end_of_line(x) (x == '\n')
+#define is_char(x) ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z'))
+#define is_num(x) (x >= '0' && x <= '9')
+#define is_identifier_char(x) (is_char(x) || x == '_')
+#define is_decimal_point(x) (x == '.')
 
-#define IS_TOKEN_SEPARATOR(character) (IS_WHITESPACE(character) || IS_END_OF_LINE(character) || is_operator(character) || is_punctuator(character))
+//#define IS_TOKEN_SEPARATOR(character) (IS_WHITESPACE(character) || IS_END_OF_LINE(character) || is_operator(character) || is_punctuator(character))
 
 #define NEXT_TOKEN(x) (*(x+1))
 #define PREVIOUS_TOKEN(x) (*(x-1))
 
+#define peek(x) NEXT_TOKEN(x)
+
 #define IS_START_TOKEN(token) (token->is_start)
 #define IS_END_TOKEN(token) (token->is_end)
 
-#define MAX_VALUE_SIZE 1000
-#define TOKEN_UNSET ""
+#define IDENTIFIER_LIMIT 85
 
 static const char* const ss_keywords[] = {
     "if", "function", "while", "break",
@@ -36,13 +31,6 @@ static const char* const ss_keywords[] = {
 };
 static const int keyword_count = LEN(ss_keywords);
 
-static const char* const ss_globals[] = {
-    "true", // 1
-    "false", // 0
-    "inf", // (value > inf) will always be false
-    "_debug" // true if running in debug env
-};
-static const int global_count = LEN(ss_globals);
 
 typedef enum {
     IDENTIFIER, /* variable names, function names, etc */
@@ -58,7 +46,7 @@ typedef enum {
 
 typedef struct {
     TokenType token;
-    char value[MAX_VALUE_SIZE];
+    char* value;
 
     /* bools to indicate start/end of token stream */
     bool is_start;
@@ -66,8 +54,10 @@ typedef struct {
 } Token;
 
 typedef struct {
+    char* string_pool;
+    int64_t pool_size;
+    int64_t pool_used;
     char* source;
-    char* current;
     int64_t length;
     Token* tokens;
     int64_t token_size;
@@ -77,5 +67,7 @@ typedef struct {
 void lexObject_init(lex_Object* object, char* source);
 void lex(lex_Object* lexObject);
 void lex_free(lex_Object* lexObject);
+
+char* push_to_pool(lex_Object* object, char* str);
 
 #endif // SS_LEX_H

@@ -176,45 +176,6 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
     }
 }
 
-int vm_test() {
-    Instruction instructions[] = {
-        {
-            ICONST, {250.50}
-        },
-        {
-            STORE, {0}
-        },
-        {
-            ICONST, {100}
-        },
-        {
-            STORE, {0}
-        },
-        {
-            ICONST, {25}
-        },
-        {
-            LOAD, {0}
-        },
-        {
-            IPRINT, {}
-        },
-        {
-            EXIT, {0}
-        },
-    };
-
-    VirtualMachine vm;
-
-    vm_init(&vm, ss_functions);
-
-    //save_to_file(instructions, LEN(instructions), "lol.ssb");
-
-	int ret = vm_execute(&vm, instructions, LEN(instructions));
-	vm_free(&vm);
-	return ret;
-}
-
 int main(int argc, char** argv) {
     CommandLineFlags flags = init_flags();
     read_flags(&flags, argc, argv);

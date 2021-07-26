@@ -44,11 +44,29 @@ bool is_keyword(const char* c) {
 }
 
 
+char* push_to_pool(lex_Object* object, char* str) {
+    if ((object->pool_used + strlen(str)) > object->pool_size) { /* check if the string pool can fit */
+        object->pool_size = (object->pool_used + strlen(str)) * 2;
+        object->string_pool = (char*)realloc(object->string_pool, object->pool_size);
+    }
+    char* begin;
+    for (int64_t i = 0; i < strlen(str); ++i) {
+        object->string_pool[object->pool_used++] = str[i];
+        if (i == 0) {
+            begin = &object->string_pool[object->pool_used - 1];
+        }
+    }
+    object->string_pool[object->pool_used++] = '\0';
+    return begin;
+}
+
 void lexObject_init(lex_Object* object, char* source) {
+    object->string_pool = (char*)ss_malloc(1000 * sizeof(char));
+    object->pool_size = 1000;
+    object->pool_used = 0;
     object->source = source;
-    object->current = object->source;
     object->length = strlen(object->source);
-    object->tokens = (Token*)ss_malloc(1000 * sizeof(Token));
+    object->tokens = (Token*)ss_malloc(250 * sizeof(Token));
     object->token_size = 1000;
     object->token_used = 0;
 }
@@ -58,121 +76,154 @@ void append_token(lex_Object* object, Token token) {
         object->token_size *= 2;
         object->tokens = (Token*)realloc(object->tokens, object->token_size * sizeof(Token));
     }
-    token.is_start = false;
-    token.is_end = false;
     object->tokens[object->token_used++] = token;
 }
 
 Token create_token(char* value, TokenType type) {
     Token token;
+    token.value = value;
     token.token = type;
-    if (value != NULL) {
-        strcpy(token.value, value);
-    } else {
-        strcpy(token.value, TOKEN_UNSET);
-    }
+    token.is_start = false;
+    token.is_end = false;
     return token;
 }
 
-void lex_comment(char* current_token, lex_Object** plexObject) {
-    int index = 0;
-    lex_Object* lexObject = *plexObject;
-    while (NEXT_TOKEN(lexObject->current) != '\0' && !IS_END_OF_LINE(NEXT_TOKEN(lexObject->current))) {
-        current_token[index++] = *lexObject->current;
-        lexObject->current++;
+char* scan_text(lex_Object* object, char* current) {
+    char source[IDENTIFIER_LIMIT];
+    int used = 0;
+    while (is_identifier_char(*current)) {
+        source[used++] = *current;
+        current++;
     }
-    append_token(lexObject, create_token(current_token, COMMENT));
+    source[used++] = '\0';
+    Token token;
+    token.value = push_to_pool(object, source);
+    token.token = is_keyword(token.value) ? KEYWORD : IDENTIFIER;
+    token.is_start = false;
+    token.is_end = false;
+    append_token(object, token);
+    return current;
 }
 
-void lex_string(char* current_token, lex_Object** plexObject) {
-    int index = 0;
-    lex_Object* lexObject = *plexObject;
-    char format_used = *lexObject->current;
-    lexObject->current++;
-    while (*lexObject->current != format_used) {
-        /* TODO: Escape sequences should be translated here */
-        current_token[index++] = *lexObject->current;
-        lexObject->current++;
+char* scan_operator(lex_Object* object, char* current) {
+    char token_operator[3];
+    int used = 0;
+    switch (*current) {
+    case '<':
+    case '>':
+    case '=':
+        token_operator[used++] = *current++;
+        if (*current == '=') {
+            token_operator[used++] = '=';
+            current++;
+        }
+        break;
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+    case ';':
+    case ',':
+        token_operator[used++] = *current++;
+        break;
+    default:
+        ss_throw("Invalid operator %c\n", *current);
     }
-    append_token(lexObject, create_token(current_token, SLITERAL));
+    token_operator[used++] = '\0';
+    append_token(object, create_token(push_to_pool(object, token_operator), OPERATOR));
+    return current;
 }
 
-void lex_num(char* current_token, int* index, lex_Object** plexObject) {
-    lex_Object* lexObject = *plexObject;
-    current_token[(*index)++] = *lexObject->current;
-    if (IS_DECIMAL_POINT(*lexObject->current) && !IS_NUM(*(lexObject->current + 1))) { /* 1. -> 1.0 */
-        current_token[(*index)++] = '0';
+char* scan_int(lex_Object* object, char* current) {
+    char token_integer[22];
+    int used = 0;
+    while (is_num(*current) || is_decimal_point(*current)) {
+        token_integer[used++] = *current++;
     }
+    token_integer[used++] = '\0';
+    append_token(object, create_token(push_to_pool(object, token_integer), ILITERAL));
+    return current;
 }
+
+char* scan_string(lex_Object* object, char* current, char string_end) {
+    int size = 85;
+    char* token_string = malloc(size);
+    int used = 0;
+    while (*current != string_end) {
+        if (*current == '\\') {
+            switch (*current++) {
+            case 'n':
+                token_string[used++] = '\n';
+                break;
+            case 't':
+                token_string[used++] = '\t';
+                break;
+            case '\\':
+                token_string[used++] = '\\';
+                break;
+            case '"':
+                token_string[used++] = '"';
+                break;
+            case '\'':
+                token_string[used++] = '\'';
+                break;
+            }
+            current++;
+        } else {
+            token_string[used++] = *current++;
+        }
+        if ((used + 1) == size) {
+            size *= 2;
+            token_string = realloc(token_string, size);
+        }
+    }
+    token_string[used++] = '\0';
+    append_token(object, create_token(push_to_pool(object, token_string), SLITERAL));
+    free(token_string);
+    return ++current;
+}
+
+char* skip_to_eol(char* current) {
+    while (*current != '\n' && *current != '\0') {
+        current++;
+    }
+    return current;
+}
+
 
 void lex(lex_Object* lexObject) {
-    char current_token[MAX_VALUE_SIZE];
-    memset(current_token, 0, sizeof(current_token));
-    int index = 0;
-    bool is_collecting = false;
-    bool is_collecting_num = false;
-    while (*lexObject->current != '\0') {
-        if (*lexObject->current == '/' && NEXT_TOKEN(lexObject->current) == '/') {
-            lex_comment(current_token, &lexObject);
-            memset(current_token, 0, sizeof(current_token));
-        } else if (*lexObject->current == '"' || *lexObject->current == '\'') {
-            lex_string(current_token, &lexObject);
-            memset(current_token, 0, sizeof(current_token));
-        } else if (IS_TOKEN_SEPARATOR(*lexObject->current)) {
-            if (is_collecting) {
-                is_collecting = false;
-                Token token = create_token(current_token, is_keyword(current_token) ? KEYWORD : IDENTIFIER);
-                append_token(lexObject, token);
-                index = 0;
-                memset(current_token, 0, sizeof(current_token));
-            } else if (is_collecting_num) {
-                is_collecting_num = false;
-                append_token(lexObject, create_token(current_token, ILITERAL));
-                index = 0;
-                memset(current_token, 0, sizeof(current_token));
-            }
-            if (IS_END_OF_LINE(*lexObject->current)) {
-                append_token(lexObject, create_token(NULL, NEWLINE));
-            } else if (is_operator(*lexObject->current) || is_punctuator(*lexObject->current)) {
-                Token op;
-                memset(op.value, 0, sizeof(op.value));
-                op.token = is_operator(*lexObject->current) ? OPERATOR : PUNCTUATOR;
-                op.value[0] = *lexObject->current;
-                if (NEXT_TOKEN(lexObject->current) == '=') {
-                    op.value[1] = '=';
-                    lexObject->current++;
-                }
-                append_token(lexObject, op);
-            }
-        } else if (IS_IDENTIFIER_CHAR(*lexObject->current)) {
-            if (!is_collecting)
-                is_collecting = true;
-            current_token[index++] = *lexObject->current;
-        } else if (IS_NUM(*lexObject->current) || IS_DECIMAL_POINT(*lexObject->current)) {
-            if (is_collecting) {
-                if (*lexObject->current == '.') {
-                    is_collecting = false;
-                    Token token = create_token(current_token, is_keyword(current_token) ? KEYWORD : IDENTIFIER);
-                    append_token(lexObject, token);
-                    index = 0;
-                    memset(current_token, 0, sizeof(current_token));
-                    append_token(lexObject, create_token(".", OPERATOR));
-                } else {
-                    current_token[index++] = *lexObject->current;
-                }
-            } else {
-                if (!is_collecting_num) {
-                    is_collecting_num = true;
-                }
-                lex_num(current_token, &index, &lexObject);
-            }
+    char* current = lexObject->source;
+    while (*current != '\0') {
+        if (*current == '/' && peek(current) == '/') {
+            current = skip_to_eol(current);
+        } else if (is_identifier_char(*current)) {
+            current = scan_text(lexObject, current);
+        } else if (is_operator(*current)) {
+            current = scan_operator(lexObject, current);
+        } else if (is_punctuator(*current)) {
+            char punctuator[2];
+            punctuator[0] = *current++;
+            punctuator[1] = '\0';
+            append_token(lexObject, create_token(push_to_pool(lexObject, punctuator), PUNCTUATOR));
+        } else if (is_num(*current)) {
+            current = scan_int(lexObject, current);
+        } else if (*current == '"' || *current == '\'') {
+            current++;
+            current = scan_string(lexObject, current, *(current - 1));
+        } else if (*current == '\n') {
+            append_token(lexObject, create_token(push_to_pool(lexObject, "NEWLINE"), NEWLINE));
+            current++;
+        } else {
+            current++;
         }
-        lexObject->current++;
     }
-    lexObject->tokens[0].is_start = true;
-    lexObject->tokens[lexObject->token_used - 1].is_end = true;
+    if (lexObject->token_used != 0) {
+        lexObject->tokens[0].is_start = true;
+        lexObject->tokens[lexObject->token_used - 1].is_end = true;
+    }
 }
 
 void lex_free(lex_Object* lexObject) {
     free_and_null(lexObject->tokens);
+    free_and_null(lexObject->string_pool);
 }
