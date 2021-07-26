@@ -12,8 +12,6 @@
 #define is_identifier_char(x) (is_char(x) || x == '_')
 #define is_decimal_point(x) (x == '.')
 
-//#define IS_TOKEN_SEPARATOR(character) (IS_WHITESPACE(character) || IS_END_OF_LINE(character) || is_operator(character) || is_punctuator(character))
-
 #define NEXT_TOKEN(x) (*(x+1))
 #define PREVIOUS_TOKEN(x) (*(x-1))
 

@@ -11,7 +11,7 @@
 				<Option object_output="../build/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="test.ssc" />
+				<Option parameters="C:\Users\khali\Documents\Projects\SeaScript\test.ssc --visualize-tokens" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>

@@ -5,6 +5,7 @@
 
 bool is_operator(char c) {
     switch (c) {
+    case '.':
     case ',':
     case '>':
     case '<':
@@ -45,7 +46,7 @@ bool is_keyword(const char* c) {
 
 
 char* push_to_pool(lex_Object* object, char* str) {
-    if ((object->pool_used + strlen(str)) > object->pool_size) { /* check if the string pool can fit */
+    if ((object->pool_used + (strlen(str)+ 1)) > object->pool_size) {
         object->pool_size = (object->pool_used + strlen(str)) * 2;
         object->string_pool = (char*)realloc(object->string_pool, object->pool_size);
     }
@@ -67,7 +68,7 @@ void lexObject_init(lex_Object* object, char* source) {
     object->source = source;
     object->length = strlen(object->source);
     object->tokens = (Token*)ss_malloc(250 * sizeof(Token));
-    object->token_size = 1000;
+    object->token_size = 250;
     object->token_used = 0;
 }
 
@@ -123,6 +124,7 @@ char* scan_operator(lex_Object* object, char* current) {
     case '*':
     case '/':
     case ';':
+    case '.':
     case ',':
         token_operator[used++] = *current++;
         break;
