@@ -45,26 +45,13 @@ bool is_keyword(const char* c) {
 }
 
 
-char* push_to_pool(lex_Object* object, char* str) {
-    if ((object->pool_used + (strlen(str)+ 1)) > object->pool_size) {
-        object->pool_size = (object->pool_used + strlen(str)) * 2;
-        object->string_pool = (char*)realloc(object->string_pool, object->pool_size);
-    }
-    char* begin;
-    for (int64_t i = 0; i < strlen(str); ++i) {
-        object->string_pool[object->pool_used++] = str[i];
-        if (i == 0) {
-            begin = &object->string_pool[object->pool_used - 1];
-        }
-    }
-    object->string_pool[object->pool_used++] = '\0';
-    return begin;
+char* create_value(char* str) {
+    char* m_str = malloc(strlen(str) + 1);
+    strcpy(m_str, str);
+    return m_str;
 }
 
 void lexObject_init(lex_Object* object, char* source) {
-    object->string_pool = (char*)ss_malloc(1000 * sizeof(char));
-    object->pool_size = 1000;
-    object->pool_used = 0;
     object->source = source;
     object->length = strlen(object->source);
     object->tokens = (Token*)ss_malloc(250 * sizeof(Token));
@@ -98,7 +85,7 @@ char* scan_text(lex_Object* object, char* current) {
     }
     source[used++] = '\0';
     Token token;
-    token.value = push_to_pool(object, source);
+    token.value = create_value(source);
     token.token = is_keyword(token.value) ? KEYWORD : IDENTIFIER;
     token.is_start = false;
     token.is_end = false;
@@ -132,7 +119,7 @@ char* scan_operator(lex_Object* object, char* current) {
         ss_throw("Invalid operator %c\n", *current);
     }
     token_operator[used++] = '\0';
-    append_token(object, create_token(push_to_pool(object, token_operator), OPERATOR));
+    append_token(object, create_token(create_value(token_operator), OPERATOR));
     return current;
 }
 
@@ -143,7 +130,7 @@ char* scan_int(lex_Object* object, char* current) {
         token_integer[used++] = *current++;
     }
     token_integer[used++] = '\0';
-    append_token(object, create_token(push_to_pool(object, token_integer), ILITERAL));
+    append_token(object, create_token(create_value(token_integer), ILITERAL));
     return current;
 }
 
@@ -180,7 +167,7 @@ char* scan_string(lex_Object* object, char* current, char string_end) {
         }
     }
     token_string[used++] = '\0';
-    append_token(object, create_token(push_to_pool(object, token_string), SLITERAL));
+    append_token(object, create_token(create_value(token_string), SLITERAL));
     free(token_string);
     return ++current;
 }
@@ -206,14 +193,14 @@ void lex(lex_Object* lexObject) {
             char punctuator[2];
             punctuator[0] = *current++;
             punctuator[1] = '\0';
-            append_token(lexObject, create_token(push_to_pool(lexObject, punctuator), PUNCTUATOR));
+            append_token(lexObject, create_token(create_value(punctuator), PUNCTUATOR));
         } else if (is_num(*current)) {
             current = scan_int(lexObject, current);
         } else if (*current == '"' || *current == '\'') {
             current++;
             current = scan_string(lexObject, current, *(current - 1));
         } else if (*current == '\n') {
-            append_token(lexObject, create_token(push_to_pool(lexObject, "NEWLINE"), NEWLINE));
+            append_token(lexObject, create_token(create_value(""), NEWLINE));
             current++;
         } else {
             current++;
@@ -226,6 +213,8 @@ void lex(lex_Object* lexObject) {
 }
 
 void lex_free(lex_Object* lexObject) {
+    for (int64_t i = 0; i < lexObject->token_used; ++i) {
+        free(lexObject->tokens[i].value);
+    }
     free_and_null(lexObject->tokens);
-    free_and_null(lexObject->string_pool);
 }

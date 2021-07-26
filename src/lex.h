@@ -52,9 +52,6 @@ typedef struct {
 } Token;
 
 typedef struct {
-    char* string_pool;
-    int64_t pool_size;
-    int64_t pool_used;
     char* source;
     int64_t length;
     Token* tokens;
