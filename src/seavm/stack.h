@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MAX_STACK_SIZE 4080
-
 typedef double stack_type;
 
 typedef char* t_string;

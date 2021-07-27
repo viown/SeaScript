@@ -48,8 +48,8 @@ void save_to_file(Instruction* instructions, size_t length, const char* path) {
 
 void push_holder_instruction(InstructionHolder* holder, Instruction instruction) {
     if (holder->length == holder->size) {
-        holder->size += 25;
-        holder->instructions = realloc(holder->instructions, holder->size);
+        holder->size *= 2;
+        holder->instructions = realloc(holder->instructions, holder->size * sizeof(Instruction));
     }
     holder->instructions[holder->length++] = instruction;
 }
