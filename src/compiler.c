@@ -76,10 +76,42 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
     }
 }
 
-InstructionMap push_expression(ReferenceTable* reftable, ss_Expression* expression) {
-    InstructionMap map;
+Opcode get_mathop_from_symbol(char symbol) {
+    switch (symbol) {
+    case '+':
+        return IADD;
+    case '-':
+        return ISUB;
+    case '*':
+        return IMUL;
+    case '/':
+        return IDIV;
+    default:
+        return -1;
+    }
+}
 
-    return map;
+Opcode get_comparisonop_from_symbol(char* symbol) {
+    if (is_eq(symbol, GREATER_THAN))
+        return GT;
+    else if (is_eq(symbol, LESS_THAN))
+        return LT;
+    else if (is_eq(symbol, EQUAL_TO))
+        return EQ;
+    return -1;
+}
+
+void push_expression(ReferenceTable* reftable, ss_Expression* expression) {
+    if (expression->length == 3 && expression->states[1].type == s_OPERATOR) {
+        ss_Operator op = get_operator(expression->states[1].state);
+        push_singular_state(reftable, &expression->states[0]);
+        push_singular_state(reftable, &expression->states[2]);
+        if (op.type == MATH) {
+            push_argless_instruction(reftable->map, get_mathop_from_symbol(((char*)op.op)[0]));
+        } else if (op.type == COMPARISON) {
+            push_argless_instruction(reftable->map, get_comparisonop_from_symbol((char*)op.op));
+        }
+    }
 }
 
 /* Pushes a variable onto the instruction map and returns its global id */
@@ -90,7 +122,7 @@ int push_variable(ReferenceTable* reftable, State* state) {
         if (variable.states.length == 1) {
             push_singular_state(reftable, &variable.states.states[0]);
         } else {
-            /* push_expression(reftable, &variable.states) */
+            push_expression(reftable, &variable.states);
         }
     } else {
         push_instruction1(reftable->map, LOADBOOL, 0);
@@ -123,7 +155,7 @@ void push_function_call(ReferenceTable* reftable, State* state) {
         if (fcall.arguments[i].length == 1) {
             push_singular_state(reftable, &fcall.arguments[i].states[0]);
         } else {
-            /* todo */
+            push_expression(reftable, &fcall.arguments[i]);
         }
     }
     int global_func = lookup_global_function(fcall.function_name);

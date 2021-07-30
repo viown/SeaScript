@@ -226,8 +226,8 @@ void parse_identifier(State* state, Token* token) {
 void parse_operator(State* state, Token* token) {
     if (is_math_op(token->value[0])) {
         ss_Operator* op = (ss_Operator*)ss_malloc(sizeof(ss_Operator));
-        Operator* math_operator = (Operator*)ss_malloc(sizeof(Operator));
-        *math_operator = token->value[0];
+        Operator* math_operator = (char*)ss_malloc(3);
+        strcpy(math_operator, token->value);
         op->type = MATH;
         op->op = math_operator;
         state->state = op;
@@ -235,8 +235,8 @@ void parse_operator(State* state, Token* token) {
     } else if (is_comparison_op(token->value[0])) {
         /* incomplete */
         ss_Operator* op = (ss_Operator*)ss_malloc(sizeof(ss_Operator));
-        Operator* comparison_op = (Operator*)ss_malloc(sizeof(Operator));
-        *comparison_op = token->value[0];
+        Operator* comparison_op = (char*)ss_malloc(3);
+        strcpy(comparison_op, token->value);
         op->type = COMPARISON;
         op->op = comparison_op;
         state->state = op;

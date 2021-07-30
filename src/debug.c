@@ -52,8 +52,8 @@ void print_state(State st) {
         printf("%s", get_identifier(st.state).identifier);
     } else if (st.type == s_OPERATOR) {
         ss_Operator s_OP = get_operator(st.state);
-        Operator op = *(Operator*)s_OP.op;
-        printf("%c", op);
+        char* op = (char*)s_OP.op;
+        printf("%s", op);
     } else if (st.type == s_LITERAL) {
         ss_Literal literal = get_literal(st.state);
         if (literal.type == l_INTEGER) {
