@@ -14,7 +14,8 @@ SOURCES = \
 	src/ssfunctions.c \
 	src/seavm/bytecode.c \
 	src/seavm/stack.c \
-	src/seavm/vm.c 
+	src/seavm/vm.c  \
+	src/shell/shell.c
 	
 HEADERS = \
 	src/compiler.h \
@@ -26,13 +27,19 @@ HEADERS = \
 	src/seavm/instruction.h \
 	src/seavm/opcodes.h \
 	src/seavm/stack.h \
-	src/seavm/vm.h
+	src/seavm/vm.h \
+	src/shell/shell.h
+	
+INCLUDES = \
+	-Isrc \
+	-Isrc/seavm \
+	-Isrc/shell
 	
 $(OUTPUT): $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(SOURCES) -o $(OUTPUT) -s
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $(OUTPUT) -s
 	
 debug: $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(SOURCES) -o $(OUTPUT) -g
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $(OUTPUT) -g
 	
 debug_mem: $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(SOURCES) -o $(OUTPUT) -fsanitize=address -static-libasan -g
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $(OUTPUT) -fsanitize=address -static-libasan -g

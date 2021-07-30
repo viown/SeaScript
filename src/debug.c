@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "./compiler.h" // for IS_INT
-#include "./debug.h"
+#include "compiler.h" // for IS_INT
+#include "debug.h"
 
 void print_state(State st);
 

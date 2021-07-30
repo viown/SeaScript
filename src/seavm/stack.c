@@ -1,5 +1,5 @@
-#include "../debug.h"
-#include "./stack.h"
+#include "debug.h"
+#include "stack.h"
 #include <stdbool.h>
 #include <stdlib.h>
 

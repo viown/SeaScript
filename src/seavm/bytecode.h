@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
-#include "./opcodes.h"
-#include "./instruction.h"
-#include "./stack.h"
+#include "opcodes.h"
+#include "instruction.h"
+#include "stack.h"
 
 
 typedef struct {

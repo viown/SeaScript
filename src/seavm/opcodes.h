@@ -1,6 +1,6 @@
 #ifndef SEAVM_OPCODES_H
 #define SEAVM_OPCODES_H
-#include "./stack.h"
+#include "stack.h"
 
 typedef unsigned char Opcode;
 

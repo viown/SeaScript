@@ -1,8 +1,8 @@
 #ifndef SEAVM_INSTRUCTION_H
 #define SEAVM_INSTRUCTION_H
 #include <stdlib.h>
-#include "../debug.h"
-#include "./opcodes.h"
+#include "debug.h"
+#include "opcodes.h"
 
 #define MAX_ARGS 1
 

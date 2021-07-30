@@ -4,8 +4,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
-#include "./seavm/stack.h"
-#include "./ssfunctions.h"
+#include "stack.h"
+#include "ssfunctions.h"
 
 #define return_null(stack) \
     push_stack(stack, create_bool(0));

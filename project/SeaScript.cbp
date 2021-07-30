@@ -11,9 +11,10 @@
 				<Option object_output="../build/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="C:\Users\khali\Documents\Projects\SeaScript\test.ssc --visualize-tokens" />
 				<Compiler>
+					<Add option="-std=c99 -I../src -I../src/seavm -I../src/shell" />
 					<Add option="-g" />
+					<Add option="-std=c99 -Isrc -Isrc/seavm" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
@@ -23,6 +24,8 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add option="-std=c99 -I../src -I../src/seavm -I../src/shell" />
+					<Add option="-std=c99 -Isrc -Isrc/seavm" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -31,6 +34,8 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-std=c99 -I../src -I../src/seavm -I../src/shell" />
+			<Add option="-std=c99 -I../src -I../src/seavm" />
 		</Compiler>
 		<Unit filename="../src/compiler.c">
 			<Option compilerVar="CC" />
@@ -65,6 +70,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/seavm/vm.h" />
+		<Unit filename="../src/shell/shell.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../src/shell/shell.h" />
 		<Unit filename="../src/ssfunctions.c">
 			<Option compilerVar="CC" />
 		</Unit>

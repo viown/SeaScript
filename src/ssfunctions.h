@@ -1,7 +1,7 @@
 #ifndef SS_FUNCTIONS_H
 #define SS_FUNCTIONS_H
-#include "./seavm/stack.h"
-#include "./seavm/vm.h"
+#include "seavm/stack.h"
+#include "seavm/vm.h"
 
 void ss_f_print(VirtualMachine* vm);
 void ss_f_input(VirtualMachine* vm);

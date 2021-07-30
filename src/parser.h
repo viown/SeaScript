@@ -1,7 +1,7 @@
 #ifndef SS_PARSER_H
 #define SS_PARSER_H
 #include <stddef.h>
-#include "./lex.h"
+#include "lex.h"
 
 /* symbols */
 #define SCOPE_OPEN "{"
@@ -29,7 +29,7 @@
 
 #define is_eq(x, y) (strcmp(x, y) == 0)
 #define is_math_op(x) (x == '+' || x == '-' || x == '*' || x == '/')
-#define is_comparison_op(x) (x == '>' || x == '<')
+#define is_comparison_op(x) (is_eq(x, GREATER_THAN) || is_eq(x, LESS_THAN) || is_eq(x, EQUAL_TO))
 #define is_literal(x) (x == ILITERAL || x == SLITERAL)
 
 /* dereference macros */

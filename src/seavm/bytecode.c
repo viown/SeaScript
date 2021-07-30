@@ -1,6 +1,6 @@
-#include "../debug.h"
-#include "./vm.h"
-#include "./bytecode.h"
+#include "debug.h"
+#include "vm.h"
+#include "bytecode.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
-#include "./debug.h"
-#include "./lex.h"
+#include "debug.h"
+#include "lex.h"
 
 bool is_operator(char c) {
     switch (c) {

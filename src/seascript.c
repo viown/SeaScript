@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "./lex.h"
-#include "./parser.h"
-#include "./seavm/bytecode.h"
-#include "./seavm/vm.h"
-#include "./debug.h"
-#include "./ssfunctions.h"
-#include "./compiler.h"
+#include "shell.h"
+#include "lex.h"
+#include "parser.h"
+#include "bytecode.h"
+#include "vm.h"
+#include "debug.h"
+#include "ssfunctions.h"
+#include "compiler.h"
 
 #define VERSION "1.0.0"
 
@@ -136,7 +137,8 @@ int compile_and_run(CommandLineFlags flags, char* path) {
         vm_free(&virtual_machine);
         return 0;
     }
-    ReferenceTable reftable = compile(&s);
+    ReferenceTable reftable = init_reftable();
+    compile(&s, &reftable);
     if (flags.preserve_bytecode) {
         char* bytecode_path = path;
         bytecode_path[strlen(bytecode_path)-1] = 'b';
@@ -176,6 +178,7 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
     }
 }
 
+
 int main(int argc, char** argv) {
     CommandLineFlags flags = init_flags();
     read_flags(&flags, argc, argv);
@@ -198,6 +201,8 @@ int main(int argc, char** argv) {
                 ss_throw("Bad Argument: Invalid extension '%s'", extension);
             }
         }
+    } else {
+        return run_shell();
     }
     return 0;
 }

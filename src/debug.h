@@ -1,6 +1,6 @@
 #ifndef SS_DEBUG_H
-#include "./lex.h"
-#include "./parser.h"
+#include "lex.h"
+#include "parser.h"
 
 #define ss_assert(condition) if (!(condition)) {ss_throw("%s:%d: %s: Assertion error '%s'", __FILE__, __LINE__, __func__, #condition);}
 #define test_call(condition, func) if (condition) {func;}

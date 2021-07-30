@@ -3,9 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "./parser.h"
-#include "./lex.h"
-#include "./debug.h"
+#include "parser.h"
+#include "lex.h"
+#include "debug.h"
 
 static size_t current_line = 1;
 
@@ -232,7 +232,7 @@ void parse_operator(State* state, Token* token) {
         op->op = math_operator;
         state->state = op;
         state->type = s_OPERATOR;
-    } else if (is_comparison_op(token->value[0])) {
+    } else if (is_comparison_op(token->value)) {
         /* incomplete */
         ss_Operator* op = (ss_Operator*)ss_malloc(sizeof(ss_Operator));
         Operator* comparison_op = (char*)ss_malloc(3);
@@ -354,9 +354,6 @@ State parse_variable_reassignment(Token* current_token, State* states, size_t le
     Token* variable_name = current_token;
     if (!IS_START_TOKEN(variable_name) && PREVIOUS_TOKEN(variable_name).token == IDENTIFIER) {
         ss_throw("line %lu: unknown keyword '%s'\n", current_line, PREVIOUS_TOKEN(variable_name).value);
-    } else if (!variable_declared(variable_name, states, length)) {
-        /* reassignment attempt to a variable that doesn't exist */
-        ss_throw("line %lu: variable undeclared '%s'\n", current_line, variable_name->value);
     }
     ++current_token;
     Token* value = ++current_token;

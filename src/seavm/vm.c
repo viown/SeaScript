@@ -1,5 +1,5 @@
-#include "../debug.h"
-#include "./vm.h"
+#include "debug.h"
+#include "vm.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -172,6 +172,7 @@ void resolve_labels(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
 }
 
 int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
+    vm->ip = 0; // Reset ip
     Instruction* cinstr;
 
     StackObject* top;
@@ -183,6 +184,7 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
 
         switch (cinstr->op) {
         case EXIT:
+            vm->ip = 0;
             return cinstr->args[0];
         case LOADBOOL:
             push_stack(&vm->stack, create_bool((bool)cinstr->args[0]));
@@ -370,6 +372,7 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             return VM_INVALID_INSTRUCTION;
         }
     }
+    vm->ip = 0;
     return VM_EXIT_FAILURE; // Should exit properly through (EXIT 0)
 }
 

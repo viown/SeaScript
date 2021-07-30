@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "./stack.h"
-#include "./instruction.h"
+#include "stack.h"
+#include "instruction.h"
 
 typedef enum {
     VM_EXIT_SUCCESS = 0,
