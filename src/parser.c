@@ -183,7 +183,6 @@ lex_Object collect_tokens_from_scope(Token** ptoken) {
 
 State parse_function_definition(Token** current_token) {
     /* TODO: Implement lambda support 'function foo(a, b) = a + b;' */
-    /* TODO: Free all this allocated mess + (also the string allocated for literals) */
     ss_Function* function = (ss_Function*)ss_malloc(sizeof(ss_Function));
     Token* function_name = ++(*current_token);
     ++(*current_token); /* move to '(' */
@@ -279,17 +278,17 @@ State parse_value(Token* token) {
     } else if (token->token == OPERATOR) {
         parse_operator(&state, token);
     } else {
-        ss_unreachable("Unidentified token passed to parse_value: %d", token->token);
+        ss_unreachable("Unidentified token passed to parse_value: %s", token->value);
     }
     return state;
 }
 
 /* reads the tokens until an ';' is encountered */
-ParseObject parse_statement(Token* token) {
+ParseObject parse_statement(Token* token, const char* end) {
     ParseObject object;
     State* states = (State*)ss_malloc(255 * sizeof(State));
     int used = 0;
-    while (strcmp(token->value, EOS) != 0) {
+    while (strcmp(token->value, end) != 0 && !token->is_end) {
         states[used++] = parse_value(token);
         if (is_function_call(token)) {
             skip_to_end_call(&token);
@@ -297,9 +296,8 @@ ParseObject parse_statement(Token* token) {
             skip_to_end(&token, INDEX_CLOSE);
         }
         token++;
-        if (token->token == NEWLINE || PREVIOUS_TOKEN(token).is_end) {
-            /* statement does not end with an EOS */
-            ss_throw("line %lu: expected '%s' after '%s'", current_line, EOS, PREVIOUS_TOKEN(token).value);
+        while (token->token == NEWLINE) {
+            token++;
         }
     }
     object.states = states;
@@ -341,7 +339,7 @@ State parse_variable_declaration(Token* current_token, State* states, size_t len
     } else {
         ++current_token; /* skip assignment operator */
         Token* value = ++current_token; /* pointer to first token */
-        ParseObject var_state = parse_statement(value);
+        ParseObject var_state = parse_statement(value, EOS);
         ss_Variable* variable = create_variable(variable_name->value, var_state);
 
         variable_state.state = variable;
@@ -357,7 +355,7 @@ State parse_variable_reassignment(Token* current_token, State* states, size_t le
     }
     ++current_token;
     Token* value = ++current_token;
-    ParseObject var_state = parse_statement(value);
+    ParseObject var_state = parse_statement(value, EOS);
     ss_Reassignment* reassignment = create_reassignment(variable_name->value, var_state);
 
     State reassignment_state = {reassignment, s_REASSIGN};
@@ -397,9 +395,17 @@ ParseObject parse(lex_Object object) {
                 states[length++] = parse_function_definition(&current_token);
             } else if (is_keyword(current_token, "return")) {
                 ss_ReturnStatement* return_statement = (ss_ReturnStatement*)ss_malloc(sizeof(ss_ReturnStatement));
-                ParseObject statement = parse_statement(current_token+1);
+                ParseObject statement = parse_statement(current_token+1, EOS);
                 *return_statement = (ss_ReturnStatement)statement;
                 State state = {return_statement, s_RETURN};
+                states[length++] = state;
+            } else if (is_keyword(current_token, "if")) {
+                ss_IfStatement* if_statement = (ss_IfStatement*)ss_malloc(sizeof(ss_ReturnStatement));
+                if_statement->condition = parse_statement(++current_token, "{");
+                skip_to_end(&current_token, "{");
+                lex_Object data = collect_tokens_from_scope(&current_token);
+                if_statement->scope = parse(data);
+                State state = {if_statement, s_IFSTATEMENT};
                 states[length++] = state;
             }
         } else if (current_token->token == IDENTIFIER) {

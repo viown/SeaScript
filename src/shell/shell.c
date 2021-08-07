@@ -47,6 +47,9 @@ char* read_line() {
 
 void terminate_shell(ShellEnvironment* env) {
     env->shell_active = false;
+    for (int i = 0; i < env->parse_objects_length; ++i) {
+        free_ParseObject(&env->parse_objects[i]);
+    }
     reftable_free(&env->reftable);
     free_and_null(env->parse_objects);
     free_and_null(env);
@@ -101,10 +104,6 @@ int run_shell() {
         free(input);
     }
     vm_free(&vm);
-    for (int i = 0; i < environment->parse_objects_length; ++i) {
-        free_ParseObject(&environment->parse_objects[i]);
-    }
     terminate_shell(environment);
-    printf("Successfully exited\n");
     return 0;
 }

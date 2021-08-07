@@ -79,7 +79,7 @@ int visualize_bytecode(char* path) {
             printf("\n");
         }
         const char* instruction = instruction_to_string(instructions[i].op);
-        printf("%s\t", instruction);
+        printf("[%d]\t%s\t", i, instruction);
         for (int j = 0; j < MAX_ARGS; ++j) {
             if (get_reader(instructions[i].op)->bytes_to_read == 0)
                 break;

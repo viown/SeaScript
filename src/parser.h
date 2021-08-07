@@ -42,6 +42,7 @@
 #define get_index(state) (*(ss_IndexOperator*)state)
 #define get_function(state) (*(ss_Function*)state)
 #define get_return(state) (*(ss_ReturnStatement*)state)
+#define get_ifstatement(state) (*(ss_IfStatement*)state)
 
 #define load_literal(literal) (*(double*)literal.value)
 
@@ -58,7 +59,8 @@ typedef enum {
     s_OPERATOR,
     s_INDEX,
     s_IDENTIFIER,
-    s_RETURN
+    s_RETURN,
+    s_IFSTATEMENT
 } StateType;
 
 typedef enum {
@@ -88,7 +90,7 @@ typedef struct {
 
 typedef struct {
     ss_Identifier* arguments;
-    int length;
+    size_t length;
 } ArgumentCollection;
 
 typedef struct {
@@ -100,6 +102,11 @@ typedef ParseObject ss_Scope;
 typedef ParseObject ss_Precedence; /* TODO: Change to nested expression */
 typedef ParseObject ss_ReturnStatement;
 typedef ParseObject ss_Expression;
+
+typedef struct {
+    ss_Expression condition;
+    ParseObject scope;
+} ss_IfStatement;
 
 typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];

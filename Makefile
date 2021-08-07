@@ -2,7 +2,7 @@ IGNORED_WARNINGS = \
 	-Wno-unused-result
 
 CC = gcc
-CFLAGS = $(IGNORED_WARNINGS) -O2 -std=c99
+CFLAGS = $(IGNORED_WARNINGS) -Os -std=c99
 OUTPUT = seascript.exe
 
 SOURCES = \

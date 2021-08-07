@@ -83,7 +83,12 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
             if (is_global(identifier)) {
                 push_globalc(reftable->map, identifier);
             } else {
-                push_instruction1(reftable->map, LOAD, get_reference_by_name(identifier, reftable->variable_references, reftable->var_reference_length));
+                int ref = get_reference_by_name(identifier, reftable->variable_references, reftable->var_reference_length);
+                if (ref != -1) {
+                    push_instruction1(reftable->map, LOAD, ref);
+                } else {
+                    ss_throw("Undefined reference to '%s'\n", identifier);
+                }
             }
             break;
         }
@@ -166,7 +171,6 @@ void push_reassignment(ReferenceTable* reftable, State* state) {
     }
 }
 
-
 void push_function_call(ReferenceTable* reftable, State* state) {
     ss_assert(state->type == s_FUNCTIONCALL);
     ss_FunctionCall fcall = get_functioncall(state->state);
@@ -183,6 +187,11 @@ void push_function_call(ReferenceTable* reftable, State* state) {
     } else {
         /* todo */
     }
+}
+
+void push_function(ReferenceTable* reftable, State* state) {
+    ss_Function function = get_function(state->state);
+
 }
 
 ReferenceTable init_reftable() {
@@ -204,7 +213,17 @@ void copy_to(ReferenceTable* to_change, ReferenceTable* data_to_copy) {
     }
 }
 
-void compile(ParseObject* object, ReferenceTable* reftable) {
+void push_instructions(InstructionMap* map, InstructionMap* to_push) {
+    for (int i = 0; i < to_push->length; ++i) {
+        map->instructions[map->length++] = to_push->instructions[i];
+        if (map->length == map->size) {
+            map->size *= 2;
+            map->instructions = (Instruction*)realloc(map->instructions, map->size * sizeof(Instruction));
+        }
+    }
+}
+
+void compile_objects(ParseObject* object, ReferenceTable* reftable) {
     if (reftable->map->length != 0)
         reftable->map->length = 0;
     State* current_state = &object->states[0];
@@ -220,9 +239,29 @@ void compile(ParseObject* object, ReferenceTable* reftable) {
             push_function_call(reftable, current_state);
         } else if (current_state->type == s_REASSIGN) {
             push_reassignment(reftable, current_state);
+        } else if (current_state->type == s_FUNCTION) {
+            ;
+        } else if (current_state->type == s_IFSTATEMENT) {
+            ss_IfStatement if_statement = get_ifstatement(current_state->state);
+            if (if_statement.condition.length == 1) {
+                push_singular_state(reftable, &if_statement.condition.states[0]);
+            } else {
+                push_expression(reftable, &if_statement.condition);
+            }
+            ReferenceTable new_table = init_reftable();
+            copy_to(&new_table, reftable);
+            compile_objects(&if_statement.scope, &new_table);
+            push_argless_instruction(reftable->map, NOT);
+            push_instruction1(reftable->map, JUMPIF, reftable->map->length + new_table.map->length + 1);
+            push_instructions(reftable->map, new_table.map);
+            reftable_free(&new_table);
         }
         current_state++;
     }
+}
+
+void compile(ParseObject* object, ReferenceTable* reftable) {
+    compile_objects(object, reftable);
     push_instruction1(reftable->map, EXIT, 0);
 }
 

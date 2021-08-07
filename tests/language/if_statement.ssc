@@ -1,7 +1,0 @@
-if a + b > c {
-	return ...;
-} else if a + b < c {
-	return ...;
-} else {
-	return -1;
-}
