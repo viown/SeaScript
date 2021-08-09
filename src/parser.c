@@ -375,6 +375,7 @@ bool variable_declared(Token* token, State* states, int length) {
     return false;
 }
 
+
 /* parses an entire scope */
 ParseObject parse(lex_Object object) {
     Token* current_token = object.tokens;
@@ -400,13 +401,16 @@ ParseObject parse(lex_Object object) {
                 State state = {return_statement, s_RETURN};
                 states[length++] = state;
             } else if (is_keyword(current_token, "if")) {
-                ss_IfStatement* if_statement = (ss_IfStatement*)ss_malloc(sizeof(ss_ReturnStatement));
+                ss_IfStatement* if_statement = (ss_IfStatement*)ss_malloc(sizeof(ss_IfStatement));
                 if_statement->condition = parse_statement(++current_token, "{");
                 skip_to_end(&current_token, "{");
                 lex_Object data = collect_tokens_from_scope(&current_token);
+                data.token_used--;
+                data.tokens[data.token_used - 1].is_end = true;
                 if_statement->scope = parse(data);
                 State state = {if_statement, s_IFSTATEMENT};
                 states[length++] = state;
+                free_and_null(data.tokens);
             }
         } else if (current_token->token == IDENTIFIER) {
             if (is_function_call(current_token)) {
@@ -463,6 +467,11 @@ void free_state(State* state) {
         }
         free_and_null(op.parse_object->states);
         free_and_null(op.parse_object);
+        free_and_null(state->state);
+    } else if (state->type == s_IFSTATEMENT) {
+        ss_IfStatement if_statement = get_ifstatement(state->state);
+        free_and_null(if_statement.condition.states);
+        free_ParseObject(&if_statement.scope);
         free_and_null(state->state);
     }
 }

@@ -7,6 +7,7 @@
 void print_state(State st);
 
 
+/*
 void* ss_malloc(size_t size) {
     void* mem = malloc(size);
     if (mem == NULL) {
@@ -14,6 +15,7 @@ void* ss_malloc(size_t size) {
     }
     return mem;
 }
+*/
 
 
 void ss_throw(const char* error, ...) {

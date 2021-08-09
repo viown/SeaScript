@@ -214,7 +214,7 @@ void lex(lex_Object* lexObject) {
 
 void lex_free(lex_Object* lexObject) {
     for (int64_t i = 0; i < lexObject->token_used; ++i) {
-        free(lexObject->tokens[i].value);
+        free_and_null(lexObject->tokens[i].value);
     }
     free_and_null(lexObject->tokens);
 }
