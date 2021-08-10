@@ -103,9 +103,17 @@ typedef ParseObject ss_Precedence; /* TODO: Change to nested expression */
 typedef ParseObject ss_ReturnStatement;
 typedef ParseObject ss_Expression;
 
+typedef enum {
+    IF,
+    ELSE,
+    ELSEIF
+} IfStatementType;
+
 typedef struct {
     ss_Expression condition;
-    ParseObject scope;
+    ParseObject* scope;
+//    IfStatementType type;
+//    ss_IfStatement* else_block;
 } ss_IfStatement;
 
 typedef struct {

@@ -189,7 +189,7 @@ State parse_function_definition(Token** current_token) {
     ArgumentCollection arguments = parse_function_arguments(current_token);
     lex_Object scopeTokens = collect_tokens_from_scope(current_token);
     ParseObject scope = parse(scopeTokens);
-    lex_free(&scopeTokens);
+    free_and_null(scopeTokens.tokens);
     strcpy(function->function_name, function_name->value);
     function->arguments = arguments;
     function->scope = scope;
@@ -406,8 +406,14 @@ ParseObject parse(lex_Object object) {
                 skip_to_end(&current_token, "{");
                 lex_Object data = collect_tokens_from_scope(&current_token);
                 data.token_used--;
-                data.tokens[data.token_used - 1].is_end = true;
-                if_statement->scope = parse(data);
+                if (data.token_used > 0) {
+                    data.tokens[data.token_used - 1].is_end = true;
+                    ParseObject* obj = malloc(sizeof(ParseObject));
+                    *obj = parse(data);
+                    if_statement->scope = obj;
+                } else {
+                    if_statement->scope = NULL;
+                }
                 State state = {if_statement, s_IFSTATEMENT};
                 states[length++] = state;
                 free_and_null(data.tokens);
@@ -471,7 +477,13 @@ void free_state(State* state) {
     } else if (state->type == s_IFSTATEMENT) {
         ss_IfStatement if_statement = get_ifstatement(state->state);
         free_and_null(if_statement.condition.states);
-        free_ParseObject(&if_statement.scope);
+        free_ParseObject(if_statement.scope);
+        free_and_null(if_statement.scope);
+        free_and_null(state->state);
+    } else if (state->type == s_FUNCTION) {
+        ss_Function function = get_function(state->state);
+        free_and_null(function.arguments.arguments);
+        free_ParseObject(&function.scope);
         free_and_null(state->state);
     }
 }
@@ -498,6 +510,8 @@ void free_ParseObject(ParseObject* object) {
             free_and_null(states.states);
             free_and_null(current.state);
         } else if (current.type == s_FUNCTIONCALL) {
+            free_state(&current);
+        } else if (current.type == s_FUNCTION) {
             free_state(&current);
         }
     }

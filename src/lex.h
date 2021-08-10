@@ -63,6 +63,4 @@ void lexObject_init(lex_Object* object, char* source);
 void lex(lex_Object* lexObject);
 void lex_free(lex_Object* lexObject);
 
-char* push_to_pool(lex_Object* object, char* str);
-
 #endif // SS_LEX_H

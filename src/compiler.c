@@ -243,18 +243,20 @@ void compile_objects(ParseObject* object, ReferenceTable* reftable) {
             ;
         } else if (current_state->type == s_IFSTATEMENT) {
             ss_IfStatement if_statement = get_ifstatement(current_state->state);
-            if (if_statement.condition.length == 1) {
-                push_singular_state(reftable, &if_statement.condition.states[0]);
-            } else {
-                push_expression(reftable, &if_statement.condition);
+            if (if_statement.scope != NULL) {
+                if (if_statement.condition.length == 1) {
+                    push_singular_state(reftable, &if_statement.condition.states[0]);
+                } else {
+                    push_expression(reftable, &if_statement.condition);
+                }
+                ReferenceTable new_table = init_reftable();
+                copy_to(&new_table, reftable);
+                compile_objects(if_statement.scope, &new_table);
+                push_argless_instruction(reftable->map, NOT);
+                push_instruction1(reftable->map, JUMPIF, reftable->map->length + new_table.map->length + 1);
+                push_instructions(reftable->map, new_table.map);
+                reftable_free(&new_table);
             }
-            ReferenceTable new_table = init_reftable();
-            copy_to(&new_table, reftable);
-            compile_objects(&if_statement.scope, &new_table);
-            push_argless_instruction(reftable->map, NOT);
-            push_instruction1(reftable->map, JUMPIF, reftable->map->length + new_table.map->length + 1);
-            push_instructions(reftable->map, new_table.map);
-            reftable_free(&new_table);
         }
         current_state++;
     }
