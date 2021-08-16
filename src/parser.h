@@ -27,7 +27,7 @@
 #define MAX_IDENTIFIER_SIZE 31
 #define MAX_ARGUMENTS 253
 
-#define is_eq(x, y) (strcmp(x, y) == 0)
+#define is_eq(x, y) (!strcmp(x, y))
 #define is_math_op(x) (x == '+' || x == '-' || x == '*' || x == '/')
 #define is_comparison_op(x) (is_eq(x, GREATER_THAN) || is_eq(x, LESS_THAN) || is_eq(x, EQUAL_TO))
 #define is_literal(x) (x == ILITERAL || x == SLITERAL)
@@ -109,12 +109,14 @@ typedef enum {
     ELSEIF
 } IfStatementType;
 
-typedef struct {
+struct ss_IfStatement {
     ss_Expression condition;
     ParseObject* scope;
-//    IfStatementType type;
-//    ss_IfStatement* else_block;
-} ss_IfStatement;
+    IfStatementType type;
+    struct ss_IfStatement* else_block;
+};
+
+typedef struct ss_IfStatement ss_IfStatement;
 
 typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];

@@ -11,16 +11,6 @@ Stack create_stack() {
     return stack;
 }
 
-bool resize_stack(Stack* stack, unsigned long new_size) {
-    stack->stack = (StackObject*)realloc(stack->stack, new_size * sizeof(StackObject));
-    if (stack->stack != 0) {
-        stack->total_size = new_size;
-        return 1;
-    } else {
-        return -1;
-    }
-}
-
 inline void push_stack(Stack* stack, StackObject value) {
     if (stack->allocated == stack->total_size) {
         stack->total_size *= 2;

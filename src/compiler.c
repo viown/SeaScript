@@ -68,35 +68,35 @@ void push_globalc(InstructionMap* map, char* global) {
 
 void push_singular_state(ReferenceTable* reftable, State* state) {
     switch (state->type) {
-        case s_LITERAL: {
-            ss_Literal value = get_literal(state->state);
-            double v = load_literal(value);
-            if (v >= INT_MAX) {
-                push_instruction1(reftable->map, LCONST, load_literal(value));
-            } else {
-                push_instruction1(reftable->map, ICONST, load_literal(value));
-            }
-            break;
+    case s_LITERAL: {
+        ss_Literal value = get_literal(state->state);
+        double v = load_literal(value);
+        if (v >= INT_MAX) {
+            push_instruction1(reftable->map, LCONST, load_literal(value));
+        } else {
+            push_instruction1(reftable->map, ICONST, load_literal(value));
         }
-        case s_IDENTIFIER: {
-            char* identifier = get_identifier(state->state).identifier;
-            if (is_global(identifier)) {
-                push_globalc(reftable->map, identifier);
+        break;
+    }
+    case s_IDENTIFIER: {
+        char* identifier = get_identifier(state->state).identifier;
+        if (is_global(identifier)) {
+            push_globalc(reftable->map, identifier);
+        } else {
+            int ref = get_reference_by_name(identifier, reftable->variable_references, reftable->var_reference_length);
+            if (ref != -1) {
+                push_instruction1(reftable->map, LOAD, ref);
             } else {
-                int ref = get_reference_by_name(identifier, reftable->variable_references, reftable->var_reference_length);
-                if (ref != -1) {
-                    push_instruction1(reftable->map, LOAD, ref);
-                } else {
-                    ss_throw("Undefined reference to '%s'\n", identifier);
-                }
+                ss_throw("Undefined reference to '%s'\n", identifier);
             }
-            break;
         }
-        case s_FUNCTIONCALL:
-            push_function_call(reftable, state);
-            break;
-        default:
-            ss_throw("Invalid Type");
+        break;
+    }
+    case s_FUNCTIONCALL:
+        push_function_call(reftable, state);
+        break;
+    default:
+        ss_throw("Invalid Type");
     }
 }
 
@@ -223,6 +223,27 @@ void push_instructions(InstructionMap* map, InstructionMap* to_push) {
     }
 }
 
+size_t label_length = 0;
+
+void push_if_statement(ReferenceTable* reftable, State* current_state) {
+    ss_IfStatement if_statement = get_ifstatement(current_state->state);
+    if (if_statement.scope != NULL) {
+        if (if_statement.condition.length == 1) {
+            push_singular_state(reftable, &if_statement.condition.states[0]);
+        } else {
+            push_expression(reftable, &if_statement.condition);
+        }
+        ReferenceTable new_table = init_reftable();
+        copy_to(&new_table, reftable);
+        compile_objects(if_statement.scope, &new_table);
+        push_argless_instruction(reftable->map, NOT);
+        push_instruction1(reftable->map, LBLJMPIF, label_length++);
+        push_instructions(reftable->map, new_table.map);
+        push_instruction1(reftable->map, LBL, label_length - 1); // exit label
+        reftable_free(&new_table);
+    }
+}
+
 void compile_objects(ParseObject* object, ReferenceTable* reftable) {
     if (reftable->map->length != 0)
         reftable->map->length = 0;
@@ -242,21 +263,7 @@ void compile_objects(ParseObject* object, ReferenceTable* reftable) {
         } else if (current_state->type == s_FUNCTION) {
             ;
         } else if (current_state->type == s_IFSTATEMENT) {
-            ss_IfStatement if_statement = get_ifstatement(current_state->state);
-            if (if_statement.scope != NULL) {
-                if (if_statement.condition.length == 1) {
-                    push_singular_state(reftable, &if_statement.condition.states[0]);
-                } else {
-                    push_expression(reftable, &if_statement.condition);
-                }
-                ReferenceTable new_table = init_reftable();
-                copy_to(&new_table, reftable);
-                compile_objects(if_statement.scope, &new_table);
-                push_argless_instruction(reftable->map, NOT);
-                push_instruction1(reftable->map, JUMPIF, reftable->map->length + new_table.map->length + 1);
-                push_instructions(reftable->map, new_table.map);
-                reftable_free(&new_table);
-            }
+            push_if_statement(reftable, current_state);
         }
         current_state++;
     }

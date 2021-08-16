@@ -32,7 +32,9 @@ typedef struct {
     size_t var_reference_length;
 } ReferenceTable;
 
+void throw_compiler_error(const char* message, ...);
 ReferenceTable init_reftable();
+void compile_objects(ParseObject* object, ReferenceTable* reftable);
 void compile(ParseObject* object, ReferenceTable* table);
 void reftable_free(ReferenceTable* table);
 

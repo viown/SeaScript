@@ -176,6 +176,9 @@ lex_Object collect_tokens_from_scope(Token** ptoken) {
             current_line++;
         (*ptoken)++;
     }
+    if ((*ptoken)->is_end) {
+        ss_throw("Scope left open\n");
+    }
     object.tokens[0].is_start = true;
     object.tokens[object.token_used-1].is_end = true;
     return object;
@@ -375,6 +378,39 @@ bool variable_declared(Token* token, State* states, int length) {
     return false;
 }
 
+ss_IfStatement* parse_if_statement(Token** current_token, IfStatementType statement_type) {
+    ss_IfStatement* if_statement = (ss_IfStatement*)ss_malloc(sizeof(ss_IfStatement));
+    if_statement->type = statement_type;
+    if (statement_type != ELSE) {
+        if_statement->condition = parse_statement(++(*current_token), "{");
+    } else {
+        if_statement->condition.length = 0;
+    }
+    if_statement->else_block = NULL;
+    skip_to_end(current_token, "{");
+    lex_Object data = collect_tokens_from_scope(current_token);
+    data.token_used--;
+    if (data.token_used > 0) {
+        data.tokens[data.token_used - 1].is_end = true;
+        ParseObject* obj = malloc(sizeof(ParseObject));
+        *obj = parse(data);
+        if_statement->scope = obj;
+    } else {
+        if_statement->scope = NULL;
+    }
+    free_and_null(data.tokens);
+    if (!(*current_token)->is_end && statement_type != ELSE) { // handle elseifs and else statements
+        if (is_eq(peek(*current_token).value, "elseif")) {
+            (*current_token)++;
+            if_statement->else_block = parse_if_statement(current_token, ELSEIF);
+        } else if (is_eq(peek(*current_token).value, "else")) {
+            (*current_token)++;
+            if_statement->else_block = parse_if_statement(current_token, ELSE);
+        }
+    }
+    return if_statement;
+}
+
 
 /* parses an entire scope */
 ParseObject parse(lex_Object object) {
@@ -401,22 +437,9 @@ ParseObject parse(lex_Object object) {
                 State state = {return_statement, s_RETURN};
                 states[length++] = state;
             } else if (is_keyword(current_token, "if")) {
-                ss_IfStatement* if_statement = (ss_IfStatement*)ss_malloc(sizeof(ss_IfStatement));
-                if_statement->condition = parse_statement(++current_token, "{");
-                skip_to_end(&current_token, "{");
-                lex_Object data = collect_tokens_from_scope(&current_token);
-                data.token_used--;
-                if (data.token_used > 0) {
-                    data.tokens[data.token_used - 1].is_end = true;
-                    ParseObject* obj = malloc(sizeof(ParseObject));
-                    *obj = parse(data);
-                    if_statement->scope = obj;
-                } else {
-                    if_statement->scope = NULL;
-                }
-                State state = {if_statement, s_IFSTATEMENT};
+                ss_IfStatement* statement = parse_if_statement(&current_token, IF);
+                State state = {statement, s_IFSTATEMENT};
                 states[length++] = state;
-                free_and_null(data.tokens);
             }
         } else if (current_token->token == IDENTIFIER) {
             if (is_function_call(current_token)) {
@@ -477,8 +500,13 @@ void free_state(State* state) {
     } else if (state->type == s_IFSTATEMENT) {
         ss_IfStatement if_statement = get_ifstatement(state->state);
         free_and_null(if_statement.condition.states);
-        free_ParseObject(if_statement.scope);
-        free_and_null(if_statement.scope);
+        if (if_statement.scope != NULL) {
+            free_ParseObject(if_statement.scope);
+            free_and_null(if_statement.scope);
+        }
+        if (if_statement.else_block != NULL) {
+            // todo: free if_statement.else_block
+        }
         free_and_null(state->state);
     } else if (state->type == s_FUNCTION) {
         ss_Function function = get_function(state->state);
@@ -509,9 +537,7 @@ void free_ParseObject(ParseObject* object) {
             }
             free_and_null(states.states);
             free_and_null(current.state);
-        } else if (current.type == s_FUNCTIONCALL) {
-            free_state(&current);
-        } else if (current.type == s_FUNCTION) {
+        } else if (current.type == s_FUNCTIONCALL || current.type == s_FUNCTION || current.type == s_IFSTATEMENT) {
             free_state(&current);
         }
     }

@@ -44,7 +44,7 @@ void get_extension(char* file_name, char* modify) {
         }
     }
     if (extension_start == NULL) {
-        ss_throw("Bad Argument: Valid filename must be passed");
+        ss_throw("Bad Argument: Valid filename must be passed\n");
     } else {
         while (*extension_start != '\0') {
             extension[len++] = *extension_start;
@@ -75,9 +75,6 @@ int visualize_bytecode(char* path) {
     Instruction* instructions = instructionHolder.instructions;
 
     for (int i = 0; i < instructionHolder.length; ++i) {
-        if (instructions[i].op == LBL) {
-            printf("\n");
-        }
         const char* instruction = instruction_to_string(instructions[i].op);
         printf("[%d]\t%s\t", i, instruction);
         for (int j = 0; j < MAX_ARGS; ++j) {

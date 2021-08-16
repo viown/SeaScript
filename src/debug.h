@@ -9,6 +9,7 @@
     free(ptr);              \
     ptr = NULL;
 
+
 void* ss_malloc(size_t size);
 void ss_throw(const char* error, ...);
 void visualize_tokens(lex_Object* object);

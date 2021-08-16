@@ -278,7 +278,11 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             break;
         case NOT:
             top = top_stack(&vm->stack);
-            push_stack(&vm->stack, create_bool(!top->object.m_bool));
+            if (top->object.m_bool) {
+                push_stack(&vm->stack, create_bool(0));
+            } else {
+                push_stack(&vm->stack, create_bool(1));
+            }
             vm->ip++;
             break;
         case IADD: {

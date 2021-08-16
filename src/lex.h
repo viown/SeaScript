@@ -25,7 +25,8 @@
 static const char* const ss_keywords[] = {
     "if", "function", "while", "break",
     "return", "global", "local", "load",
-    "for", "in", "not", "and", "or", "else"
+    "for", "in", "not", "and", "or", "else",
+    "elseif"
 };
 static const int keyword_count = LEN(ss_keywords);
 
