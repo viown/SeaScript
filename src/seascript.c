@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "conf.h"
 #include "shell.h"
 #include "lex.h"
 #include "parser.h"
@@ -75,6 +76,9 @@ int visualize_bytecode(char* path) {
     Instruction* instructions = instructionHolder.instructions;
 
     for (int i = 0; i < instructionHolder.length; ++i) {
+        if (instructions[i].op == LBL) {
+            printf("\n");
+        }
         const char* instruction = instruction_to_string(instructions[i].op);
         printf("[%d]\t%s\t", i, instruction);
         for (int j = 0; j < MAX_ARGS; ++j) {
@@ -108,7 +112,7 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     vm_init(&virtual_machine, ss_functions);
     char* source_code = read_file(path);
     if (source_code == NULL)
-        ss_throw("File '%s' could not be found", path);
+        ss_throw("File '%s' could not be found\n", path);
     lex_Object object;
     lexObject_init(&object, source_code);
     lex(&object);
@@ -117,7 +121,7 @@ int compile_and_run(CommandLineFlags flags, char* path) {
             lex_free(&object);
             vm_free(&virtual_machine);
             free_and_null(source_code);
-            ss_throw("Tokens too big to visualize");
+            ss_throw("Tokens too big to visualize\n");
         }
         visualize_tokens(&object);
         lex_free(&object);
@@ -171,7 +175,7 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
         else if (!strcmp(argv[i], "--version"))
             flags->check_version = true;
         else if (argv[i][0] == '-' && argv[i][1] == '-')
-            ss_throw("Invalid flag '%s'", argv[i]);
+            ss_throw("Invalid flag '%s'\n", argv[i]);
     }
 }
 
@@ -186,16 +190,16 @@ int main(int argc, char** argv) {
         } else {
             char extension[255];
             get_extension(argv[1], extension);
-            if (strcmp(extension, ".ssb") == 0) {
+            if (strcmp(extension, BYTECODE_EXTENSION) == 0) {
                 if (!flags.is_view) {
                     return execute_bytecode(argv[1]);
                 } else {
                     return visualize_bytecode(argv[1]);
                 }
-            } else if (!strcmp(extension, ".ssc")) {
+            } else if (!strcmp(extension, SOURCE_CODE_EXTENSION)) {
                 return compile_and_run(flags, argv[1]);
             } else {
-                ss_throw("Bad Argument: Invalid extension '%s'", extension);
+                ss_throw("Bad Argument: Invalid extension '%s'\n", extension);
             }
         }
     } else {

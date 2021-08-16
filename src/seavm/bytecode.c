@@ -1,4 +1,3 @@
-#include "debug.h"
 #include "vm.h"
 #include "bytecode.h"
 #include <stdio.h>
@@ -37,7 +36,7 @@ void save_to_file(Instruction* instructions, size_t length, const char* path) {
         bytecode[cursor++] = instruction->op;
         const OpcodeReader* reader = get_reader(instruction->op);
         if (reader == NULL) {
-            ss_throw("Invalid instruction '%s'", instruction_to_string(instruction->op));
+            ss_throw("Invalid instruction '%s'\n", instruction_to_string(instruction->op));
         }
         write_bytes(instruction, bytecode, &cursor, reader->bytes_to_read);
     }
@@ -67,14 +66,14 @@ InstructionHolder read_from_file(const char* path) {
     holder.length = 0;
     FILE* file = fopen(path, "r");
     if (file == NULL) {
-        ss_throw("Invalid path '%s'", path);
+        ss_throw("Invalid path '%s'\n", path);
     }
     long byte_size = get_file_size(path);
     int cursor = 0;
     unsigned char* bytecode = (unsigned char*)ss_malloc(byte_size + 1);
     fread(bytecode, 1, byte_size, file);
     if (bytecode[cursor++] != 0x32) {
-        ss_throw("Invalid bytecode file, missing magic number.");
+        ss_throw("Invalid bytecode file, missing magic number.\n");
     }
     while (cursor != byte_size) {
         Instruction instruction;

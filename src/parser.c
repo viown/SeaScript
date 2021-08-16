@@ -135,13 +135,13 @@ ArgumentCollection parse_function_arguments(Token** ptoken) {
             strcpy(arg.identifier, (*ptoken)->value);
             arguments[used++] = arg;
         } else if (strcmp((*ptoken)->value, ARG_SEPARATOR) != 0) {
-            ss_throw("line %lu: Invalid token in function arguments '%s'", current_line, (*ptoken)->value);
+            ss_throw("line %lu: Invalid token in function arguments '%s'\n", current_line, (*ptoken)->value);
         }
         (*ptoken)++;
     }
     (*ptoken)++; /* move to SCOPE_OPEN */
     if (strcmp((*ptoken)->value, SCOPE_OPEN) != 0) {
-        ss_throw("line %lu: Function doesn't lead to scope; missing '%s'", current_line, SCOPE_OPEN);
+        ss_throw("line %lu: Function doesn't lead to scope; missing '%s'\n", current_line, SCOPE_OPEN);
     }
 
     collection.length = used;
@@ -327,7 +327,7 @@ ss_Reassignment* create_reassignment(char* var_name, ParseObject var_states) {
 State parse_variable_declaration(Token* current_token, State* states, size_t length) {
     Token* variable_name = ++current_token; /* name of variable */
     if (variable_name->token == KEYWORD) {
-        ss_throw("line %lu: variable name cannot be a reserved keyword", current_line);
+        ss_throw("line %lu: variable name cannot be a reserved keyword\n", current_line);
     } else if (variable_declared(variable_name, states, length)) {
         ss_throw("line: %lu: attempted redeclaration of variable '%s'\n", current_line, variable_name->value);
     }

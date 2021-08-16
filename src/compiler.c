@@ -6,6 +6,8 @@
 #include "debug.h"
 #include "ssfunctions.h"
 
+size_t label_length = 0;
+
 void push_function_call(ReferenceTable* reftable, State* state);
 
 Instruction create_instruction(Opcode op) {
@@ -96,7 +98,7 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
         push_function_call(reftable, state);
         break;
     default:
-        ss_throw("Invalid Type");
+        ss_throw("Invalid Type\n");
     }
 }
 
@@ -167,7 +169,7 @@ void push_reassignment(ReferenceTable* reftable, State* state) {
         }
         push_instruction1(reftable->map, STORE, ref);
     } else {
-        ss_throw("Compiler Error: Could not get reference to variable");
+        ss_throw("Compiler Error: Could not get reference to variable\n");
     }
 }
 
@@ -222,8 +224,6 @@ void push_instructions(InstructionMap* map, InstructionMap* to_push) {
         }
     }
 }
-
-size_t label_length = 0;
 
 void push_if_statement(ReferenceTable* reftable, State* current_state) {
     ss_IfStatement if_statement = get_ifstatement(current_state->state);

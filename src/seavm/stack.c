@@ -1,4 +1,3 @@
-#include "debug.h"
 #include "stack.h"
 #include <stdbool.h>
 #include <stdlib.h>
@@ -7,7 +6,7 @@ Stack create_stack() {
     Stack stack;
     stack.total_size = 100;
     stack.allocated = 0;
-    stack.stack = (StackObject*)ss_malloc(100 * sizeof(StackObject));
+    stack.stack = (StackObject*)malloc(100 * sizeof(StackObject));
     return stack;
 }
 
@@ -30,7 +29,7 @@ inline StackObject* top_stack(Stack* stack) {
 }
 
 void terminate_stack(Stack* stack) {
-    free_and_null(stack->stack);
+    free(stack->stack);
 }
 
 StackObject create_bool(bool val) {
