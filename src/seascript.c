@@ -11,8 +11,8 @@
 #include "ssfunctions.h"
 #include "compiler.h"
 
-#define VERSION "1.0.0"
-
+bool shell_env = false;
+bool debug_env = false;
 
 typedef struct {
     bool is_view : 1;
@@ -174,6 +174,8 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
             flags->no_run = true;
         else if (!strcmp(argv[i], "--version"))
             flags->check_version = true;
+        else if (!strcmp(argv[i], "--debug"))
+            debug_env = true;
         else if (argv[i][0] == '-' && argv[i][1] == '-')
             ss_throw("Invalid flag '%s'\n", argv[i]);
     }
@@ -186,11 +188,10 @@ int main(int argc, char** argv) {
     if (argc >= 2) {
         if (flags.check_version) {
             printf("V%s\n", VERSION);
-            return 0;
         } else {
             char extension[255];
             get_extension(argv[1], extension);
-            if (strcmp(extension, BYTECODE_EXTENSION) == 0) {
+            if (!strcmp(extension, BYTECODE_EXTENSION)) {
                 if (!flags.is_view) {
                     return execute_bytecode(argv[1]);
                 } else {
@@ -203,6 +204,7 @@ int main(int argc, char** argv) {
             }
         }
     } else {
+        shell_env = true;
         return run_shell();
     }
     return 0;

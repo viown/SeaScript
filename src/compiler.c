@@ -2,6 +2,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <limits.h>
+#include <stdarg.h>
 #include "compiler.h"
 #include "debug.h"
 #include "ssfunctions.h"
@@ -89,7 +90,7 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
             if (ref != -1) {
                 push_instruction1(reftable->map, LOAD, ref);
             } else {
-                ss_throw("Undefined reference to '%s'\n", identifier);
+                ss_throw("line %d: Undefined reference to '%s'\n", state->line, identifier);
             }
         }
         break;
@@ -105,13 +106,13 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
 Opcode get_mathop_from_symbol(char symbol) {
     switch (symbol) {
     case '+':
-        return IADD;
+        return ADD;
     case '-':
-        return ISUB;
+        return SUB;
     case '*':
-        return IMUL;
+        return MUL;
     case '/':
-        return IDIV;
+        return DIV;
     default:
         return -1;
     }
@@ -169,7 +170,7 @@ void push_reassignment(ReferenceTable* reftable, State* state) {
         }
         push_instruction1(reftable->map, STORE, ref);
     } else {
-        ss_throw("Compiler Error: Could not get reference to variable\n");
+        ss_throw("line %d: Undefined reference to '%s'\n", state->line, reassignment.variable_name);
     }
 }
 

@@ -15,6 +15,7 @@ SOURCES = \
 	src/seavm/bytecode.c \
 	src/seavm/stack.c \
 	src/seavm/vm.c  \
+	src/seavm/cpu.c \
 	src/shell/shell.c
 	
 HEADERS = \
@@ -28,6 +29,7 @@ HEADERS = \
 	src/seavm/opcodes.h \
 	src/seavm/stack.h \
 	src/seavm/vm.h \
+	src/seavm/cpu.h \
 	src/shell/shell.h
 	
 INCLUDES = \
@@ -35,11 +37,13 @@ INCLUDES = \
 	-Isrc/seavm \
 	-Isrc/shell
 	
-$(OUTPUT): $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $(OUTPUT) -s
+seascript: $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $@ -s
 	
 debug: $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $(OUTPUT) -g
 	
 debug_mem: $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $(OUTPUT) -fsanitize=address -static-libasan -g
+	
+.PHONY: seascript

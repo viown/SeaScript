@@ -6,6 +6,11 @@
 #include "opcodes.h"
 #include "instruction.h"
 #include "stack.h"
+#if __has_include("conf.h")
+#include "conf.h"
+#else
+#define VERSION "0.0.0"
+#endif
 
 
 typedef struct {
@@ -29,10 +34,10 @@ static const OpcodeReader reader_map[] = {
     {JUMP, sizeof(int32_t)},
     {JUMPIF, sizeof(int32_t)},
     {NOT, 0},
-    {IADD, 0},
-    {ISUB, 0},
-    {IMUL, 0},
-    {IDIV, 0},
+    {ADD, 0},
+    {SUB, 0},
+    {MUL, 0},
+    {DIV, 0},
     {CALL, sizeof(int32_t)},
     {RET, 0},
     {CALLC, sizeof(int32_t)},

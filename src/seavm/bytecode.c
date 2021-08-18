@@ -30,7 +30,10 @@ void save_to_file(Instruction* instructions, size_t length, const char* path) {
     FILE* file = fopen(path, "wb");
     char* bytecode = (char*)ss_malloc(length * 8);
     size_t cursor = 0;
-    bytecode[cursor++] = 0x32;
+    const char* version = VERSION;
+    for (int i = 0; i < strlen(version); ++i) {
+        bytecode[cursor++] = version[i];
+    }
     for (size_t i = 0; i < length; ++i) {
         Instruction* instruction = &instructions[i];
         bytecode[cursor++] = instruction->op;
@@ -59,6 +62,13 @@ void free_holder(InstructionHolder* holder) {
     holder->length = -1;
 }
 
+void load_version(unsigned char* bytecode, char* version) {
+    for (int i = 0; i < 6; ++i) {
+        version[i] = bytecode[i];
+    }
+    version[5] = '\0';
+}
+
 InstructionHolder read_from_file(const char* path) {
     InstructionHolder holder;
     holder.instructions = ss_malloc(100 * sizeof(Instruction));
@@ -69,11 +79,13 @@ InstructionHolder read_from_file(const char* path) {
         ss_throw("Invalid path '%s'\n", path);
     }
     long byte_size = get_file_size(path);
-    int cursor = 0;
+    int cursor = 5;
     unsigned char* bytecode = (unsigned char*)ss_malloc(byte_size + 1);
     fread(bytecode, 1, byte_size, file);
-    if (bytecode[cursor++] != 0x32) {
-        ss_throw("Invalid bytecode file, missing magic number.\n");
+    char version[10];
+    load_version(bytecode, version);
+    if (strcmp(version, VERSION) != 0) {
+        ss_throw("This bytecode file uses Seascript v%s, which differs from the current version (%s). Running it can be dangerous.\nHalt.\n", version, VERSION);
     }
     while (cursor != byte_size) {
         Instruction instruction;

@@ -121,6 +121,7 @@ void parse_function_call(State* state, Token* token) {
     func_call->arg_count = length;
     state->type = s_FUNCTIONCALL;
     state->state = func_call;
+    state->line = current_line;
 }
 
 ArgumentCollection parse_function_arguments(Token** ptoken) {
@@ -215,6 +216,7 @@ void parse_literal(State* state, Token* token) {
         literal->value = literal_string;
         literal->type = l_STRING;
     }
+    state->line = current_line;
     state->state = literal;
 }
 
@@ -223,6 +225,7 @@ void parse_identifier(State* state, Token* token) {
     strcpy(identifier->identifier, token->value);
     state->state = identifier;
     state->type = s_IDENTIFIER;
+    state->line = current_line;
 }
 
 void parse_operator(State* state, Token* token) {
@@ -233,7 +236,6 @@ void parse_operator(State* state, Token* token) {
         op->type = MATH;
         op->op = math_operator;
         state->state = op;
-        state->type = s_OPERATOR;
     } else if (is_comparison_op(token->value)) {
         /* incomplete */
         ss_Operator* op = (ss_Operator*)ss_malloc(sizeof(ss_Operator));
@@ -242,8 +244,9 @@ void parse_operator(State* state, Token* token) {
         op->type = COMPARISON;
         op->op = comparison_op;
         state->state = op;
-        state->type = s_OPERATOR;
     }
+    state->line = current_line;
+    state->type = s_OPERATOR;
 }
 
 void parse_array_index(State* state, Token* token) {
@@ -264,6 +267,7 @@ void parse_array_index(State* state, Token* token) {
     parse_object->states = states;
     op->name = name->value;
     op->parse_object = parse_object;
+    state->line = current_line;
     state->type = s_INDEX;
     state->state = op;
 }
@@ -281,7 +285,7 @@ State parse_value(Token* token) {
     } else if (token->token == OPERATOR) {
         parse_operator(&state, token);
     } else {
-        ss_unreachable("Unidentified token passed to parse_value: %s", token->value);
+        ss_unreachable("line %d: Unidentified token passed to parse_value: %s\n", current_line, token->value);
     }
     return state;
 }
@@ -326,9 +330,7 @@ ss_Reassignment* create_reassignment(char* var_name, ParseObject var_states) {
 
 State parse_variable_declaration(Token* current_token, State* states, size_t length) {
     Token* variable_name = ++current_token; /* name of variable */
-    if (variable_name->token == KEYWORD) {
-        ss_throw("line %lu: variable name cannot be a reserved keyword\n", current_line);
-    } else if (variable_declared(variable_name, states, length)) {
+    if (variable_declared(variable_name, states, length)) {
         ss_throw("line: %lu: attempted redeclaration of variable '%s'\n", current_line, variable_name->value);
     }
     State variable_state;
@@ -361,7 +363,7 @@ State parse_variable_reassignment(Token* current_token, State* states, size_t le
     ParseObject var_state = parse_statement(value, EOS);
     ss_Reassignment* reassignment = create_reassignment(variable_name->value, var_state);
 
-    State reassignment_state = {reassignment, s_REASSIGN};
+    State reassignment_state = {reassignment, s_REASSIGN, current_line};
     return reassignment_state;
 }
 
@@ -434,11 +436,11 @@ ParseObject parse(lex_Object object) {
                 ss_ReturnStatement* return_statement = (ss_ReturnStatement*)ss_malloc(sizeof(ss_ReturnStatement));
                 ParseObject statement = parse_statement(current_token+1, EOS);
                 *return_statement = (ss_ReturnStatement)statement;
-                State state = {return_statement, s_RETURN};
+                State state = {return_statement, s_RETURN, current_line};
                 states[length++] = state;
             } else if (is_keyword(current_token, "if")) {
                 ss_IfStatement* statement = parse_if_statement(&current_token, IF);
-                State state = {statement, s_IFSTATEMENT};
+                State state = {statement, s_IFSTATEMENT, current_line};
                 states[length++] = state;
             }
         } else if (current_token->token == IDENTIFIER) {

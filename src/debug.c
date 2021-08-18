@@ -6,6 +6,9 @@
 
 void print_state(State st);
 
+extern bool shell_env;
+extern bool shell_err;
+
 void* ss_malloc(size_t size) {
     void* mem = malloc(size);
     if (mem == NULL) {
@@ -19,7 +22,12 @@ void ss_throw(const char* error, ...) {
     va_start(args, error);
     vprintf(error, args);
     va_end(args);
-    exit(1);
+    if (!shell_env) {
+        exit(1);
+    } else {
+        /* Instead of terminating the program, we set shell_err so the shell can handle it. */
+        shell_err = true;
+    }
 }
 
 void visualize_tokens(lex_Object* object) {

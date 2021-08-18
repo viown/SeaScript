@@ -53,7 +53,9 @@ const char* instruction_to_string(Opcode op);
 
 void vm_init(VirtualMachine* vm, const ss_BaseFunction* func_list);
 void push_heap_object(VirtualMachine* vm, void* mem_block);
-void vm_free(VirtualMachine* vm);
 int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length);
+void vm_clear(VirtualMachine* vm);
+void vm_free(VirtualMachine* vm);
+void vm_raise(VirtualMachine* vm, unsigned char exit_code);
 
 #endif // SEAVM_VM_H

@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "cpu.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -67,6 +68,19 @@ void push_heap_object(VirtualMachine* vm, void* mem_block) {
     }
     vm->heap_table[vm->heap_table_used++] = mem_block;
 }
+
+/* Reset the virtual machine's memory state */
+void vm_clear(VirtualMachine* vm) {
+    vm->ip = 0;
+    vm->global_used = 0;
+    for (size_t i = 0; i < vm->heap_table_used; ++i) {
+        free_and_null(vm->heap_table[i]);
+    }
+    vm->heap_table_used = 0;
+    vm->label_addr_used = 0;
+    vm->stack.allocated = 0;
+}
+
 
 void vm_free(VirtualMachine* vm) {
     free_and_null(vm->globals);
@@ -168,6 +182,12 @@ void resolve_labels(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             vm->label_addresses[(long long int)instrs[i].args[0]] = i;
         }
     }
+}
+
+void vm_raise(VirtualMachine* vm, unsigned char exit_code) {
+    // TODO: Use an environment exit instead of terminating the program
+    vm_free(vm);
+    exit(exit_code);
 }
 
 int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
@@ -284,35 +304,22 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             }
             vm->ip++;
             break;
-        case IADD: {
-            compute(vm->stack, pop_stack(&vm->stack), +, pop_stack(&vm->stack));
+        case ADD:
+            push_stack(&vm->stack, cpu_add(vm));
             vm->ip++;
             break;
-        }
-        case ISUB: {
-            StackObject first = pop_stack(&vm->stack);
-            StackObject second = pop_stack(&vm->stack);
-            compute(vm->stack, first, -, second);
+        case SUB:
+            push_stack(&vm->stack, cpu_sub(vm));
             vm->ip++;
             break;
-        }
-        case IMUL: {
-            compute(vm->stack, pop_stack(&vm->stack), *, pop_stack(&vm->stack));
+        case MUL:
+            push_stack(&vm->stack, cpu_mul(vm));
             vm->ip++;
             break;
-        }
-        case IDIV: {
-            StackObject first = pop_stack(&vm->stack);
-            StackObject second = pop_stack(&vm->stack);
-            if (second.object.m_int32 == 0)
-                return VM_DIVBYZERO;
-            StackObject object;
-            object.object.m_double = (double)second.object.m_int32 / (double)first.object.m_int32;
-            object.type = DOUBLE;
-            push_stack(&vm->stack, object);
+        case DIV:
+            push_stack(&vm->stack, cpu_div(vm));
             vm->ip++;
             break;
-        }
         case CALL:
             vm->return_addresses[vm->ret_sp++] = vm->ip; /* store return address in stack */
             vm->ip = vm->label_addresses[cinstr->args[0]]; /* jump to the (assumed) function */
@@ -411,14 +418,14 @@ const char* instruction_to_string(Opcode op) {
         return "JUMPIF";
     case NOT:
         return "NOT";
-    case IADD:
-        return "IADD";
-    case ISUB:
-        return "ISUB";
-    case IMUL:
-        return "IMUL";
-    case IDIV:
-        return "IDIV";
+    case ADD:
+        return "ADD";
+    case SUB:
+        return "SUB";
+    case MUL:
+        return "MUL";
+    case DIV:
+        return "DIV";
     case CALL:
         return "CALL";
     case RET:

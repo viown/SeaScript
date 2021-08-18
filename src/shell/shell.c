@@ -10,11 +10,7 @@
 #include "shell.h"
 #include "debug.h"
 
-/*
-** TODO: Create a reusable shell environment
-*/
-
-static const char* startup = "SeaScript Interactive Shell v1.0\nType :help for help\n";
+bool shell_err = false;
 
 ShellEnvironment* create_shell_environment() {
     ShellEnvironment* shell_environment = ss_malloc(sizeof(ShellEnvironment));
@@ -53,6 +49,7 @@ void terminate_shell(ShellEnvironment* env) {
     reftable_free(&env->reftable);
     free_and_null(env->parse_objects);
     free_and_null(env);
+    vm_free(&env->vm);
 }
 
 void execute_shell_command(ShellEnvironment** env, const char* cmd) {
@@ -82,7 +79,11 @@ void execute_input(ShellEnvironment* env, VirtualMachine* vm, char* input) {
     lex(&object);
     ParseObject parse_data = parse(object);
     compile(&parse_data, &env->reftable);
-    vm_execute(vm, env->reftable.map->instructions, env->reftable.map->length);
+    if (!shell_err) {
+        vm_execute(vm, env->reftable.map->instructions, env->reftable.map->length);
+    } else {
+        shell_err = false;
+    }
     push_parse_object(env, parse_data);
     lex_free(&object);
 }
@@ -90,8 +91,7 @@ void execute_input(ShellEnvironment* env, VirtualMachine* vm, char* input) {
 int run_shell() {
     ShellEnvironment* environment = create_shell_environment();
     print_start();
-    VirtualMachine vm;
-    vm_init(&vm, ss_functions);
+    vm_init(&environment->vm, ss_functions);
     while (environment->shell_active) {
         printf("> ");
         char* input = read_line();
@@ -99,11 +99,10 @@ int run_shell() {
             /* shell specific command */
             execute_shell_command(&environment, input);
         } else {
-            execute_input(environment, &vm, input);
+            execute_input(environment, &environment->vm, input);
         }
         free(input);
     }
-    vm_free(&vm);
     terminate_shell(environment);
     return 0;
 }

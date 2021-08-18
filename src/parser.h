@@ -82,6 +82,7 @@ typedef enum {
 typedef struct {
     void* state;
     StateType type;
+    size_t line;
 } State;
 
 typedef struct {

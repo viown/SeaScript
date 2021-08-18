@@ -19,10 +19,10 @@ typedef unsigned char Opcode;
 #define JUMP        12
 #define JUMPIF      13
 #define NOT         14
-#define IADD        15
-#define ISUB        16
-#define IMUL        17
-#define IDIV        18
+#define ADD         15
+#define SUB         16
+#define MUL         17
+#define DIV         18
 /* 19-26 reserved for future use */
 #define CALL        27
 #define RET         28
