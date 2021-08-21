@@ -3,7 +3,6 @@ IGNORED_WARNINGS = \
 
 CC = gcc
 CFLAGS = $(IGNORED_WARNINGS) -Os -std=c99
-OUTPUT = seascript.exe
 
 SOURCES = \
 	src/compiler.c \
@@ -38,12 +37,12 @@ INCLUDES = \
 	-Isrc/shell
 	
 seascript: $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $@ -s
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o seascript -s
 	
 debug: $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $(OUTPUT) -g
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o seascript -g
 	
 debug_mem: $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o $(OUTPUT) -fsanitize=address -static-libasan -g
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o seascript -fsanitize=address -static-libasan -g
 	
-.PHONY: seascript
+.PHONY: seascript debug debug_mem

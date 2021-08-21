@@ -11,6 +11,35 @@ size_t label_length = 0;
 
 void push_function_call(ReferenceTable* reftable, State* state);
 
+size_t get_label_address(InstructionMap* map, size_t label) {
+    size_t addr;
+    for (addr = 0; addr < map->length; ++addr) {
+        if (map->instructions[addr].op == LBL && map->instructions[addr].args[0] == label) {
+            return addr;
+        }
+    }
+    return addr == map->length ? -1 : addr;
+}
+
+/* Converts labels to addresses and converting label instructions to regular instructions */
+void translate_labels(InstructionMap* map) {
+    for (size_t i = 0; i < map->length; ++i) {
+        switch (map->instructions[i].op) {
+            case LBLJMP:
+                map->instructions[i].op = JUMP;
+                map->instructions[i].args[0] = get_label_address(map, map->instructions[i].args[0]);
+                break;
+            case LBLJMPIF:
+                map->instructions[i].op = JUMPIF;
+                map->instructions[i].args[0] = get_label_address(map, map->instructions[i].args[0]);
+                break;
+            case LBL:
+                map->instructions[i].op = NOP;
+                break;
+        }
+    }
+}
+
 Instruction create_instruction(Opcode op) {
     Instruction instruction;
     instruction.op = op;
@@ -226,21 +255,35 @@ void push_instructions(InstructionMap* map, InstructionMap* to_push) {
     }
 }
 
-void push_if_statement(ReferenceTable* reftable, State* current_state) {
-    ss_IfStatement if_statement = get_ifstatement(current_state->state);
+void push_if_statement(ReferenceTable* reftable, ss_IfStatement if_statement) {
+    //ss_IfStatement if_statement = get_ifstatement(current_state->state);
     if (if_statement.scope != NULL) {
         if (if_statement.condition.length == 1) {
             push_singular_state(reftable, &if_statement.condition.states[0]);
-        } else {
+        } else if (if_statement.condition.length > 1) {
             push_expression(reftable, &if_statement.condition);
+        } else {
+            push_instruction1(reftable->map, LOADBOOL, 1);
         }
         ReferenceTable new_table = init_reftable();
         copy_to(&new_table, reftable);
         compile_objects(if_statement.scope, &new_table);
         push_argless_instruction(reftable->map, NOT);
-        push_instruction1(reftable->map, LBLJMPIF, label_length++);
-        push_instructions(reftable->map, new_table.map);
-        push_instruction1(reftable->map, LBL, label_length - 1); // exit label
+        if (if_statement.else_block == NULL) {
+            size_t exit_label = label_length++;
+            push_instruction1(reftable->map, LBLJMPIF, exit_label);
+            push_instructions(reftable->map, new_table.map);
+            push_instruction1(reftable->map, LBL, exit_label);
+        } else {
+            size_t exit_label = label_length++;
+            size_t conditional_label = label_length++;
+            push_instruction1(reftable->map, LBLJMPIF, exit_label);
+            push_instructions(reftable->map, new_table.map);
+            push_instruction1(reftable->map, LBLJMP, conditional_label);
+            push_instruction1(reftable->map, LBL, exit_label);
+            push_if_statement(reftable, *if_statement.else_block);
+            push_instruction1(reftable->map, LBL, conditional_label);
+        }
         reftable_free(&new_table);
     }
 }
@@ -264,7 +307,7 @@ void compile_objects(ParseObject* object, ReferenceTable* reftable) {
         } else if (current_state->type == s_FUNCTION) {
             ;
         } else if (current_state->type == s_IFSTATEMENT) {
-            push_if_statement(reftable, current_state);
+            push_if_statement(reftable, get_ifstatement(current_state->state));
         }
         current_state++;
     }
@@ -273,6 +316,7 @@ void compile_objects(ParseObject* object, ReferenceTable* reftable) {
 void compile(ParseObject* object, ReferenceTable* reftable) {
     compile_objects(object, reftable);
     push_instruction1(reftable->map, EXIT, 0);
+    translate_labels(reftable->map); // optional, but recommended
 }
 
 void reftable_free(ReferenceTable* table) {

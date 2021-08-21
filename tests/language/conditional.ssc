@@ -1,0 +1,14 @@
+// TEST RESULT:
+// OUTPUT: 3
+// EXPECTED OUTPUT: 3
+// SUCCESS
+
+if false {
+	print(0);
+} elseif false {
+	print(1);
+} elseif false {
+	print(2);
+} else {
+	print(3);
+}

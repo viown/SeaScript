@@ -202,6 +202,9 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
         cinstr = &instrs[vm->ip];
 
         switch (cinstr->op) {
+        case NOP:
+            vm->ip++;
+            break;
         case EXIT:
             vm->ip = 0;
             return cinstr->args[0];
@@ -388,6 +391,8 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
 
 const char* instruction_to_string(Opcode op) {
     switch (op) {
+    case NOP:
+        return "NOP";
     case EXIT:
         return "EXIT";
     case LOADBOOL:

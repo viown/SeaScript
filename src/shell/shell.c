@@ -19,6 +19,7 @@ ShellEnvironment* create_shell_environment() {
     shell_environment->parse_objects = ss_malloc(5 * sizeof(ParseObject));
     shell_environment->parse_objects_size = 5;
     shell_environment->parse_objects_length = 0;
+    vm_init(&shell_environment->vm, ss_functions);
     return shell_environment;
 }
 
@@ -48,8 +49,8 @@ void terminate_shell(ShellEnvironment* env) {
     }
     reftable_free(&env->reftable);
     free_and_null(env->parse_objects);
-    free_and_null(env);
     vm_free(&env->vm);
+    free_and_null(env);
 }
 
 void execute_shell_command(ShellEnvironment** env, const char* cmd) {
@@ -91,7 +92,6 @@ void execute_input(ShellEnvironment* env, VirtualMachine* vm, char* input) {
 int run_shell() {
     ShellEnvironment* environment = create_shell_environment();
     print_start();
-    vm_init(&environment->vm, ss_functions);
     while (environment->shell_active) {
         printf("> ");
         char* input = read_line();

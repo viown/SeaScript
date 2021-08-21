@@ -1,0 +1,16 @@
+// TEST RESULT:
+// OUTPUT: 0
+// EXPECTED OUTPUT: 0
+// SUCCESS
+
+if true {
+	print(0);
+} elseif true {
+	print(1);
+} elseif true {
+	print(2);
+} elseif false {
+	print(3);
+} else {
+	print(4);
+}
