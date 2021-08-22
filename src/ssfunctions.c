@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
+#include <inttypes.h>
 #include "stack.h"
 #include "ssfunctions.h"
 
@@ -13,11 +14,8 @@
 #define return_string(stack, str) \
     push_stack(stack, create_string(str));
 
-#define return_int32(stack, num) \
-    push_stack(stack, create_int32(num))
-
-#define return_int64(stack, num) \
-    push_stack(stack, create_int64(num))
+#define return_number(stack, num) \
+    push_stack(stack, create_number(num))
 
 int lookup_global_function(char* func_name) {
     for (int i = 0; i < sizeof(ss_functions) / sizeof(ss_functions[0]); ++i) {
@@ -36,14 +34,8 @@ void ss_f_print(VirtualMachine* vm) {
         else
             printf("true");
         break;
-    case INT32:
-        printf("%d", obj.object.m_int32);
-        break;
-    case INT64:
-        printf("%lld", (long long int)obj.object.m_int64);
-        break;
-    case DOUBLE:
-        printf("%g", obj.object.m_double);
+    case NUMBER:
+        printf("%f", obj.object.m_number);
         break;
     case STRING:
         printf("%s", obj.object.m_string);
@@ -66,7 +58,7 @@ void ss_f_input(VirtualMachine* vm) {
 
 void ss_f_exit(VirtualMachine* vm) {
     StackObject* top = top_stack(&vm->stack);
-    exit(top->object.m_int32);
+    exit((unsigned char)top->object.m_number);
 }
 
 void ss_f_test_add(VirtualMachine* vm) {
@@ -74,8 +66,8 @@ void ss_f_test_add(VirtualMachine* vm) {
     StackObject num1 = pop_stack(&vm->stack);
     StackObject num2 = pop_stack(&vm->stack);
     StackObject sum;
-    sum.type = INT64;
-    sum.object.m_int64 = num1.object.m_int32 + num2.object.m_int32;
+    sum.type = NUMBER;
+    sum.object.m_number = num1.object.m_number + num2.object.m_number;
     push_stack(&vm->stack, sum); /* return sum */
 }
 
@@ -83,17 +75,15 @@ void ss_f_to_string(VirtualMachine* vm) {
     StackObject number = pop_stack(&vm->stack);
     char* num_str = malloc(20);
     push_heap_object(vm, num_str);
-    sprintf(num_str, "%d", number.object.m_int32);
+    sprintf(num_str, "%d", (int32_t)number.object.m_number);
     return_string(&vm->stack, num_str);
 }
 
 void ss_f_to_number(VirtualMachine* vm) {
     StackObject str = pop_stack(&vm->stack);
     if (str.type != STRING) {
-        if (str.type == INT32) {
-            return_int32(&vm->stack, str.object.m_int32);
-        } else if (str.type == INT64) {
-            return_int64(&vm->stack, str.object.m_int64);
+        if (str.type == NUMBER) {
+            return_number(&vm->stack, str.object.m_number);
         } else {
             return_null(&vm->stack);
         }
@@ -104,14 +94,14 @@ void ss_f_to_number(VirtualMachine* vm) {
             int n = s[i] - '0';
             num = num * 10 + n;
         }
-        return_int64(&vm->stack, num);
+        return_number(&vm->stack, (double)num);
     }
 }
 
 void ss_f_time(VirtualMachine* vm) {
     StackObject current_time;
-    current_time.object.m_int64 = (int64_t)time(NULL);
-    current_time.type = INT64;
+    current_time.object.m_number = (double)time(NULL);
+    current_time.type = NUMBER;
     push_stack(&vm->stack, current_time);
 }
 

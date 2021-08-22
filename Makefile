@@ -14,7 +14,6 @@ SOURCES = \
 	src/seavm/bytecode.c \
 	src/seavm/stack.c \
 	src/seavm/vm.c  \
-	src/seavm/cpu.c \
 	src/shell/shell.c
 	
 HEADERS = \
@@ -28,7 +27,6 @@ HEADERS = \
 	src/seavm/opcodes.h \
 	src/seavm/stack.h \
 	src/seavm/vm.h \
-	src/seavm/cpu.h \
 	src/shell/shell.h
 	
 INCLUDES = \

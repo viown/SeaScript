@@ -58,10 +58,10 @@ void append_instruction(InstructionMap* map, Instruction instruction) {
 }
 
 /* Push a constant onto the stack */
-void push_constant(InstructionMap* map, int32_t constant) {
+void push_constant(InstructionMap* map, double constant) {
     Instruction instruction;
-    instruction.op = ICONST;
-    instruction.args[0] = constant;
+    instruction.op = LOADC;
+    instruction.args[0] = (int64_t)constant;
     append_instruction(map, instruction);
 }
 
@@ -103,11 +103,7 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
     case s_LITERAL: {
         ss_Literal value = get_literal(state->state);
         double v = load_literal(value);
-        if (v >= INT_MAX) {
-            push_instruction1(reftable->map, LCONST, load_literal(value));
-        } else {
-            push_instruction1(reftable->map, ICONST, load_literal(value));
-        }
+        push_instruction1(reftable->map, LOADC, v);
         break;
     }
     case s_IDENTIFIER: {
@@ -243,6 +239,7 @@ void copy_to(ReferenceTable* to_change, ReferenceTable* data_to_copy) {
     for (size_t i = 0; i < data_to_copy->var_reference_length; ++i) {
         to_change->variable_references[to_change->var_reference_length++] = data_to_copy->variable_references[i];
     }
+    to_change->map->global_counter = to_change->var_reference_length;
 }
 
 void push_instructions(InstructionMap* map, InstructionMap* to_push) {
@@ -256,7 +253,6 @@ void push_instructions(InstructionMap* map, InstructionMap* to_push) {
 }
 
 void push_if_statement(ReferenceTable* reftable, ss_IfStatement if_statement) {
-    //ss_IfStatement if_statement = get_ifstatement(current_state->state);
     if (if_statement.scope != NULL) {
         if (if_statement.condition.length == 1) {
             push_singular_state(reftable, &if_statement.condition.states[0]);
@@ -316,7 +312,7 @@ void compile_objects(ParseObject* object, ReferenceTable* reftable) {
 void compile(ParseObject* object, ReferenceTable* reftable) {
     compile_objects(object, reftable);
     push_instruction1(reftable->map, EXIT, 0);
-    translate_labels(reftable->map); // optional, but recommended
+    translate_labels(reftable->map);
 }
 
 void reftable_free(ReferenceTable* table) {

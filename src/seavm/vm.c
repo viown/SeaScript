@@ -1,32 +1,7 @@
 #include "vm.h"
-#include "cpu.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
-
-#define compare_objects(a, op, b)                               \
-    switch (highest_type) {                                     \
-    case INT32:                                                 \
-        perform_cast(a, INT32);                                 \
-        perform_cast(b, INT32);                                 \
-        return a->object.m_int32 op b->object.m_int32;          \
-    case INT64:                                                 \
-        perform_cast(a, INT64);                                 \
-        perform_cast(b, INT64);                                 \
-        return a->object.m_int64 op b->object.m_int64;          \
-    case DOUBLE:                                                \
-        perform_cast(a, DOUBLE);                                \
-        perform_cast(b, DOUBLE);                                \
-        return a->object.m_double op b->object.m_double;        \
-    default:                                                    \
-        return 0;                                               \
-    }
-
-#define compute(stack, first, op, second)                                                   \
-    StackObject object;                                                                     \
-    object.object.m_int64 = (int64_t)(second.object.m_int32 op first.object.m_int32);       \
-    object.type = INT64;                                                                    \
-    push_stack(&stack, object);
 
 
 void vm_init(VirtualMachine* vm, const ss_BaseFunction* func_list) {
@@ -92,90 +67,6 @@ void vm_free(VirtualMachine* vm) {
     terminate_stack(&vm->stack);
 }
 
-
-void cast_int(StackObject* object, StackObjType type) {
-    int32_t num = object->object.m_int32;
-    switch (type) {
-    case INT64:
-        object->object.m_int64 = (int64_t)num;
-        object->type = INT64;
-        break;
-    case DOUBLE:
-        object->object.m_double = (double)num;
-        object->type = DOUBLE;
-        break;
-    default:
-        return;
-    }
-}
-
-void cast_long(StackObject* object, StackObjType type) {
-    int64_t num = object->object.m_int64;
-    switch (type) {
-    case INT32:
-        object->object.m_int32 = (int32_t)num;
-        object->type = INT32;
-        break;
-    case DOUBLE:
-        object->object.m_double = (double)num;
-        object->type = DOUBLE;
-        break;
-    default:
-        return;
-    }
-}
-
-void cast_double(StackObject* object, StackObjType type) {
-    double num = object->object.m_double;
-    switch (type) {
-    case INT32:
-        object->object.m_int32 = (int32_t)num;
-        object->type = INT32;
-        break;
-    case INT64:
-        object->object.m_int64 = (int64_t)num;
-        object->type = INT64;
-        break;
-    default:
-        return;
-    }
-}
-
-
-void perform_cast(StackObject* object, StackObjType type) {
-    if (object->type == type)
-        return;
-    switch (object->type) {
-    case INT32:
-        cast_int(object, type);
-        break;
-    case INT64:
-        cast_long(object, type);
-        break;
-    case DOUBLE:
-        cast_double(object, type);
-        break;
-    default:
-        return;
-    }
-}
-
-bool is_equal(StackObject* a, StackObject* b) {
-    StackObjType highest_type = (a->type > b->type) ? a->type : b->type;
-    compare_objects(a, ==, b);
-}
-
-
-bool is_lt(StackObject* a, StackObject* b) {
-    StackObjType highest_type = (a->type > b->type) ? a->type : b->type;
-    compare_objects(a, <, b);
-}
-
-bool is_gt(StackObject* a, StackObject* b) {
-    StackObjType highest_type = (a->type > b->type) ? a->type : b->type;
-    compare_objects(a, >, b);
-}
-
 void resolve_labels(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
     for (uint64_t i = 0; i < length; ++i) {
         if (instrs[i].op == LBL) {
@@ -197,6 +88,10 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
     StackObject* top;
     StackObject object;
 
+    // Arithmetic operands
+    StackObject a;
+    StackObject b;
+
     resolve_labels(vm, instrs, length);
     while (vm->ip != length) {
         cinstr = &instrs[vm->ip];
@@ -212,26 +107,10 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             push_stack(&vm->stack, create_bool((bool)cinstr->args[0]));
             vm->ip++;
             break;
-        case ICONST:
-            object.object.m_int32 = cinstr->args[0];
-            object.type = INT32;
+        case LOADC: // load constant
+            object.object.m_number = cinstr->args[0];
+            object.type = NUMBER;
             push_stack(&vm->stack, object);
-            vm->ip++;
-            break;
-        case LCONST:
-            object.object.m_int64 = cinstr->args[0];
-            object.type = INT64;
-            push_stack(&vm->stack, object);
-            vm->ip++;
-            break;
-        case DCONST:
-            object.object.m_double = cinstr->args[0];
-            object.type = DOUBLE;
-            push_stack(&vm->stack, object);
-            vm->ip++;
-            break;
-        case CAST:
-            perform_cast(top_stack(&vm->stack), (StackObjType)cinstr->args[0]);
             vm->ip++;
             break;
         case POP:
@@ -240,51 +119,27 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             break;
         case INC:
             top = top_stack(&vm->stack);
-            switch (top->type) {
-            case INT32:
-                top->object.m_int32++;
-                break;
-            case INT64:
-                top->object.m_int64++;
-                break;
-            case DOUBLE:
-                top->object.m_double++;
-                break;
-            default:
-                break;
-            }
+            top->object.m_number++;
             vm->ip++;
             break;
         case DEC:
             top = top_stack(&vm->stack);
-            switch (top->type) {
-            case INT32:
-                top->object.m_int32--;
-                break;
-            case INT64:
-                top->object.m_int64--;
-                break;
-            case DOUBLE:
-                top->object.m_double--;
-                break;
-            default:
-                break;
-            }
+            top->object.m_number--;
             vm->ip++;
             break;
         case EQ:
             top = top_stack(&vm->stack);
-            push_stack(&vm->stack, create_bool(is_equal(top-1, top)));
+            push_stack(&vm->stack, create_bool((top-1)->object.m_number == top->object.m_number));
             vm->ip++;
             break;
         case LT:
             top = top_stack(&vm->stack);
-            push_stack(&vm->stack, create_bool(is_lt(top-1, top)));
+            push_stack(&vm->stack, create_bool((top-1)->object.m_number < top->object.m_number));
             vm->ip++;
             break;
         case GT:
             top = top_stack(&vm->stack);
-            push_stack(&vm->stack, create_bool(is_gt(top-1, top)));
+            push_stack(&vm->stack, create_bool((top-1)->object.m_number > top->object.m_number));
             vm->ip++;
             break;
         case JUMP:
@@ -308,19 +163,35 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             vm->ip++;
             break;
         case ADD:
-            push_stack(&vm->stack, cpu_add(vm));
+            b = pop_stack(&vm->stack);
+            a = pop_stack(&vm->stack);
+            object.object.m_number = a.object.m_number + b.object.m_number;
+            object.type = NUMBER;
+            push_stack(&vm->stack, object);
             vm->ip++;
             break;
         case SUB:
-            push_stack(&vm->stack, cpu_sub(vm));
+            b = pop_stack(&vm->stack);
+            a = pop_stack(&vm->stack);
+            object.object.m_number = a.object.m_number - b.object.m_number;
+            object.type = NUMBER;
+            push_stack(&vm->stack, object);
             vm->ip++;
             break;
         case MUL:
-            push_stack(&vm->stack, cpu_mul(vm));
+            b = pop_stack(&vm->stack);
+            a = pop_stack(&vm->stack);
+            object.object.m_number = a.object.m_number * b.object.m_number;
+            object.type = NUMBER;
+            push_stack(&vm->stack, object);
             vm->ip++;
             break;
         case DIV:
-            push_stack(&vm->stack, cpu_div(vm));
+            b = pop_stack(&vm->stack);
+            a = pop_stack(&vm->stack);
+            object.object.m_number = a.object.m_number / b.object.m_number;
+            object.type = NUMBER;
+            push_stack(&vm->stack, object);
             vm->ip++;
             break;
         case CALL:
@@ -356,31 +227,6 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             else
                 vm->ip++;
             break;
-        case IPRINT:
-            top = top_stack(&vm->stack);
-            if (top == NULL)
-                return VM_BADINSTR;
-            switch (top->type) {
-            case BOOL:
-                printf("%d", top->object.m_bool);
-                break;
-            case INT32:
-                printf("%d", top->object.m_int32);
-                break;
-            case INT64:
-                printf("%ld", top->object.m_int64);
-                break;
-            case DOUBLE:
-                printf("%f", top->object.m_double);
-                break;
-            case STRING:
-                printf("%s", top->object.m_string);
-                break;
-            default:
-                return VM_BADDATA;
-            }
-            vm->ip++;
-            break;
         default:
             return VM_INVALID_INSTRUCTION;
         }
@@ -397,14 +243,8 @@ const char* instruction_to_string(Opcode op) {
         return "EXIT";
     case LOADBOOL:
         return "LOADBOOL";
-    case ICONST:
-        return "ICONST";
-    case LCONST:
-        return "LCONST";
-    case DCONST:
-        return "DCONST";
-    case CAST:
-        return "CAST";
+    case LOADC:
+        return "LOADC";
     case POP:
         return "POP";
     case INC:
@@ -447,8 +287,6 @@ const char* instruction_to_string(Opcode op) {
         return "LBLJMP";
     case LBLJMPIF:
         return "LBLJMPIF";
-    case IPRINT:
-        return "IPRINT";
     default:
         return "UNKNOWN";
     }

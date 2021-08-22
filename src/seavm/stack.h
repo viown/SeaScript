@@ -9,8 +9,7 @@ typedef char* t_string;
 
 typedef enum {
     BOOL,
-    INT32,
-    INT64,
+    NUMBER,
     DOUBLE,
     STRING, /* can only be loaded from a constant pool or CALLC function */
     ARRAY,
@@ -18,9 +17,7 @@ typedef enum {
 
 typedef union {
     bool m_bool;
-    int32_t m_int32;
-    int64_t m_int64;
-    double m_double;
+    double m_number;
     t_string m_string;
 } DataObject;
 
@@ -42,8 +39,7 @@ StackObject* top_stack(Stack* stack);
 void terminate_stack(Stack* stack);
 
 StackObject create_bool(bool val);
-StackObject create_int32(int32_t val);
-StackObject create_int64(int64_t val);
+StackObject create_number(double val);
 StackObject create_string(t_string val);
 
 #endif // SEAVM_STACK_H

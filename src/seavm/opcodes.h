@@ -7,10 +7,7 @@ typedef unsigned char Opcode;
 #define NOP         0
 #define EXIT        1
 #define LOADBOOL    2
-#define ICONST      3
-#define LCONST      4
-#define DCONST      5
-#define CAST        6
+#define LOADC       5
 #define POP         7
 #define INC         8
 #define DEC         9
@@ -33,7 +30,6 @@ typedef unsigned char Opcode;
 #define LBL         32
 #define LBLJMP      33
 #define LBLJMPIF    34
-#define IPRINT      35
 
 
 #endif // SEAVM_OPCODES_H

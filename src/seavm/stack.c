@@ -39,17 +39,10 @@ StackObject create_bool(bool val) {
     return object;
 }
 
-StackObject create_int32(int32_t val) {
+StackObject create_number(double val) {
     StackObject object;
-    object.object.m_int32 = val;
-    object.type = INT32;
-    return object;
-}
-
-StackObject create_int64(int64_t val) {
-    StackObject object;
-    object.object.m_int64 = val;
-    object.type = INT64;
+    object.object.m_number = val;
+    object.type = NUMBER;
     return object;
 }
 
