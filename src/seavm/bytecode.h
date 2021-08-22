@@ -12,6 +12,17 @@
 #define VERSION "0.0.0"
 #endif
 
+#define STRING_POOL 177
+
+typedef struct {
+    char** constants;
+    size_t size;
+    size_t length;
+} StringPool;
+
+StringPool create_string_pool();
+size_t push_to_pool(StringPool* pool, char* str);
+void free_string_pool(StringPool* pool);
 
 typedef struct {
     Opcode op;
@@ -23,12 +34,14 @@ static const OpcodeReader reader_map[] = {
     {EXIT, sizeof(int)},
     {LOADBOOL, sizeof(bool)},
     {LOADC, sizeof(double)},
+    {LOADPOOL, sizeof(int32_t)},
     {POP, 0},
     {INC, 0},
     {DEC, 0},
     {EQ, 0},
     {LT, 0},
     {GT, 0},
+    {NEQ, 0},
     {JUMP, sizeof(int32_t)},
     {JUMPIF, sizeof(int32_t)},
     {NOT, 0},
@@ -47,11 +60,9 @@ static const OpcodeReader reader_map[] = {
 };
 
 const OpcodeReader* get_reader(Opcode op);
-
-void save_to_file(Instruction* instructions, size_t length, const char* path);
-InstructionHolder read_from_file(const char* path);
+void save_to_file(Instruction* instructions, StringPool* pool, size_t length, const char* path);
+InstructionHolder read_from_file(const char* path, StringPool* pool);
 long get_file_size(const char* path);
-
 void free_holder(InstructionHolder* holder);
 
 #endif // SEAVM_BYTECODE_H

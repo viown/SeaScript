@@ -30,6 +30,7 @@ typedef struct {
     VariableReference* variable_references;
     size_t var_reference_size;
     size_t var_reference_length;
+    StringPool string_pool;
 } ReferenceTable;
 
 ReferenceTable init_reftable();

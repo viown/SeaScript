@@ -35,7 +35,11 @@ void ss_f_print(VirtualMachine* vm) {
             printf("true");
         break;
     case NUMBER:
-        printf("%f", obj.object.m_number);
+        if ((obj.object.m_number - (int64_t)obj.object.m_number) == 0) {
+            printf("%lld", (long long int)obj.object.m_number);
+        } else {
+            printf("%g", obj.object.m_number);
+        }
         break;
     case STRING:
         printf("%s", obj.object.m_string);

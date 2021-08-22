@@ -29,7 +29,7 @@
 
 #define is_eq(x, y) (!strcmp(x, y))
 #define is_math_op(x) (x == '+' || x == '-' || x == '*' || x == '/')
-#define is_comparison_op(x) (is_eq(x, GREATER_THAN) || is_eq(x, LESS_THAN) || is_eq(x, EQUAL_TO))
+#define is_comparison_op(x) (is_eq(x, GREATER_THAN) || is_eq(x, LESS_THAN) || is_eq(x, EQUAL_TO) || is_eq(x, NOT_EQUAL_TO))
 #define is_literal(x) (x == ILITERAL || x == SLITERAL)
 
 /* dereference macros */
@@ -69,8 +69,7 @@ typedef enum {
 } OperatorType;
 
 typedef enum {
-    l_INTEGER,
-    l_DOUBLE, /* todo */
+    l_NUMBER,
     l_STRING
 } LiteralType;
 

@@ -209,7 +209,7 @@ void parse_literal(State* state, Token* token) {
         double* value = (double*)ss_malloc(sizeof(double));
         *value = atof(token->value);
         literal->value = value;
-        literal->type = l_INTEGER;
+        literal->type = l_NUMBER;
     } else if (token->token == SLITERAL) {
         char* literal_string = (char*)ss_malloc(strlen(token->value) + 1);
         strcpy(literal_string, token->value);

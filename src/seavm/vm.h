@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include "stack.h"
 #include "instruction.h"
+#include "bytecode.h"
 
 typedef enum {
     VM_EXIT_SUCCESS = 0,
@@ -53,7 +54,7 @@ const char* instruction_to_string(Opcode op);
 
 void vm_init(VirtualMachine* vm, const ss_BaseFunction* func_list);
 void push_heap_object(VirtualMachine* vm, void* mem_block);
-int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length);
+int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, uint64_t length);
 void vm_clear(VirtualMachine* vm);
 void vm_free(VirtualMachine* vm);
 void vm_raise(VirtualMachine* vm, unsigned char exit_code);

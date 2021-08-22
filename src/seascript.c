@@ -72,7 +72,8 @@ char* read_file(const char* path) {
 }
 
 int visualize_bytecode(char* path) {
-    InstructionHolder instructionHolder = read_from_file(path);
+    StringPool pool = create_string_pool();
+    InstructionHolder instructionHolder = read_from_file(path, &pool);
     Instruction* instructions = instructionHolder.instructions;
 
     for (int i = 0; i < instructionHolder.length; ++i) {
@@ -93,17 +94,20 @@ int visualize_bytecode(char* path) {
         }
         printf("\n");
     }
+    free_string_pool(&pool);
     free_holder(&instructionHolder);
     return 0;
 }
 
 int execute_bytecode(char* path) {
     VirtualMachine virtual_machine;
+    StringPool pool = create_string_pool();
     vm_init(&virtual_machine, ss_functions);
-    InstructionHolder holder = read_from_file(path);
-    int exec = vm_execute(&virtual_machine, holder.instructions, holder.length);
+    InstructionHolder holder = read_from_file(path, &pool);
+    int exec = vm_execute(&virtual_machine, &pool, holder.instructions, holder.length);
     free_holder(&holder);
     vm_free(&virtual_machine);
+    free_string_pool(&pool);
     return exec;
 }
 
@@ -143,13 +147,13 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     if (flags.preserve_bytecode) {
         char* bytecode_path = path;
         bytecode_path[strlen(bytecode_path)-1] = 'b';
-        save_to_file(reftable.map->instructions, reftable.map->length, bytecode_path);
+        save_to_file(reftable.map->instructions, &reftable.string_pool, reftable.map->length, bytecode_path);
     }
     free_ParseObject(&s);
     lex_free(&object);
     free_and_null(source_code);
     if (!flags.no_run) {
-        int ret = vm_execute(&virtual_machine, reftable.map->instructions, reftable.map->length);
+        int ret = vm_execute(&virtual_machine, &reftable.string_pool, reftable.map->instructions, reftable.map->length);
         reftable_free(&reftable);
         vm_free(&virtual_machine);
         return ret;

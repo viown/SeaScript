@@ -10,6 +10,39 @@
 
 #define LEN(x) (sizeof(x) / sizeof(x[0]))
 
+StringPool create_string_pool() {
+    StringPool pool;
+    pool.constants = (char**)ss_malloc(10 * sizeof(char*));
+    pool.size = 10;
+    pool.length = 0;
+    return pool;
+}
+
+size_t count_pool_size(StringPool* pool) {
+    size_t counter = 0;
+    for (size_t i = 0; i < pool->length; ++i) {
+        counter += strlen(pool->constants[i]) + 1;
+    }
+    return counter;
+}
+
+size_t push_to_pool(StringPool* pool, char* str) {
+    if (pool->size == pool->length) {
+        pool->size *= 2;
+        pool->constants = realloc(pool->constants, pool->size * sizeof(char*));
+    }
+    pool->constants[pool->length++] = str; // note: must be heap allocated
+    return pool->length - 1;
+}
+
+void free_string_pool(StringPool* pool) {
+    for (size_t i = 0; i < pool->length; ++i) {
+        free_and_null(pool->constants[i]);
+    }
+    free_and_null(pool->constants);
+    pool->length = -1;
+}
+
 const OpcodeReader* get_reader(Opcode op) {
     for (int i = 0; i < LEN(reader_map); ++i) {
         if (reader_map[i].op==op)
@@ -18,7 +51,7 @@ const OpcodeReader* get_reader(Opcode op) {
     return NULL;
 }
 
-void write_bytes(Instruction* instruction, char* bytecode, size_t* cursor, uint16_t bytes_to_read) {
+void write_bytes(Instruction* instruction, unsigned char* bytecode, size_t* cursor, uint16_t bytes_to_read) {
     arg_type arg = instruction->args[0];
     uint8_t* d = (uint8_t*)&arg;
     for (int i = 0; i < bytes_to_read; ++i) {
@@ -26,9 +59,21 @@ void write_bytes(Instruction* instruction, char* bytecode, size_t* cursor, uint1
     }
 }
 
-void save_to_file(Instruction* instructions, size_t length, const char* path) {
+void write_byte(unsigned char* bytecode, size_t* cursor, uint8_t byte) {
+    bytecode[(*cursor)++] = byte;
+}
+
+void append_string(unsigned char* bytecode, size_t* cursor, char* string) {
+    for (int i = 0; i < strlen(string); ++i) {
+        bytecode[(*cursor)++] = string[i];
+    }
+    bytecode[++(*cursor)] = '\0';
+}
+
+void save_to_file(Instruction* instructions, StringPool* pool, size_t length, const char* path) {
     FILE* file = fopen(path, "wb");
-    char* bytecode = (char*)ss_malloc(length * 8);
+    unsigned char* bytecode = (unsigned char*)ss_malloc(length * 8 + count_pool_size(pool));
+    size_t size = length * 8;
     size_t cursor = 0;
     const char* version = VERSION;
     for (int i = 0; i < strlen(version); ++i) {
@@ -42,6 +87,12 @@ void save_to_file(Instruction* instructions, size_t length, const char* path) {
             ss_throw("Invalid instruction '%s'\n", instruction_to_string(instruction->op));
         }
         write_bytes(instruction, bytecode, &cursor, reader->bytes_to_read);
+    }
+    if (pool->length != 0) {
+        write_byte(bytecode, &cursor, STRING_POOL);
+        for (size_t i = 0; i < pool->length; ++i) {
+            append_string(bytecode, &cursor, pool->constants[i]);
+        }
     }
     fwrite(bytecode, 1, cursor, file);
     fclose(file);
@@ -69,7 +120,7 @@ void load_version(unsigned char* bytecode, char* version) {
     version[5] = '\0';
 }
 
-InstructionHolder read_from_file(const char* path) {
+InstructionHolder read_from_file(const char* path, StringPool* pool) {
     InstructionHolder holder;
     holder.instructions = ss_malloc(100 * sizeof(Instruction));
     holder.size = 100;
@@ -88,6 +139,9 @@ InstructionHolder read_from_file(const char* path) {
         ss_throw("This bytecode file uses Seascript v%s, which differs from the current version (%s). Running it can be dangerous.\nHalt.\n", version, VERSION);
     }
     while (cursor != byte_size) {
+        if (bytecode[cursor] == STRING_POOL) {
+            break;
+        }
         Instruction instruction;
         instruction.op = bytecode[cursor++];
         const OpcodeReader* reader = get_reader(instruction.op);
@@ -100,6 +154,26 @@ InstructionHolder read_from_file(const char* path) {
         memcpy(&argument, bytes, bytes_to_read);
         instruction.args[0] = argument;
         push_holder_instruction(&holder, instruction);
+    }
+    if (bytecode[cursor] == STRING_POOL) {
+        cursor++;
+        char* string = malloc(100);
+        size_t string_size = 100;
+        size_t length = 0;
+        while (cursor != byte_size) {
+            do {
+                if (length == string_size) {
+                    string_size *= 2;
+                    string = realloc(string, string_size);
+                }
+                string[length++] = bytecode[cursor];
+            } while (bytecode[cursor++] != '\0');
+            string[length++] = '\0';
+            push_to_pool(pool, string);
+            string = malloc(100);
+            string_size = 100;
+            length = 0;
+        }
     }
     fclose(file);
     free(bytecode);

@@ -15,6 +15,7 @@ bool is_operator(char c) {
     case '/':
     case '=':
     case ';':
+    case '!':
         return true;
     default:
         return false;
@@ -100,6 +101,13 @@ char* scan_operator(lex_Object* object, char* current) {
     case '<':
     case '>':
     case '=':
+        token_operator[used++] = *current++;
+        if (*current == '=') {
+            token_operator[used++] = '=';
+            current++;
+        }
+        break;
+    case '!':
         token_operator[used++] = *current++;
         if (*current == '=') {
             token_operator[used++] = '=';

@@ -61,10 +61,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/seavm/bytecode.h" />
-		<Unit filename="../src/seavm/cpu.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../src/seavm/cpu.h" />
 		<Unit filename="../src/seavm/instruction.h" />
 		<Unit filename="../src/seavm/opcodes.h" />
 		<Unit filename="../src/seavm/stack.c">

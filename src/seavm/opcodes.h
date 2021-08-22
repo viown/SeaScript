@@ -2,34 +2,40 @@
 #define SEAVM_OPCODES_H
 #include "stack.h"
 
+/*
+*   Reserved opcodes:
+*   1. 177 - Used by the bytecode serializer to store constants
+*/
+
 typedef unsigned char Opcode;
 
 #define NOP         0
 #define EXIT        1
 #define LOADBOOL    2
-#define LOADC       5
-#define POP         7
-#define INC         8
-#define DEC         9
-#define EQ          10
-#define LT          11
-#define GT          12
-#define JUMP        13
-#define JUMPIF      14
-#define NOT         15
-#define ADD         16
-#define SUB         17
-#define MUL         18
-#define DIV         19
-/* 20-26 reserved for future use */
-#define CALL        27
-#define RET         28
-#define CALLC       29
-#define STORE       30
-#define LOAD        31
-#define LBL         32
-#define LBLJMP      33
-#define LBLJMPIF    34
+#define LOADC       3
+#define LOADPOOL    4
+#define POP         5
+#define INC         6
+#define DEC         7
+#define EQ          8
+#define LT          9
+#define GT          10
+#define NEQ         11
+#define JUMP        12
+#define JUMPIF      13
+#define NOT         14
+#define ADD         15
+#define SUB         16
+#define MUL         17
+#define DIV         18
+#define CALL        19
+#define RET         20
+#define CALLC       21
+#define STORE       22
+#define LOAD        23
+#define LBL         24
+#define LBLJMP      25
+#define LBLJMPIF    26
 
 
 #endif // SEAVM_OPCODES_H

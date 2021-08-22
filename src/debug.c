@@ -61,9 +61,9 @@ void print_state(State st) {
         printf("%s", op);
     } else if (st.type == s_LITERAL) {
         ss_Literal literal = get_literal(st.state);
-        if (literal.type == l_INTEGER) {
+        if (literal.type == l_NUMBER) {
             double value = load_literal(literal);
-            if (literal.type == l_INTEGER) {
+            if (literal.type == l_NUMBER) {
                 printf("%g", value);
             }
         } else if (literal.type == l_STRING) {

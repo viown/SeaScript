@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "ssfunctions.h"
 
+extern bool shell_env;
 size_t label_length = 0;
 
 void push_function_call(ReferenceTable* reftable, State* state);
@@ -102,8 +103,15 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
     switch (state->type) {
     case s_LITERAL: {
         ss_Literal value = get_literal(state->state);
-        double v = load_literal(value);
-        push_instruction1(reftable->map, LOADC, v);
+        if (value.type == l_NUMBER) {
+            double v = load_literal(value);
+            push_instruction1(reftable->map, LOADC, v);
+        } else if (value.type == l_STRING) {
+            char* str = (char*)value.value;
+            char* v = ss_malloc(strlen(str) + 1);
+            strcpy(v, str);
+            push_instruction1(reftable->map, LOADPOOL, push_to_pool(&reftable->string_pool, v));
+        }
         break;
     }
     case s_IDENTIFIER: {
@@ -128,40 +136,51 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
     }
 }
 
-Opcode get_mathop_from_symbol(char symbol) {
-    switch (symbol) {
+void push_math(InstructionMap* map, char op) {
+    switch (op) {
     case '+':
-        return ADD;
+        push_argless_instruction(map, ADD);
+        break;
     case '-':
-        return SUB;
+        push_argless_instruction(map, SUB);
+        break;
     case '*':
-        return MUL;
+        push_argless_instruction(map, MUL);
+        break;
     case '/':
-        return DIV;
+        push_argless_instruction(map, DIV);
+        break;
     default:
-        return -1;
+        ss_throw("Bad operator");
     }
 }
 
-Opcode get_comparisonop_from_symbol(char* symbol) {
-    if (is_eq(symbol, GREATER_THAN))
-        return GT;
-    else if (is_eq(symbol, LESS_THAN))
-        return LT;
-    else if (is_eq(symbol, EQUAL_TO))
-        return EQ;
-    return -1;
+void push_comparison(InstructionMap* map, char* op) {
+    if (is_eq(op, GREATER_THAN)) {
+        push_argless_instruction(map, GT);
+    } else if (is_eq(op, LESS_THAN)) {
+        push_argless_instruction(map, LT);
+    } else if (is_eq(op, EQUAL_TO)) {
+        push_argless_instruction(map, EQ);
+    } else if (is_eq(op, NOT_EQUAL_TO)) {
+        push_argless_instruction(map, EQ);
+        push_argless_instruction(map, NOT);
+    } else {
+        ss_throw("Bad operator");
+    }
 }
 
 void push_expression(ReferenceTable* reftable, ss_Expression* expression) {
+    // This only works for one way operations, e.g `x + y`.
+    // TODO: Parse this expression to an AST
     if (expression->length == 3 && expression->states[1].type == s_OPERATOR) {
         ss_Operator op = get_operator(expression->states[1].state);
         push_singular_state(reftable, &expression->states[0]);
         push_singular_state(reftable, &expression->states[2]);
         if (op.type == MATH) {
-            push_argless_instruction(reftable->map, get_mathop_from_symbol(((char*)op.op)[0]));
+            push_math(reftable->map, *(char*)op.op);
         } else if (op.type == COMPARISON) {
-            push_argless_instruction(reftable->map, get_comparisonop_from_symbol((char*)op.op));
+            push_comparison(reftable->map, (char*)op.op);
         }
     }
 }
@@ -232,6 +251,7 @@ ReferenceTable init_reftable() {
     table.variable_references = (VariableReference*)ss_malloc(1000 * sizeof(VariableReference));
     table.var_reference_size = 1000;
     table.var_reference_length = 0;
+    table.string_pool = create_string_pool();
     return table;
 }
 
@@ -240,6 +260,7 @@ void copy_to(ReferenceTable* to_change, ReferenceTable* data_to_copy) {
         to_change->variable_references[to_change->var_reference_length++] = data_to_copy->variable_references[i];
     }
     to_change->map->global_counter = to_change->var_reference_length;
+    to_change->string_pool = data_to_copy->string_pool;
 }
 
 void push_instructions(InstructionMap* map, InstructionMap* to_push) {
@@ -261,32 +282,30 @@ void push_if_statement(ReferenceTable* reftable, ss_IfStatement if_statement) {
         } else {
             push_instruction1(reftable->map, LOADBOOL, 1);
         }
-        ReferenceTable new_table = init_reftable();
-        copy_to(&new_table, reftable);
-        compile_objects(if_statement.scope, &new_table);
         push_argless_instruction(reftable->map, NOT);
         if (if_statement.else_block == NULL) {
             size_t exit_label = label_length++;
             push_instruction1(reftable->map, LBLJMPIF, exit_label);
-            push_instructions(reftable->map, new_table.map);
+            compile_objects(if_statement.scope, reftable);
             push_instruction1(reftable->map, LBL, exit_label);
         } else {
             size_t exit_label = label_length++;
             size_t conditional_label = label_length++;
             push_instruction1(reftable->map, LBLJMPIF, exit_label);
-            push_instructions(reftable->map, new_table.map);
+            compile_objects(if_statement.scope, reftable);
             push_instruction1(reftable->map, LBLJMP, conditional_label);
             push_instruction1(reftable->map, LBL, exit_label);
             push_if_statement(reftable, *if_statement.else_block);
             push_instruction1(reftable->map, LBL, conditional_label);
         }
-        reftable_free(&new_table);
     }
 }
 
 void compile_objects(ParseObject* object, ReferenceTable* reftable) {
-    if (reftable->map->length != 0)
-        reftable->map->length = 0;
+    if (shell_env) {
+        if (reftable->map->length != 0)
+            reftable->map->length = 0;
+    }
     State* current_state = &object->states[0];
     State* end_state = &object->states[object->length];
     while (current_state != end_state) {
@@ -319,4 +338,5 @@ void reftable_free(ReferenceTable* table) {
     free_and_null(table->map->instructions);
     free_and_null(table->map);
     free_and_null(table->variable_references);
+    free_string_pool(&table->string_pool);
 }

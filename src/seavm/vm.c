@@ -81,7 +81,7 @@ void vm_raise(VirtualMachine* vm, unsigned char exit_code) {
     exit(exit_code);
 }
 
-int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
+int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, uint64_t length) {
     vm->ip = 0; // Reset ip
     Instruction* cinstr;
 
@@ -113,6 +113,12 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
             push_stack(&vm->stack, object);
             vm->ip++;
             break;
+        case LOADPOOL:
+            object.object.m_string = pool->constants[cinstr->args[0]];
+            object.type = STRING;
+            push_stack(&vm->stack, object);
+            vm->ip++;
+            break;
         case POP:
             pop_stack(&vm->stack);
             vm->ip++;
@@ -140,6 +146,11 @@ int vm_execute(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
         case GT:
             top = top_stack(&vm->stack);
             push_stack(&vm->stack, create_bool((top-1)->object.m_number > top->object.m_number));
+            vm->ip++;
+            break;
+        case NEQ:
+            top = top_stack(&vm->stack);
+            push_stack(&vm->stack, create_bool((top-1)->object.m_number != top->object.m_number));
             vm->ip++;
             break;
         case JUMP:
@@ -245,6 +256,8 @@ const char* instruction_to_string(Opcode op) {
         return "LOADBOOL";
     case LOADC:
         return "LOADC";
+    case LOADPOOL:
+        return "LOADPOOL";
     case POP:
         return "POP";
     case INC:
@@ -257,6 +270,8 @@ const char* instruction_to_string(Opcode op) {
         return "LT";
     case GT:
         return "GT";
+    case NEQ:
+        return "NEQ";
     case JUMP:
         return "JUMP";
     case JUMPIF:
