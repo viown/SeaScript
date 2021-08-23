@@ -17,22 +17,22 @@ SOURCES = \
 	src/shell/shell.c
 	
 HEADERS = \
-	src/compiler.h \
-	src/debug.h \
-	src/lex.h \
-	src/parser.h \
-	src/ssfunctions.h \
-	src/seavm/bytecode.h \
-	src/seavm/instruction.h \
-	src/seavm/opcodes.h \
-	src/seavm/stack.h \
-	src/seavm/vm.h \
-	src/shell/shell.h
+	include/compiler.h \
+	include/debug.h \
+	include/lex.h \
+	include/parser.h \
+	include/ssfunctions.h \
+	include/seavm/bytecode.h \
+	include/seavm/instruction.h \
+	include/seavm/opcodes.h \
+	include/seavm/stack.h \
+	include/seavm/vm.h \
+	include/shell/shell.h
 	
 INCLUDES = \
-	-Isrc \
-	-Isrc/seavm \
-	-Isrc/shell
+	-Iinclude \
+	-Iinclude/seavm \
+	-Iinclude/shell \
 	
 seascript: $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -o seascript -s

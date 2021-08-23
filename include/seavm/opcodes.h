@@ -20,22 +20,21 @@ typedef unsigned char Opcode;
 #define EQ          8
 #define LT          9
 #define GT          10
-#define NEQ         11
-#define JUMP        12
-#define JUMPIF      13
-#define NOT         14
-#define ADD         15
-#define SUB         16
-#define MUL         17
-#define DIV         18
-#define CALL        19
-#define RET         20
-#define CALLC       21
-#define STORE       22
-#define LOAD        23
-#define LBL         24
-#define LBLJMP      25
-#define LBLJMPIF    26
+#define JUMP        11
+#define JUMPIF      12
+#define NOT         13
+#define ADD         14
+#define SUB         15
+#define MUL         16
+#define DIV         17
+#define CALL        18
+#define RET         19
+#define CALLC       20
+#define STORE       21
+#define LOAD        22
+#define LBL         23
+#define LBLJMP      24
+#define LBLJMPIF    25
 
 
 #endif // SEAVM_OPCODES_H

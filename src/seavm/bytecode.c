@@ -18,6 +18,14 @@ StringPool create_string_pool() {
     return pool;
 }
 
+size_t string_exists(StringPool* pool, char* str) {
+    for (size_t i = 0; i < pool->length; ++i) {
+        if (!strcmp(pool->constants[i], str))
+            return i;
+    }
+    return -1;
+}
+
 size_t count_pool_size(StringPool* pool) {
     size_t counter = 0;
     for (size_t i = 0; i < pool->length; ++i) {

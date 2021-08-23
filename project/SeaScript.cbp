@@ -34,51 +34,52 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-std=c99 -Iinclude -Iinclude/seavm -Iinclude/shell" />
 			<Add option="-std=c99 -I../src -I../src/seavm -I../src/shell" />
 			<Add option="-std=c99 -I../src -I../src/seavm" />
 		</Compiler>
+		<Unit filename="../include/compiler.h" />
+		<Unit filename="../include/conf.h" />
+		<Unit filename="../include/debug.h" />
+		<Unit filename="../include/lex.h" />
+		<Unit filename="../include/parser.h" />
+		<Unit filename="../include/seavm/bytecode.h" />
+		<Unit filename="../include/seavm/instruction.h" />
+		<Unit filename="../include/seavm/opcodes.h" />
+		<Unit filename="../include/seavm/stack.h" />
+		<Unit filename="../include/seavm/vm.h" />
+		<Unit filename="../include/shell/shell.h" />
+		<Unit filename="../include/ssfunctions.h" />
 		<Unit filename="../src/compiler.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/compiler.h" />
-		<Unit filename="../src/conf.h" />
 		<Unit filename="../src/debug.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/debug.h" />
 		<Unit filename="../src/lex.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/lex.h" />
 		<Unit filename="../src/parser.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/parser.h" />
 		<Unit filename="../src/seascript.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../src/seavm/bytecode.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/seavm/bytecode.h" />
-		<Unit filename="../src/seavm/instruction.h" />
-		<Unit filename="../src/seavm/opcodes.h" />
 		<Unit filename="../src/seavm/stack.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/seavm/stack.h" />
 		<Unit filename="../src/seavm/vm.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/seavm/vm.h" />
 		<Unit filename="../src/shell/shell.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/shell/shell.h" />
 		<Unit filename="../src/ssfunctions.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../src/ssfunctions.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

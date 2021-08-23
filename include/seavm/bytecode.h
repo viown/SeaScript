@@ -21,6 +21,7 @@ typedef struct {
 } StringPool;
 
 StringPool create_string_pool();
+size_t string_exists(StringPool* pool, char* str);
 size_t push_to_pool(StringPool* pool, char* str);
 void free_string_pool(StringPool* pool);
 
@@ -41,7 +42,6 @@ static const OpcodeReader reader_map[] = {
     {EQ, 0},
     {LT, 0},
     {GT, 0},
-    {NEQ, 0},
     {JUMP, sizeof(int32_t)},
     {JUMPIF, sizeof(int32_t)},
     {NOT, 0},

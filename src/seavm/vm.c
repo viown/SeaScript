@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <string.h>
 
 
 void vm_init(VirtualMachine* vm, const ss_BaseFunction* func_list) {
@@ -86,6 +87,7 @@ int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, uint64
     Instruction* cinstr;
 
     StackObject* top;
+    StackObject* top2;
     StackObject object;
 
     // Arithmetic operands
@@ -135,7 +137,14 @@ int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, uint64
             break;
         case EQ:
             top = top_stack(&vm->stack);
-            push_stack(&vm->stack, create_bool((top-1)->object.m_number == top->object.m_number));
+            top2 = top - 1;
+            if (top->type == STRING && top2->type == STRING) {
+                push_stack(&vm->stack, create_bool( !strcmp(top->object.m_string, top2->object.m_string) ));
+            } else if (top->type == STRING || top2->type == STRING) {
+                push_stack(&vm->stack, create_bool(false));
+            } else {
+                push_stack(&vm->stack, create_bool( (top-1)->object.m_number == top->object.m_number) );
+            }
             vm->ip++;
             break;
         case LT:
@@ -146,11 +155,6 @@ int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, uint64
         case GT:
             top = top_stack(&vm->stack);
             push_stack(&vm->stack, create_bool((top-1)->object.m_number > top->object.m_number));
-            vm->ip++;
-            break;
-        case NEQ:
-            top = top_stack(&vm->stack);
-            push_stack(&vm->stack, create_bool((top-1)->object.m_number != top->object.m_number));
             vm->ip++;
             break;
         case JUMP:
@@ -270,8 +274,6 @@ const char* instruction_to_string(Opcode op) {
         return "LT";
     case GT:
         return "GT";
-    case NEQ:
-        return "NEQ";
     case JUMP:
         return "JUMP";
     case JUMPIF:

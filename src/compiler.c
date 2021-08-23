@@ -108,9 +108,14 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
             push_instruction1(reftable->map, LOADC, v);
         } else if (value.type == l_STRING) {
             char* str = (char*)value.value;
-            char* v = ss_malloc(strlen(str) + 1);
-            strcpy(v, str);
-            push_instruction1(reftable->map, LOADPOOL, push_to_pool(&reftable->string_pool, v));
+            size_t check = string_exists(&reftable->string_pool, str);
+            if (check == -1) {
+                char* v = ss_malloc(strlen(str) + 1);
+                strcpy(v, str);
+                push_instruction1(reftable->map, LOADPOOL, push_to_pool(&reftable->string_pool, v));
+            } else {
+                push_instruction1(reftable->map, LOADPOOL, check);
+            }
         }
         break;
     }
