@@ -4,7 +4,7 @@
 
 /*
 *   Reserved opcodes:
-*   1. 177 - Used by the bytecode serializer to store constants
+*   177 - Used by the bytecode serializer to store constants
 */
 
 typedef unsigned char Opcode;
@@ -35,6 +35,7 @@ typedef unsigned char Opcode;
 #define LBL         23
 #define LBLJMP      24
 #define LBLJMPIF    25
+#define LBLCALL     26
 
 
 #endif // SEAVM_OPCODES_H

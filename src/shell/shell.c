@@ -81,7 +81,7 @@ void execute_input(ShellEnvironment* env, VirtualMachine* vm, char* input) {
     ParseObject parse_data = parse(object);
     compile(&parse_data, &env->reftable);
     if (!shell_err) {
-        vm_execute(vm, &env->reftable.string_pool, env->reftable.map->instructions, env->reftable.map->length);
+        vm_execute(vm, env->reftable.string_pool, env->reftable.map->instructions, env->reftable.map->length);
     } else {
         shell_err = false;
     }

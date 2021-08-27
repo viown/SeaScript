@@ -57,6 +57,7 @@ static const OpcodeReader reader_map[] = {
     {LBL, sizeof(int32_t)},
     {LBLJMP, sizeof(int32_t)},
     {LBLJMPIF, sizeof(int32_t)},
+    {LBLCALL, sizeof(int32_t)},
 };
 
 const OpcodeReader* get_reader(Opcode op);

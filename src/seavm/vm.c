@@ -82,7 +82,7 @@ void vm_raise(VirtualMachine* vm, unsigned char exit_code) {
     exit(exit_code);
 }
 
-int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, uint64_t length) {
+int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, size_t length) {
     vm->ip = 0; // Reset ip
     Instruction* cinstr;
 
@@ -210,8 +210,12 @@ int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, uint64
             vm->ip++;
             break;
         case CALL:
-            vm->return_addresses[vm->ret_sp++] = vm->ip; /* store return address in stack */
-            vm->ip = vm->label_addresses[cinstr->args[0]]; /* jump to the (assumed) function */
+            vm->return_addresses[vm->ret_sp++] = vm->ip;
+            vm->ip = cinstr->args[0];
+            break;
+        case LBLCALL:
+            vm->return_addresses[vm->ret_sp++] = vm->ip;
+            vm->ip = vm->label_addresses[cinstr->args[0]];
             break;
         case RET:
             vm->ip = vm->return_addresses[--vm->ret_sp] + 1;
@@ -246,7 +250,6 @@ int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, uint64
             return VM_INVALID_INSTRUCTION;
         }
     }
-    vm->ip = 0;
     return VM_EXIT_FAILURE; // Should exit properly through (EXIT 0)
 }
 
@@ -304,6 +307,8 @@ const char* instruction_to_string(Opcode op) {
         return "LBLJMP";
     case LBLJMPIF:
         return "LBLJMPIF";
+    case LBLCALL:
+        return "LBLCALL";
     default:
         return "UNKNOWN";
     }

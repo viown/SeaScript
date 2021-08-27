@@ -76,6 +76,15 @@ int visualize_bytecode(char* path) {
     InstructionHolder instructionHolder = read_from_file(path, &pool);
     Instruction* instructions = instructionHolder.instructions;
 
+    // String Constants
+    if (pool.length != 0) {
+        printf("String Constants:\n");
+        for (size_t i = 0; i < pool.length; ++i) {
+            printf("%d - \"%s\"\n", i, pool.constants[i]);
+        }
+        printf("\n\n");
+    }
+    // Output instructions
     for (int i = 0; i < instructionHolder.length; ++i) {
         if (instructions[i].op == LBL) {
             printf("\n");
@@ -147,13 +156,13 @@ int compile_and_run(CommandLineFlags flags, char* path) {
     if (flags.preserve_bytecode) {
         char* bytecode_path = path;
         bytecode_path[strlen(bytecode_path)-1] = 'b';
-        save_to_file(reftable.map->instructions, &reftable.string_pool, reftable.map->length, bytecode_path);
+        save_to_file(reftable.map->instructions, reftable.string_pool, reftable.map->length, bytecode_path);
     }
     free_ParseObject(&s);
     lex_free(&object);
     free_and_null(source_code);
     if (!flags.no_run) {
-        int ret = vm_execute(&virtual_machine, &reftable.string_pool, reftable.map->instructions, reftable.map->length);
+        int ret = vm_execute(&virtual_machine, reftable.string_pool, reftable.map->instructions, reftable.map->length);
         reftable_free(&reftable);
         vm_free(&virtual_machine);
         return ret;

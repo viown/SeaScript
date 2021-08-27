@@ -237,7 +237,6 @@ void parse_operator(State* state, Token* token) {
         op->op = math_operator;
         state->state = op;
     } else if (is_comparison_op(token->value)) {
-        /* incomplete */
         ss_Operator* op = (ss_Operator*)ss_malloc(sizeof(ss_Operator));
         Operator* comparison_op = (char*)ss_malloc(3);
         strcpy(comparison_op, token->value);
@@ -290,7 +289,6 @@ State parse_value(Token* token) {
     return state;
 }
 
-/* reads the tokens until an ';' is encountered */
 ParseObject parse_statement(Token* token, const char* end) {
     ParseObject object;
     State* states = (State*)ss_malloc(255 * sizeof(State));
@@ -426,7 +424,7 @@ ParseObject parse(lex_Object object) {
         if (current_token->token == NEWLINE) {
             current_line++;
         } else if (current_token->token == KEYWORD) {
-            if (is_variable_declaration(current_token + 1)) { /* variable declaration? */
+            if (is_variable_declaration(current_token + 1)) {
                 State variable_state = parse_variable_declaration(current_token, states, length);
                 states[length++] = variable_state;
                 skip_to_end(&current_token, EOS);

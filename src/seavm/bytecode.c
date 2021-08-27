@@ -59,16 +59,16 @@ const OpcodeReader* get_reader(Opcode op) {
     return NULL;
 }
 
+void write_byte(unsigned char* bytecode, size_t* cursor, uint8_t byte) {
+    bytecode[(*cursor)++] = byte;
+}
+
 void write_bytes(Instruction* instruction, unsigned char* bytecode, size_t* cursor, uint16_t bytes_to_read) {
     arg_type arg = instruction->args[0];
     uint8_t* d = (uint8_t*)&arg;
     for (int i = 0; i < bytes_to_read; ++i) {
-        bytecode[(*cursor)++] = *d++;
+        write_byte(bytecode, cursor, *d++);
     }
-}
-
-void write_byte(unsigned char* bytecode, size_t* cursor, uint8_t byte) {
-    bytecode[(*cursor)++] = byte;
 }
 
 void append_string(unsigned char* bytecode, size_t* cursor, char* string) {

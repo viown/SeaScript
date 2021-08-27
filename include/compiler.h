@@ -9,7 +9,7 @@
 #define IS_INT(x) ((x - (int)x) == 0)
 
 static const char* const ss_globals[] = {
-    "false", "true"
+    "false", "true", "_env"
 };
 static const int global_count = LEN(ss_globals);
 
@@ -26,11 +26,20 @@ typedef struct {
 } VariableReference;
 
 typedef struct {
+    InstructionMap* function_instructions;
+    char function_name[MAX_IDENTIFIER_SIZE];
+    size_t reference;
+} Function;
+
+typedef struct {
     InstructionMap* map;
     VariableReference* variable_references;
     size_t var_reference_size;
     size_t var_reference_length;
-    StringPool string_pool;
+    StringPool* string_pool;
+    Function* functions;
+    size_t functions_size;
+    size_t functions_length;
 } ReferenceTable;
 
 ReferenceTable init_reftable();

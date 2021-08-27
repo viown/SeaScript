@@ -8,6 +8,7 @@
 #include "ssfunctions.h"
 
 extern bool shell_env;
+extern bool debug_env;
 size_t label_length = 0;
 
 void push_function_call(ReferenceTable* reftable, State* state);
@@ -32,6 +33,10 @@ void translate_labels(InstructionMap* map) {
                 break;
             case LBLJMPIF:
                 map->instructions[i].op = JUMPIF;
+                map->instructions[i].args[0] = get_label_address(map, map->instructions[i].args[0]);
+                break;
+            case LBLCALL:
+                map->instructions[i].op = CALL;
                 map->instructions[i].args[0] = get_label_address(map, map->instructions[i].args[0]);
                 break;
             case LBL:
@@ -97,6 +102,8 @@ void push_globalc(InstructionMap* map, char* global) {
         push_instruction1(map, LOADBOOL, 1);
     else if (is_eq(global, "false"))
         push_instruction1(map, LOADBOOL, 0);
+    else if (is_eq(global, "_env"))
+        push_instruction1(map, LOADBOOL, debug_env);
 }
 
 void push_singular_state(ReferenceTable* reftable, State* state) {
@@ -108,11 +115,11 @@ void push_singular_state(ReferenceTable* reftable, State* state) {
             push_instruction1(reftable->map, LOADC, v);
         } else if (value.type == l_STRING) {
             char* str = (char*)value.value;
-            size_t check = string_exists(&reftable->string_pool, str);
+            size_t check = string_exists(reftable->string_pool, str);
             if (check == -1) {
                 char* v = ss_malloc(strlen(str) + 1);
                 strcpy(v, str);
-                push_instruction1(reftable->map, LOADPOOL, push_to_pool(&reftable->string_pool, v));
+                push_instruction1(reftable->map, LOADPOOL, push_to_pool(reftable->string_pool, v));
             } else {
                 push_instruction1(reftable->map, LOADPOOL, check);
             }
@@ -223,6 +230,14 @@ void push_reassignment(ReferenceTable* reftable, State* state) {
     }
 }
 
+int lookup_local_function(ReferenceTable* reftable, char* function_name) {
+    for (size_t i = 0; i < reftable->functions_length; ++i) {
+        if (!strcmp(reftable->functions[i].function_name, function_name))
+            return reftable->functions[i].reference;
+    }
+    return -1;
+}
+
 void push_function_call(ReferenceTable* reftable, State* state) {
     ss_assert(state->type == s_FUNCTIONCALL);
     ss_FunctionCall fcall = get_functioncall(state->state);
@@ -237,27 +252,13 @@ void push_function_call(ReferenceTable* reftable, State* state) {
     if (global_func != -1) {
         push_instruction1(reftable->map, CALLC, global_func);
     } else {
-        /* todo */
+        int local_func = lookup_local_function(reftable, fcall.function_name);
+        if (local_func != -1) {
+            push_instruction1(reftable->map, LBLCALL, local_func);
+        } else {
+            ss_throw("line %d: Unknown function '%s'\n", state->line, fcall.function_name);
+        }
     }
-}
-
-void push_function(ReferenceTable* reftable, State* state) {
-    ss_Function function = get_function(state->state);
-
-}
-
-ReferenceTable init_reftable() {
-    ReferenceTable table;
-    table.map = (InstructionMap*)ss_malloc(sizeof(InstructionMap));
-    table.map->instructions = (Instruction*)ss_malloc(1000 * sizeof(Instruction));
-    table.map->size = 1000;
-    table.map->length = 0;
-    table.map->global_counter = 0;
-    table.variable_references = (VariableReference*)ss_malloc(1000 * sizeof(VariableReference));
-    table.var_reference_size = 1000;
-    table.var_reference_length = 0;
-    table.string_pool = create_string_pool();
-    return table;
 }
 
 void copy_to(ReferenceTable* to_change, ReferenceTable* data_to_copy) {
@@ -266,6 +267,53 @@ void copy_to(ReferenceTable* to_change, ReferenceTable* data_to_copy) {
     }
     to_change->map->global_counter = to_change->var_reference_length;
     to_change->string_pool = data_to_copy->string_pool;
+}
+
+void init_map(InstructionMap* map) {
+    map->instructions = (Instruction*)ss_malloc(1000 * sizeof(Instruction));
+    map->size = 1000;
+    map->length = 0;
+    map->global_counter = 0;
+}
+
+ReferenceTable init_reftable() {
+    ReferenceTable table;
+    table.map = (InstructionMap*)ss_malloc(sizeof(InstructionMap));
+    init_map(table.map);
+    table.variable_references = (VariableReference*)ss_malloc(1000 * sizeof(VariableReference));
+    table.var_reference_size = 1000;
+    table.var_reference_length = 0;
+    table.string_pool = (StringPool*)malloc(sizeof(StringPool));
+    *table.string_pool = create_string_pool();
+    table.functions_size = 5;
+    table.functions_length = 0;
+    table.functions = (Function*)ss_malloc(sizeof(Function) * table.functions_size);
+    return table;
+}
+
+void append_function(ReferenceTable* reftable, Function function) {
+    if (reftable->functions_length == reftable->functions_size) {
+        reftable->functions_size *= 2;
+        reftable->functions = realloc(reftable->functions, sizeof(Function) * reftable->functions_size);
+    }
+    reftable->functions[reftable->functions_length++] = function;
+}
+
+void push_function(ReferenceTable* reftable, State* state) {
+    InstructionMap* function_instructions = ss_malloc(sizeof(InstructionMap));
+    ss_Function function = get_function(state->state);
+    Function function_holder;
+    init_map(function_instructions);
+    strcpy(function_holder.function_name, function.function_name);
+    ReferenceTable temp = init_reftable();
+    copy_to(&temp, reftable);
+    compile_objects(&function.scope, &temp);
+    for (int i = 0; i < temp.map->length; ++i) {
+        append_instruction(function_instructions, temp.map->instructions[i]);
+    }
+    function_holder.reference = label_length++;
+    function_holder.function_instructions = function_instructions;
+    append_function(reftable, function_holder);
 }
 
 void push_instructions(InstructionMap* map, InstructionMap* to_push) {
@@ -311,8 +359,8 @@ void compile_objects(ParseObject* object, ReferenceTable* reftable) {
         if (reftable->map->length != 0)
             reftable->map->length = 0;
     }
-    State* current_state = &object->states[0];
-    State* end_state = &object->states[object->length];
+    State* current_state = object->states;
+    State* end_state = object->states + object->length;
     while (current_state != end_state) {
         if (current_state->type == s_VARIABLE) {
             int ref = push_variable(reftable, current_state);
@@ -325,7 +373,7 @@ void compile_objects(ParseObject* object, ReferenceTable* reftable) {
         } else if (current_state->type == s_REASSIGN) {
             push_reassignment(reftable, current_state);
         } else if (current_state->type == s_FUNCTION) {
-            ;
+            push_function(reftable, current_state);
         } else if (current_state->type == s_IFSTATEMENT) {
             push_if_statement(reftable, get_ifstatement(current_state->state));
         }
@@ -336,6 +384,11 @@ void compile_objects(ParseObject* object, ReferenceTable* reftable) {
 void compile(ParseObject* object, ReferenceTable* reftable) {
     compile_objects(object, reftable);
     push_instruction1(reftable->map, EXIT, 0);
+    for (size_t i = 0; i < reftable->functions_length; ++i) {
+        push_instruction1(reftable->map, LBL, reftable->functions[i].reference);
+        push_instructions(reftable->map, reftable->functions[i].function_instructions);
+        push_argless_instruction(reftable->map, RET);
+    }
     translate_labels(reftable->map);
 }
 
@@ -343,5 +396,5 @@ void reftable_free(ReferenceTable* table) {
     free_and_null(table->map->instructions);
     free_and_null(table->map);
     free_and_null(table->variable_references);
-    free_string_pool(&table->string_pool);
+    free_string_pool(table->string_pool);
 }
