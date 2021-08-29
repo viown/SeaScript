@@ -20,7 +20,7 @@ size_t get_label_address(InstructionMap* map, size_t label) {
             return addr;
         }
     }
-    return addr == map->length ? -1 : addr;
+    return addr;
 }
 
 /* Converts labels to addresses and converting label instructions to regular instructions */
@@ -39,9 +39,11 @@ void translate_labels(InstructionMap* map) {
                 map->instructions[i].op = CALL;
                 map->instructions[i].args[0] = get_label_address(map, map->instructions[i].args[0]);
                 break;
-            case LBL:
-                map->instructions[i].op = NOP;
-                break;
+        }
+    }
+    for (size_t i = 0; i < map->length; ++i) {
+        if (map->instructions[i].op == LBL) {
+            map->instructions[i].op = NOP;
         }
     }
 }
@@ -287,33 +289,44 @@ ReferenceTable init_reftable() {
     *table.string_pool = create_string_pool();
     table.functions_size = 5;
     table.functions_length = 0;
-    table.functions = (Function*)ss_malloc(sizeof(Function) * table.functions_size);
+    table.functions = (CFunction*)ss_malloc(sizeof(CFunction) * table.functions_size);
     return table;
 }
 
-void append_function(ReferenceTable* reftable, Function function) {
+void append_function(ReferenceTable* reftable, CFunction function) {
     if (reftable->functions_length == reftable->functions_size) {
         reftable->functions_size *= 2;
-        reftable->functions = realloc(reftable->functions, sizeof(Function) * reftable->functions_size);
+        reftable->functions = realloc(reftable->functions, sizeof(CFunction) * reftable->functions_size);
     }
     reftable->functions[reftable->functions_length++] = function;
+}
+
+void update_function(ReferenceTable* reftable, size_t reference, CFunction function) {
+    for (size_t i = 0; i < reftable->functions_length; ++i) {
+        if (reftable->functions[i].reference == reference) {
+            reftable->functions[i] = function;
+        }
+    }
 }
 
 void push_function(ReferenceTable* reftable, State* state) {
     InstructionMap* function_instructions = ss_malloc(sizeof(InstructionMap));
     ss_Function function = get_function(state->state);
-    Function function_holder;
+    CFunction function_holder;
+    function_holder.reference = label_length++;
+    function_holder.function_instructions = NULL;
     init_map(function_instructions);
     strcpy(function_holder.function_name, function.function_name);
-    ReferenceTable temp = init_reftable();
-    copy_to(&temp, reftable);
-    compile_objects(&function.scope, &temp);
-    for (int i = 0; i < temp.map->length; ++i) {
-        append_instruction(function_instructions, temp.map->instructions[i]);
-    }
-    function_holder.reference = label_length++;
-    function_holder.function_instructions = function_instructions;
     append_function(reftable, function_holder);
+
+    InstructionMap* orig_map = reftable->map;
+    reftable->map = ss_malloc(sizeof(InstructionMap));
+    init_map(reftable->map);
+    compile_objects(&function.scope, reftable);
+    function_holder.function_instructions = reftable->map;
+    reftable->map = orig_map;
+
+    update_function(reftable, function_holder.reference, function_holder);
 }
 
 void push_instructions(InstructionMap* map, InstructionMap* to_push) {
@@ -376,6 +389,13 @@ void compile_objects(ParseObject* object, ReferenceTable* reftable) {
             push_function(reftable, current_state);
         } else if (current_state->type == s_IFSTATEMENT) {
             push_if_statement(reftable, get_ifstatement(current_state->state));
+        } else if (current_state->type == s_RETURN) {
+            ss_ReturnStatement ret = get_return(current_state->state);
+            if (ret.length == 1) {
+                push_singular_state(reftable, &ret.states[0]);
+            } else {
+                push_expression(reftable, &ret);
+            }
         }
         current_state++;
     }

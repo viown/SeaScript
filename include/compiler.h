@@ -29,7 +29,7 @@ typedef struct {
     InstructionMap* function_instructions;
     char function_name[MAX_IDENTIFIER_SIZE];
     size_t reference;
-} Function;
+} CFunction;
 
 typedef struct {
     InstructionMap* map;
@@ -37,7 +37,7 @@ typedef struct {
     size_t var_reference_size;
     size_t var_reference_length;
     StringPool* string_pool;
-    Function* functions;
+    CFunction* functions;
     size_t functions_size;
     size_t functions_length;
 } ReferenceTable;

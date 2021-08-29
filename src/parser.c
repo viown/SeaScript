@@ -17,6 +17,8 @@ static inline bool is_keyword(Token* token, char* keyword) {
 
 /* check whether current identifier leads to a function call */
 static inline bool is_function_call(Token* current_token) {
+    if (current_token->is_end)
+        return false;
     bool is_preceded = strcmp(NEXT_TOKEN(current_token).value, FUNC_OPEN) == 0;
     if (!IS_START_TOKEN(current_token)) {
         return is_preceded && (strcmp(PREVIOUS_TOKEN(current_token).value, "function") != 0);
@@ -43,6 +45,8 @@ static inline bool is_variable_declaration(Token* current_token) {
 }
 
 static inline bool is_variable_reassignment(Token* current_token) {
+    if (current_token->is_end)
+        return false;
     bool is_assigning = current_token->token == IDENTIFIER && strcmp(NEXT_TOKEN(current_token).value, ASSIGNMENT) == 0;
     if (!IS_START_TOKEN(current_token)) {
         return is_assigning && strcmp(PREVIOUS_TOKEN(current_token).value, "global") != 0;
@@ -52,6 +56,8 @@ static inline bool is_variable_reassignment(Token* current_token) {
 }
 
 static inline bool is_array_index(Token* current_token) {
+    if (current_token->is_end)
+        return false;
     return current_token->token == IDENTIFIER && (strcmp(NEXT_TOKEN(current_token).value, INDEX_OPEN) == 0);
 }
 
@@ -76,8 +82,10 @@ void skip_to_end_call(Token** ptoken) {
 /* skips to end of statement */
 void skip_to_end(Token** ptoken, const char* end) {
     while (strcmp((*ptoken)->value, end)) {
-        if ((*ptoken)->token == NEWLINE) {
+        if ((*ptoken)->token == TNEWLINE) {
             current_line++;
+        } else if ((*ptoken)->is_end) {
+            return;
         }
         (*ptoken)++;
     }
@@ -99,7 +107,7 @@ void parse_function_call(State* state, Token* token) {
             if (is_eq(token->value, FUNC_CLOSE)) {
                 is_looping = false;
                 break;
-            } else if (token->token == NEWLINE) {
+            } else if (token->token == TNEWLINE) {
                 ++token;
                 continue;
             }
@@ -173,7 +181,7 @@ lex_Object collect_tokens_from_scope(Token** ptoken) {
             object.token_size *= 2;
             object.tokens = (Token*)realloc(object.tokens, object.token_size * sizeof(Token));
         }
-        if ((*ptoken)->token == NEWLINE)
+        if ((*ptoken)->token == TNEWLINE)
             current_line++;
         (*ptoken)++;
     }
@@ -301,7 +309,7 @@ ParseObject parse_statement(Token* token, const char* end) {
             skip_to_end(&token, INDEX_CLOSE);
         }
         token++;
-        while (token->token == NEWLINE) {
+        while (token->token == TNEWLINE) {
             token++;
         }
     }
@@ -421,7 +429,7 @@ ParseObject parse(lex_Object object) {
     size_t length = 0;
     State* states = (State*)ss_malloc(size * sizeof(State));
     while (current_token != end) {
-        if (current_token->token == NEWLINE) {
+        if (current_token->token == TNEWLINE) {
             current_line++;
         } else if (current_token->token == KEYWORD) {
             if (is_variable_declaration(current_token + 1)) {

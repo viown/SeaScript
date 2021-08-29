@@ -4,7 +4,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
-#include <inttypes.h>
+#include <readline/readline.h>
 #include "stack.h"
 #include "ssfunctions.h"
 
@@ -53,26 +53,17 @@ void ss_f_print(VirtualMachine* vm) {
 
 void ss_f_input(VirtualMachine* vm) {
     /* temporary test for strings */
-    char* input = malloc(50);
-    push_heap_object(vm, input); // mark for free
-    fgets(input, 50, stdin);
-    input[strlen(input)-1] = '\0';
+    char* input = readline("");
     return_string(&vm->stack, input);
 }
 
 void ss_f_exit(VirtualMachine* vm) {
     StackObject* top = top_stack(&vm->stack);
-    exit((unsigned char)top->object.m_number);
-}
-
-void ss_f_test_add(VirtualMachine* vm) {
-    /* function for testing return values */
-    StackObject num1 = pop_stack(&vm->stack);
-    StackObject num2 = pop_stack(&vm->stack);
-    StackObject sum;
-    sum.type = NUMBER;
-    sum.object.m_number = num1.object.m_number + num2.object.m_number;
-    push_stack(&vm->stack, sum); /* return sum */
+    if (top->type == NUMBER) {
+        exit((unsigned char)top->object.m_number);
+    } else {
+        exit(top->object.m_bool);
+    }
 }
 
 void ss_f_to_string(VirtualMachine* vm) {

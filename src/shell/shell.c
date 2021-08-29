@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 #include <string.h>
 #include <stdbool.h>
 #include <malloc.h>
@@ -33,13 +35,6 @@ void push_parse_object(ShellEnvironment* env, ParseObject obj) {
 
 void print_start() {
     printf("%s", startup);
-}
-
-char* read_line() {
-    char* s = malloc(1000);
-    fgets(s, 1000, stdin);
-    s[strlen(s)-1] = '\0';
-    return s;
 }
 
 void terminate_shell(ShellEnvironment* env) {
@@ -93,15 +88,14 @@ int run_shell() {
     ShellEnvironment* environment = create_shell_environment();
     print_start();
     while (environment->shell_active) {
-        printf("> ");
-        char* input = read_line();
+        char* input = readline("> ");
+        add_history(input);
         if (input[0] == ':') {
             /* shell specific command */
             execute_shell_command(&environment, input);
         } else {
             execute_input(environment, &environment->vm, input);
         }
-        free(input);
     }
     terminate_shell(environment);
     return 0;

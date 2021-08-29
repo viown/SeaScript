@@ -6,7 +6,6 @@
 void ss_f_print(VirtualMachine* vm);
 void ss_f_input(VirtualMachine* vm);
 void ss_f_exit(VirtualMachine* vm);
-void ss_f_test_add(VirtualMachine* vm);
 void ss_f_to_string(VirtualMachine* vm);
 void ss_f_to_number(VirtualMachine* vm);
 void ss_f_time(VirtualMachine* vm);
@@ -15,7 +14,6 @@ static const ss_BaseFunction ss_functions[] = {
     {"print", &ss_f_print, 1},
     {"input", &ss_f_input, 0},
     {"exit", &ss_f_exit, 1},
-    {"test_add", &ss_f_test_add, 2},
     {"to_string", &ss_f_to_string, 1},
     {"to_number", &ss_f_to_number, 1},
     {"time", &ss_f_time, 0},

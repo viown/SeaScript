@@ -80,7 +80,7 @@ Token create_token(char* value, TokenType type) {
 char* scan_text(lex_Object* object, char* current) {
     char source[IDENTIFIER_LIMIT];
     int used = 0;
-    while (is_identifier_char(*current)) {
+    while (is_identifier_char(*current) || is_num(*current)) {
         source[used++] = *current;
         current++;
     }
@@ -208,7 +208,7 @@ void lex(lex_Object* lexObject) {
             current++;
             current = scan_string(lexObject, current, *(current - 1));
         } else if (*current == '\n') {
-            append_token(lexObject, create_token(create_value(""), NEWLINE));
+            append_token(lexObject, create_token(create_value(""), TNEWLINE));
             current++;
         } else {
             current++;
