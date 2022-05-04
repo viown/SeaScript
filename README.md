@@ -7,6 +7,7 @@ Seascript is designed to be fast and reliable while maintaining the capabilities
 # Example Program
 
 example.ssc:
+
     function countToTen() {
         global i = 0;
         
