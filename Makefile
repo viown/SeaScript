@@ -35,12 +35,12 @@ INCLUDES = \
 	-Iinclude/shell \
 	
 seascript: $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -lreadline -o seascript -s
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -lreadline -o seascript.out -s
 	
 debug: $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -lreadline -o seascript -g
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -lreadline -o seascript.out -g
 	
 debug_mem: $(SOURCES) $(HEADERS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -lreadline -o seascript -fsanitize=address -static-libasan -g
+	$(CC) $(CFLAGS) $(INCLUDES) $(SOURCES) -lreadline -o seascript.out -fsanitize=address -static-libasan -g
 	
 .PHONY: seascript debug debug_mem

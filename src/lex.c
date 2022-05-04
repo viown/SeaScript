@@ -208,7 +208,7 @@ void lex(lex_Object* lexObject) {
             current++;
             current = scan_string(lexObject, current, *(current - 1));
         } else if (*current == '\n') {
-            append_token(lexObject, create_token(create_value(""), TNEWLINE));
+            append_token(lexObject, create_token(create_value("\n"), TNEWLINE));
             current++;
         } else {
             current++;

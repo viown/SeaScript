@@ -185,7 +185,7 @@ lex_Object collect_tokens_from_scope(Token** ptoken) {
             current_line++;
         (*ptoken)++;
     }
-    if ((*ptoken)->is_end) {
+    if ((*ptoken)->is_end && !is_eq((*ptoken)->value, "}")) {
         ss_throw("Scope left open\n");
     }
     object.tokens[0].is_start = true;

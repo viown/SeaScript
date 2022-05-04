@@ -119,6 +119,11 @@ struct ss_IfStatement {
 typedef struct ss_IfStatement ss_IfStatement;
 
 typedef struct {
+    ss_Expression condition;
+    ParseObject* scope;
+} ss_WhileStatement;
+
+typedef struct {
     char function_name[MAX_IDENTIFIER_SIZE];
     ArgumentCollection arguments;
     ParseObject scope;

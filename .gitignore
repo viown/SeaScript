@@ -1,9 +1,18 @@
+# Directories
 build/
+
+# Binary
+*.out
+*.exe
 *.o
+
+# Seascript-specific
+*.ssc
+*.ssb
+
+# Other
 *.sln
 *.depend
 *.layout
-*.ssb
 .vscode
-*.exe
 *.txt

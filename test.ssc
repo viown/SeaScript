@@ -1,3 +1,5 @@
-global a = 20;
+function testFunction() {
+    return time();    
+}
 
-if a == 20 {print("hello");}
+print(testFunction());

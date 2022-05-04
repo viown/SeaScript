@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "conf.h"
 #include "shell.h"
 #include "lex.h"
@@ -19,7 +20,7 @@ typedef struct {
     bool preserve_bytecode : 1;
     bool visualize_tokens : 1;
     bool parser_print : 1;
-    bool no_run : 1;
+    bool benchmark : 1;
     bool check_version : 1;
 } CommandLineFlags;
 
@@ -29,7 +30,7 @@ CommandLineFlags init_flags() {
     flags.preserve_bytecode = false;
     flags.visualize_tokens = false;
     flags.parser_print = false;
-    flags.no_run = false;
+    flags.benchmark = false;
     flags.check_version = false;
     return flags;
 }
@@ -157,20 +158,17 @@ int compile_and_run(CommandLineFlags flags, char* path) {
         char* bytecode_path = path;
         bytecode_path[strlen(bytecode_path)-1] = 'b';
         save_to_file(reftable.map->instructions, reftable.string_pool, reftable.map->length, bytecode_path);
-    }
-    free_ParseObject(&s);
-    lex_free(&object);
-    free_and_null(source_code);
-    if (!flags.no_run) {
-        int ret = vm_execute(&virtual_machine, reftable.string_pool, reftable.map->instructions, reftable.map->length);
-        reftable_free(&reftable);
-        vm_free(&virtual_machine);
-        return ret;
-    } else {
         reftable_free(&reftable);
         vm_free(&virtual_machine);
         return 0;
     }
+    free_ParseObject(&s);
+    lex_free(&object);
+    free_and_null(source_code);
+    int ret = vm_execute(&virtual_machine, reftable.string_pool, reftable.map->instructions, reftable.map->length);
+    reftable_free(&reftable);
+    vm_free(&virtual_machine);
+    return ret;
 }
 
 void read_flags(CommandLineFlags* flags, int argc, char** argv) {
@@ -183,8 +181,8 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
             flags->visualize_tokens = true;
         else if (!strcmp(argv[i], "--parser-print"))
             flags->parser_print = true;
-        else if (!strcmp(argv[i], "--norun"))
-            flags->no_run = true;
+        else if (!strcmp(argv[i], "--benchmark"))
+            flags->benchmark = true;
         else if (!strcmp(argv[i], "--version"))
             flags->check_version = true;
         else if (!strcmp(argv[i], "--debug"))
@@ -194,6 +192,23 @@ void read_flags(CommandLineFlags* flags, int argc, char** argv) {
     }
 }
 
+int compile_and_run_in_benchmark(CommandLineFlags flags, char* path) {
+    clock_t startTime = clock();
+    int execution = compile_and_run(flags, path);
+    clock_t endTime = clock();
+    double secondsTaken = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
+    printf("\nCode executed in %f seconds.\n", secondsTaken);
+    return execution;
+}
+
+int execute_bytecode_in_benchmark(char* path) {
+    clock_t startTime = clock();
+    int execution = execute_bytecode(path);
+    clock_t endTime = clock();
+    double secondsTaken = ((double)(endTime - startTime)) / CLOCKS_PER_SEC;
+    printf("\nCode executed in %f seconds.\n", secondsTaken);
+    return execution;
+}
 
 int main(int argc, char** argv) {
     CommandLineFlags flags = init_flags();
@@ -206,12 +221,20 @@ int main(int argc, char** argv) {
             get_extension(argv[1], extension);
             if (!strcmp(extension, BYTECODE_EXTENSION)) {
                 if (!flags.is_view) {
-                    return execute_bytecode(argv[1]);
+                    if (flags.benchmark) {
+                        return execute_bytecode_in_benchmark(argv[1]);
+                    } else {
+                        return execute_bytecode(argv[1]);
+                    }
                 } else {
                     return visualize_bytecode(argv[1]);
                 }
             } else if (!strcmp(extension, SOURCE_CODE_EXTENSION)) {
-                return compile_and_run(flags, argv[1]);
+                if (flags.benchmark) {
+                    return compile_and_run_in_benchmark(flags, argv[1]);
+                } else {
+                    return compile_and_run(flags, argv[1]);
+                }
             } else {
                 ss_throw("Bad Argument: Invalid extension '%s'\n", extension);
             }
