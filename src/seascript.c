@@ -123,49 +123,37 @@ int execute_bytecode(char* path) {
 
 int compile_and_run(CommandLineFlags flags, char* path) {
     VirtualMachine virtual_machine;
+    ParseObject parseTree;
+    ReferenceTable reftable;
+    lex_Object lexObject;
     vm_init(&virtual_machine, ss_functions);
     char* source_code = read_file(path);
     if (source_code == NULL)
         ss_throw("File '%s' could not be found\n", path);
-    lex_Object object;
-    lexObject_init(&object, source_code);
-    lex(&object);
+    lexObject_init(&lexObject, source_code);
+    lex(&lexObject);
+    parseTree = parse(lexObject);
+    reftable = init_reftable();
+    compile(&parseTree, &reftable);
+    int ret;
     if (flags.visualize_tokens) {
-        if (object.token_used > 2500) {
-            lex_free(&object);
-            vm_free(&virtual_machine);
-            free_and_null(source_code);
-            ss_throw("Tokens too big to visualize\n");
+        if (lexObject.token_used > 2500) {
+            printf("Tokens too big to visualize\n");
+        } else {
+            visualize_tokens(&lexObject);
         }
-        visualize_tokens(&object);
-        lex_free(&object);
-        vm_free(&virtual_machine);
-        free_and_null(source_code);
-        return 0;
-    }
-    ParseObject s = parse(object);
-    if (flags.parser_print) {
-        visualize_states(&s);
-        free_ParseObject(&s);
-        lex_free(&object);
-        free_and_null(source_code);
-        vm_free(&virtual_machine);
-        return 0;
-    }
-    ReferenceTable reftable = init_reftable();
-    compile(&s, &reftable);
-    if (flags.preserve_bytecode) {
+    } else if (flags.parser_print) {
+        visualize_states(&parseTree);
+    } else if (flags.preserve_bytecode) {
         char* bytecode_path = path;
         bytecode_path[strlen(bytecode_path)-1] = 'b';
         save_to_file(reftable.map->instructions, reftable.string_pool, reftable.map->length, bytecode_path);
-        reftable_free(&reftable);
-        vm_free(&virtual_machine);
-        return 0;
+    } else {
+        ret = vm_execute(&virtual_machine, reftable.string_pool, reftable.map->instructions, reftable.map->length);
     }
-    free_ParseObject(&s);
-    lex_free(&object);
+    free_ParseObject(&parseTree);
+    lex_free(&lexObject);
     free_and_null(source_code);
-    int ret = vm_execute(&virtual_machine, reftable.string_pool, reftable.map->instructions, reftable.map->length);
     reftable_free(&reftable);
     vm_free(&virtual_machine);
     return ret;

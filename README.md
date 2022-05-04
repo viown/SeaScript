@@ -8,16 +8,14 @@ Seascript is designed to be fast and reliable while maintaining the capabilities
 
 example.ssc:
 
-    function countToTen() {
-        global i = 0;
-        
-        while i < 10 {
-            i = i + 1;
-        }
+    function wait(seconds) {
+        global start = time(); // UNIX time
+
+        while ((time() - start) < seconds) {}
     }
 
-    countToTen();
-    print("Successfully counted to 10!");
+    wait(10);
+    print("Waited 10 seconds");
 
 To run this code:
 
