@@ -26,7 +26,7 @@ int lookup_global_function(char* func_name) {
 }
 
 void ss_f_print(VirtualMachine* vm) {
-    StackObject obj = pop_stack(&vm->stack);
+    StackObject obj = pop_stack(&vm->stack[vm->sp]);
     switch (obj.type) {
     case BOOL:
         if (obj.object.m_bool == 0)
@@ -48,17 +48,17 @@ void ss_f_print(VirtualMachine* vm) {
         exit(-1);
     }
     printf("\n");
-    return_null(&vm->stack);
+    return_null(&vm->stack[vm->sp]);
 }
 
 void ss_f_input(VirtualMachine* vm) {
     /* temporary test for strings */
     char* input = readline("");
-    return_string(&vm->stack, input);
+    return_string(&vm->stack[vm->sp], input);
 }
 
 void ss_f_exit(VirtualMachine* vm) {
-    StackObject* top = top_stack(&vm->stack);
+    StackObject* top = top_stack(&vm->stack[vm->sp]);
     if (top->type == NUMBER) {
         exit((unsigned char)top->object.m_number);
     } else {
@@ -67,20 +67,20 @@ void ss_f_exit(VirtualMachine* vm) {
 }
 
 void ss_f_to_string(VirtualMachine* vm) {
-    StackObject number = pop_stack(&vm->stack);
+    StackObject number = pop_stack(&vm->stack[vm->sp]);
     char* num_str = malloc(20);
-    push_heap_object(vm, num_str);
+    push_heap_object(vm, num_str); // TODO: Stop using this garbage and place num_str inside the virtual machine's memory.
     sprintf(num_str, "%d", (int32_t)number.object.m_number);
-    return_string(&vm->stack, num_str);
+    return_string(&vm->stack[vm->sp], num_str);
 }
 
 void ss_f_to_number(VirtualMachine* vm) {
-    StackObject str = pop_stack(&vm->stack);
+    StackObject str = pop_stack(&vm->stack[vm->sp]);
     if (str.type != STRING) {
         if (str.type == NUMBER) {
-            return_number(&vm->stack, str.object.m_number);
+            return_number(&vm->stack[vm->sp], str.object.m_number);
         } else {
-            return_null(&vm->stack);
+            return_null(&vm->stack[vm->sp]);
         }
     } else {
         int64_t num = 0;
@@ -89,7 +89,7 @@ void ss_f_to_number(VirtualMachine* vm) {
             int n = s[i] - '0';
             num = num * 10 + n;
         }
-        return_number(&vm->stack, (double)num);
+        return_number(&vm->stack[vm->sp], (double)num);
     }
 }
 
@@ -97,7 +97,7 @@ void ss_f_time(VirtualMachine* vm) {
     StackObject current_time;
     current_time.object.m_number = (double)time(NULL);
     current_time.type = NUMBER;
-    push_stack(&vm->stack, current_time);
+    push_stack(&vm->stack[vm->sp], current_time);
 }
 
 

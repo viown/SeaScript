@@ -31,6 +31,8 @@ typedef unsigned char Opcode;
 #define LBLJMP      24
 #define LBLJMPIF    25
 #define LBLCALL     26
+#define LSTORE      27
+#define LLOAD       28
 
 
 #endif // SEAVM_OPCODES_H

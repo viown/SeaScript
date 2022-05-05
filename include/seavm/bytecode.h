@@ -24,6 +24,14 @@
 * 27-41 :  Reserved for future use.
 */
 
+#define HEADER_MAGIC_NUMBER         0
+#define HEADER_VERSION              5
+#define HEADER_INSTRUCTION_LENGTH   11
+#define HEADER_BYTECODE_SIZE        15
+#define HEADER_CONSTANT_ADDR        19
+#define HEADER_BEGIN_ADDR           23
+#define HEADER_UNUSED               27
+
 typedef struct {
     char** constants;
     size_t size;
@@ -78,6 +86,8 @@ static const OpcodeReader reader_map[] = {
     {LBLJMP, sizeof(int32_t)},
     {LBLJMPIF, sizeof(int32_t)},
     {LBLCALL, sizeof(int32_t)},
+    {LSTORE, sizeof(int32_t)},
+    {LLOAD, sizeof(int32_t)}
 };
 
 const OpcodeReader* get_reader(Opcode op);

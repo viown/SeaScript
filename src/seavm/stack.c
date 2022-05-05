@@ -7,6 +7,7 @@ Stack create_stack() {
     stack.total_size = 100;
     stack.allocated = 0;
     stack.stack = (StackObject*)malloc(100 * sizeof(StackObject));
+    stack.init = true;
     return stack;
 }
 

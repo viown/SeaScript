@@ -30,6 +30,7 @@ typedef struct {
     StackObject* stack;
     uint64_t total_size;
     uint64_t allocated;
+    bool init;
 } Stack;
 
 Stack create_stack();

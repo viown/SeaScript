@@ -80,25 +80,25 @@ void append_string(unsigned char* bytecode, size_t* cursor, char* string) {
 
 HeaderInfo extract_header_info(unsigned char* bytecode) {
     HeaderInfo info;
-    info.magic_number = *((int*)bytecode);
-    memcpy(info.version, bytecode + 5, 6);
+    info.magic_number = *((int*)(bytecode + HEADER_MAGIC_NUMBER));
+    memcpy(info.version, bytecode + HEADER_VERSION, sizeof(info.version));
     info.version[5] = '\0';
-    info.instruction_length = *((int*)(bytecode + 11));
-    info.bytecode_size = *((int*)(bytecode + 15));
-    info.pool_addr = *((int*)(bytecode + 19));
-    info.instr_addr = *((int*)(bytecode + 23));
+    info.instruction_length = *((int*)(bytecode + HEADER_INSTRUCTION_LENGTH));
+    info.bytecode_size = *((int*)(bytecode + HEADER_BYTECODE_SIZE));
+    info.pool_addr = *((int*)(bytecode + HEADER_CONSTANT_ADDR));
+    info.instr_addr = *((int*)(bytecode + HEADER_BEGIN_ADDR));
     return info;
 }
 
 void insert_header_info(unsigned char* bytecode, HeaderInfo info) {
     memset(bytecode, 0, 41);
-    memcpy(bytecode, (unsigned char*)&info.magic_number, 4);
-    memcpy(bytecode + 5, info.version, 6);
-    memcpy(bytecode + 11, (unsigned char*)&info.instruction_length, 4);
-    memcpy(bytecode + 15, (unsigned char*)&info.bytecode_size, 4);
-    memcpy(bytecode + 19, (unsigned char*)&info.pool_addr, 4);
-    memcpy(bytecode + 23, (unsigned char*)&info.instr_addr, 4);
-    memcpy(bytecode + 27, (unsigned char*)&info.unused, 14);
+    memcpy(bytecode + HEADER_MAGIC_NUMBER, (unsigned char*)&info.magic_number, sizeof(info.magic_number));
+    memcpy(bytecode + HEADER_VERSION, info.version, sizeof(info.version));
+    memcpy(bytecode + HEADER_INSTRUCTION_LENGTH, (unsigned char*)&info.instruction_length, sizeof(info.instruction_length));
+    memcpy(bytecode + HEADER_BYTECODE_SIZE, (unsigned char*)&info.bytecode_size, sizeof(info.bytecode_size));
+    memcpy(bytecode + HEADER_CONSTANT_ADDR, (unsigned char*)&info.pool_addr, sizeof(info.pool_addr));
+    memcpy(bytecode + HEADER_BEGIN_ADDR, (unsigned char*)&info.instr_addr, sizeof(info.instr_addr));
+    memcpy(bytecode + HEADER_UNUSED, (unsigned char*)&info.unused, sizeof(info.unused));
 }
 
 void save_to_file(Instruction* instructions, StringPool* pool, size_t length, const char* path) {
@@ -106,7 +106,6 @@ void save_to_file(Instruction* instructions, StringPool* pool, size_t length, co
     unsigned char* bytecode = (unsigned char*)ss_malloc(length * 8 + count_pool_size(pool) + 40);
     size_t size = length * 8;
     size_t cursor = 0;
-    const char* version = VERSION;
 
     HeaderInfo info;
     strcpy(info.version, VERSION);
@@ -184,7 +183,7 @@ InstructionHolder read_from_file(const char* path, StringPool* pool) {
     cursor = info.instr_addr;
 
     while (cursor != byte_size) {
-        if (bytecode[cursor] >= info.pool_addr) {
+        if (cursor >= info.pool_addr && info.pool_addr != 0) {
             break;
         }
         Instruction instruction;

@@ -30,7 +30,7 @@ typedef struct {
 } ss_BaseFunction;
 
 struct VirtualMachine {
-    Stack stack;
+    Stack stack[256];
     size_t ip;
     const ss_BaseFunction* c_functions;
 
@@ -38,8 +38,12 @@ struct VirtualMachine {
     size_t global_size;
     size_t global_used;
 
+    StackObject* locals[256];
+    size_t local_size[256];
+    size_t local_used[256];
+
     int return_addresses[255]; /* stack for return addresses */
-    int ret_sp;
+    int sp;
 
     int* label_addresses;
     size_t label_addr_size;

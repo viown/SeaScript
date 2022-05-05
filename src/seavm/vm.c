@@ -6,13 +6,19 @@
 
 
 void vm_init(VirtualMachine* vm, const ss_BaseFunction* func_list) {
-    vm->stack = create_stack();
+    for (int i = 0; i < 256; ++i) {
+        vm->stack[i].init = false;
+    }
+    vm->stack[0] = create_stack();
     vm->ip = 0;
     vm->c_functions = func_list;
     vm->globals = (StackObject*)ss_malloc(50 * sizeof(StackObject));
     vm->global_size = 50;
     vm->global_used = 0;
-    vm->ret_sp = 0;
+    vm->locals[0] = (StackObject*)ss_malloc(50 * sizeof(StackObject));
+    vm->local_size[0] = 50;
+    vm->local_used[0] = 50;
+    vm->sp = 0;
     vm->label_addresses = (int*)ss_malloc(500 * sizeof(int));
     vm->label_addr_size = 500;
     vm->label_addr_used = 0;
@@ -54,7 +60,7 @@ void vm_clear(VirtualMachine* vm) {
     }
     vm->heap_table_used = 0;
     vm->label_addr_used = 0;
-    vm->stack.allocated = 0;
+    vm->stack[vm->sp].allocated = 0;
 }
 
 
@@ -65,7 +71,7 @@ void vm_free(VirtualMachine* vm) {
         free_and_null(vm->heap_table[i]);
     }
     free_and_null(vm->heap_table);
-    terminate_stack(&vm->stack);
+    terminate_stack(&vm->stack[0]);
 }
 
 void resolve_labels(VirtualMachine* vm, Instruction* instrs, uint64_t length) {
@@ -106,62 +112,62 @@ int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, size_t
             vm->ip = 0;
             return cinstr->args[0];
         case LOADBOOL:
-            push_stack(&vm->stack, create_bool((bool)cinstr->args[0]));
+            push_stack(&vm->stack[vm->sp], create_bool((bool)cinstr->args[0]));
             vm->ip++;
             break;
         case LOADC: // load constant
             object.object.m_number = cinstr->args[0];
             object.type = NUMBER;
-            push_stack(&vm->stack, object);
+            push_stack(&vm->stack[vm->sp], object);
             vm->ip++;
             break;
         case LOADPOOL:
             object.object.m_string = pool->constants[cinstr->args[0]];
             object.type = STRING;
-            push_stack(&vm->stack, object);
+            push_stack(&vm->stack[vm->sp], object);
             vm->ip++;
             break;
         case POP:
-            pop_stack(&vm->stack);
+            pop_stack(&vm->stack[vm->sp]);
             vm->ip++;
             break;
         case INC:
-            top = top_stack(&vm->stack);
+            top = top_stack(&vm->stack[vm->sp]);
             top->object.m_number++;
             vm->ip++;
             break;
         case DEC:
-            top = top_stack(&vm->stack);
+            top = top_stack(&vm->stack[vm->sp]);
             top->object.m_number--;
             vm->ip++;
             break;
         case EQ:
-            top = top_stack(&vm->stack);
+            top = top_stack(&vm->stack[vm->sp]);
             top2 = top - 1;
             if (top->type == STRING && top2->type == STRING) {
-                push_stack(&vm->stack, create_bool( !strcmp(top->object.m_string, top2->object.m_string) ));
+                push_stack(&vm->stack[vm->sp], create_bool( !strcmp(top->object.m_string, top2->object.m_string) ));
             } else if (top->type == STRING || top2->type == STRING) {
-                push_stack(&vm->stack, create_bool(false));
+                push_stack(&vm->stack[vm->sp], create_bool(false));
             } else {
-                push_stack(&vm->stack, create_bool( (top-1)->object.m_number == top->object.m_number) );
+                push_stack(&vm->stack[vm->sp], create_bool( (top-1)->object.m_number == top->object.m_number) );
             }
             vm->ip++;
             break;
         case LT:
-            top = top_stack(&vm->stack);
-            push_stack(&vm->stack, create_bool((top-1)->object.m_number < top->object.m_number));
+            top = top_stack(&vm->stack[vm->sp]);
+            push_stack(&vm->stack[vm->sp], create_bool((top-1)->object.m_number < top->object.m_number));
             vm->ip++;
             break;
         case GT:
-            top = top_stack(&vm->stack);
-            push_stack(&vm->stack, create_bool((top-1)->object.m_number > top->object.m_number));
+            top = top_stack(&vm->stack[vm->sp]);
+            push_stack(&vm->stack[vm->sp], create_bool((top-1)->object.m_number > top->object.m_number));
             vm->ip++;
             break;
         case JUMP:
             vm->ip = cinstr->args[0];
             break;
         case JUMPIF:
-            top = top_stack(&vm->stack);
+            top = top_stack(&vm->stack[vm->sp]);
             if (top->object.m_bool) {
                 vm->ip = cinstr->args[0];
             } else {
@@ -169,67 +175,77 @@ int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, size_t
             }
             break;
         case NOT:
-            top = top_stack(&vm->stack);
+            top = top_stack(&vm->stack[vm->sp]);
             if (top->object.m_bool) {
-                push_stack(&vm->stack, create_bool(0));
+                push_stack(&vm->stack[vm->sp], create_bool(0));
             } else {
-                push_stack(&vm->stack, create_bool(1));
+                push_stack(&vm->stack[vm->sp], create_bool(1));
             }
             vm->ip++;
             break;
         case ADD:
-            b = pop_stack(&vm->stack);
-            a = pop_stack(&vm->stack);
+            b = pop_stack(&vm->stack[vm->sp]);
+            a = pop_stack(&vm->stack[vm->sp]);
             object.object.m_number = a.object.m_number + b.object.m_number;
             object.type = NUMBER;
-            push_stack(&vm->stack, object);
+            push_stack(&vm->stack[vm->sp], object);
             vm->ip++;
             break;
         case SUB:
-            b = pop_stack(&vm->stack);
-            a = pop_stack(&vm->stack);
+            b = pop_stack(&vm->stack[vm->sp]);
+            a = pop_stack(&vm->stack[vm->sp]);
             object.object.m_number = a.object.m_number - b.object.m_number;
             object.type = NUMBER;
-            push_stack(&vm->stack, object);
+            push_stack(&vm->stack[vm->sp], object);
             vm->ip++;
             break;
         case MUL:
-            b = pop_stack(&vm->stack);
-            a = pop_stack(&vm->stack);
+            b = pop_stack(&vm->stack[vm->sp]);
+            a = pop_stack(&vm->stack[vm->sp]);
             object.object.m_number = a.object.m_number * b.object.m_number;
             object.type = NUMBER;
-            push_stack(&vm->stack, object);
+            push_stack(&vm->stack[vm->sp], object);
             vm->ip++;
             break;
         case DIV:
-            b = pop_stack(&vm->stack);
-            a = pop_stack(&vm->stack);
+            b = pop_stack(&vm->stack[vm->sp]);
+            a = pop_stack(&vm->stack[vm->sp]);
             object.object.m_number = a.object.m_number / b.object.m_number;
             object.type = NUMBER;
-            push_stack(&vm->stack, object);
+            push_stack(&vm->stack[vm->sp], object);
             vm->ip++;
             break;
         case CALL:
-            vm->return_addresses[vm->ret_sp++] = vm->ip;
+            vm->return_addresses[vm->sp++] = vm->ip;
             vm->ip = cinstr->args[0];
+            vm->stack[vm->sp] = create_stack();
+            vm->locals[vm->sp] = (StackObject*)ss_malloc(50 * sizeof(StackObject));
+            vm->local_size[vm->sp] = 50;
+            vm->local_used[vm->sp] = 0;
             break;
         case LBLCALL:
-            vm->return_addresses[vm->ret_sp++] = vm->ip;
+            vm->return_addresses[vm->sp++] = vm->ip;
             vm->ip = vm->label_addresses[cinstr->args[0]];
+            vm->stack[vm->sp] = create_stack();
+            vm->locals[vm->sp] = (StackObject*)ss_malloc(50 * sizeof(StackObject));
+            vm->local_size[vm->sp] = 50;
+            vm->local_used[vm->sp] = 0;
             break;
         case RET:
-            vm->ip = vm->return_addresses[--vm->ret_sp] + 1;
+            terminate_stack(&vm->stack[vm->sp]);
+            free_and_null(vm->locals[vm->sp]);
+            vm->ip = vm->return_addresses[--vm->sp] + 1;
             break;
         case CALLC:
             vm->c_functions[cinstr->args[0]].func(vm);
             vm->ip++;
             break;
         case STORE:
-            set_global(vm, pop_stack(&vm->stack), cinstr->args[0]);
+            set_global(vm, pop_stack(&vm->stack[vm->sp]), cinstr->args[0]);
             vm->ip++;
             break;
         case LOAD:
-            push_stack(&vm->stack, vm->globals[cinstr->args[0]]);
+            push_stack(&vm->stack[vm->sp], vm->globals[cinstr->args[0]]);
             vm->ip++;
             break;
         case LBL:
@@ -240,11 +256,23 @@ int vm_execute(VirtualMachine* vm, StringPool* pool, Instruction* instrs, size_t
             vm->ip = vm->label_addresses[cinstr->args[0]];
             break;
         case LBLJMPIF:
-            top = top_stack(&vm->stack);
+            top = top_stack(&vm->stack[vm->sp]);
             if (top->object.m_bool)
                 vm->ip = vm->label_addresses[cinstr->args[0]];
             else
                 vm->ip++;
+            break;
+        case LSTORE:
+            if (cinstr->args[0] >= vm->local_size[vm->sp]) {
+                vm->local_size[vm->sp] *= 2;
+                vm->locals[vm->sp] = (StackObject*)realloc(vm->locals[vm->sp], vm->local_size[vm->sp] * sizeof(StackObject));
+            }
+            vm->locals[vm->sp][cinstr->args[0]] = pop_stack(&vm->stack[vm->sp]);
+            vm->ip++;
+            break;
+        case LLOAD:
+            push_stack(&vm->stack[vm->sp], vm->locals[vm->sp][cinstr->args[0]]);
+            vm->ip++;
             break;
         default:
             return VM_INVALID_INSTRUCTION;
@@ -309,6 +337,10 @@ const char* instruction_to_string(Opcode op) {
         return "LBLJMPIF";
     case LBLCALL:
         return "LBLCALL";
+    case LSTORE:
+        return "LSTORE";
+    case LLOAD:
+        return "LLOAD";
     default:
         return "UNKNOWN";
     }
