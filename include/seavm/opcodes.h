@@ -2,11 +2,6 @@
 #define SEAVM_OPCODES_H
 #include "stack.h"
 
-/*
-*   Reserved opcodes:
-*   177 - Used by the bytecode serializer to store constants
-*/
-
 typedef unsigned char Opcode;
 
 #define NOP         0

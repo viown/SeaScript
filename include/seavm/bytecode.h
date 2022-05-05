@@ -15,15 +15,14 @@
 /*
 * Header info
 *
-* 0-5   :  The version of the bytecode (mismatched versions won't be executed).
-* 6-9   :  Size of instructions
-* 10-13 :  Total size of the bytecode
-* 14-17 :  Address where constants such as strings are stored.
-* 18-21 :  Address where instructions begin.
-* 22-41 :  Reserved for future use.
+* 0-4   :  Magic number defined in conf.h
+* 5-10  :  The version of the bytecode (mismatched versions won't be executed).
+* 11-14 :  Size of instructions
+* 15-18 :  Total size of the bytecode
+* 19-22 :  Address where constants such as strings are stored.
+* 23-26 :  Address where instructions begin.
+* 27-41 :  Reserved for future use.
 */
-
-#define STRING_POOL 177
 
 typedef struct {
     char** constants;
@@ -42,12 +41,13 @@ typedef struct {
 } OpcodeReader;
 
 typedef struct {
+    int magic_number;
     char version[6];
     int instruction_length;
     int bytecode_size;
     int pool_addr;
     int instr_addr;
-    char unused[18];
+    char unused[14];
 } HeaderInfo;
 
 static const OpcodeReader reader_map[] = {

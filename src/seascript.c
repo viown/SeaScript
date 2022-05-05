@@ -24,6 +24,11 @@ typedef struct {
     bool check_version : 1;
 } CommandLineFlags;
 
+typedef enum {
+    BYTECODE,
+    SOURCE
+} FileType;
+
 CommandLineFlags init_flags() {
     CommandLineFlags flags;
     flags.is_view = false;
@@ -33,28 +38,6 @@ CommandLineFlags init_flags() {
     flags.benchmark = false;
     flags.check_version = false;
     return flags;
-}
-
-void get_extension(char* file_name, char* modify) {
-    char extension[255];
-    int len = 0;
-    char* extension_start = NULL;
-    for (int i = 0; i < strlen(file_name); ++i) {
-        if (file_name[i] == '.') {
-            extension_start = &file_name[i];
-            break;
-        }
-    }
-    if (extension_start == NULL) {
-        ss_throw("Bad Argument: Valid filename must be passed\n");
-    } else {
-        while (*extension_start != '\0') {
-            extension[len++] = *extension_start;
-            extension_start++;
-        }
-    }
-    extension[len++] = '\0';
-    strcpy(modify, extension);
 }
 
 char* read_file(const char* path) {
@@ -198,6 +181,23 @@ int execute_bytecode_in_benchmark(char* path) {
     return execution;
 }
 
+FileType get_file_type(char* path) {
+    FILE* file = fopen(path, "r");
+    long size = get_file_size(path);
+    int magic_number;
+    if (size < 4) {
+        fclose(file);
+        return SOURCE;
+    }
+    fread((int*)&magic_number, 4, 1, file);
+    fclose(file);
+    if (magic_number == BYTECODE_MAGIC_NUMBER) {
+        return BYTECODE;
+    } else {
+        return SOURCE;
+    }
+}
+
 int main(int argc, char** argv) {
     CommandLineFlags flags = init_flags();
     read_flags(&flags, argc, argv);
@@ -205,9 +205,8 @@ int main(int argc, char** argv) {
         if (flags.check_version) {
             printf("V%s\n", VERSION);
         } else {
-            char extension[255];
-            get_extension(argv[1], extension);
-            if (!strcmp(extension, BYTECODE_EXTENSION)) {
+            FileType fileType = get_file_type(argv[1]);
+            if (fileType == BYTECODE) {
                 if (!flags.is_view) {
                     if (flags.benchmark) {
                         return execute_bytecode_in_benchmark(argv[1]);
@@ -217,14 +216,12 @@ int main(int argc, char** argv) {
                 } else {
                     return visualize_bytecode(argv[1]);
                 }
-            } else if (!strcmp(extension, SOURCE_CODE_EXTENSION)) {
+            } else if (fileType == SOURCE) {
                 if (flags.benchmark) {
                     return compile_and_run_in_benchmark(flags, argv[1]);
                 } else {
                     return compile_and_run(flags, argv[1]);
                 }
-            } else {
-                ss_throw("Bad Argument: Invalid extension '%s'\n", extension);
             }
         }
     } else {

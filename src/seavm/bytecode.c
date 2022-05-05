@@ -80,25 +80,25 @@ void append_string(unsigned char* bytecode, size_t* cursor, char* string) {
 
 HeaderInfo extract_header_info(unsigned char* bytecode) {
     HeaderInfo info;
-    for (int i = 0; i <= 5; ++i) {
-        info.version[i] = bytecode[i];
-    }
+    info.magic_number = *((int*)bytecode);
+    memcpy(info.version, bytecode + 5, 6);
     info.version[5] = '\0';
-    info.instruction_length = *((int*)(bytecode + 6));
-    info.bytecode_size = *((int*)(bytecode + 10));
-    info.pool_addr = *((int*)(bytecode + 14));
-    info.instr_addr = *((int*)(bytecode + 18));
+    info.instruction_length = *((int*)(bytecode + 11));
+    info.bytecode_size = *((int*)(bytecode + 15));
+    info.pool_addr = *((int*)(bytecode + 19));
+    info.instr_addr = *((int*)(bytecode + 23));
     return info;
 }
 
 void insert_header_info(unsigned char* bytecode, HeaderInfo info) {
     memset(bytecode, 0, 41);
-    memcpy(bytecode, info.version, 6);
-    memcpy(bytecode + 6, (unsigned char*)&info.instruction_length, 4);
-    memcpy(bytecode + 10, (unsigned char*)&info.bytecode_size, 4);
-    memcpy(bytecode + 14, (unsigned char*)&info.pool_addr, 4);
-    memcpy(bytecode + 18, (unsigned char*)&info.instr_addr, 4);
-    memcpy(bytecode + 22, (unsigned char*)&info.unused, 18);
+    memcpy(bytecode, (unsigned char*)&info.magic_number, 4);
+    memcpy(bytecode + 5, info.version, 6);
+    memcpy(bytecode + 11, (unsigned char*)&info.instruction_length, 4);
+    memcpy(bytecode + 15, (unsigned char*)&info.bytecode_size, 4);
+    memcpy(bytecode + 19, (unsigned char*)&info.pool_addr, 4);
+    memcpy(bytecode + 23, (unsigned char*)&info.instr_addr, 4);
+    memcpy(bytecode + 27, (unsigned char*)&info.unused, 14);
 }
 
 void save_to_file(Instruction* instructions, StringPool* pool, size_t length, const char* path) {
@@ -110,11 +110,12 @@ void save_to_file(Instruction* instructions, StringPool* pool, size_t length, co
 
     HeaderInfo info;
     strcpy(info.version, VERSION);
+    info.magic_number = BYTECODE_MAGIC_NUMBER;
     info.instruction_length = length;
     info.bytecode_size = 0; /* todo */
     info.pool_addr = 0;
     info.instr_addr = 42;
-    strcpy(info.unused, "Hello friend.");
+    strcpy(info.unused, "Hello, friend");
 
     cursor = info.instr_addr;
 
@@ -173,28 +174,14 @@ InstructionHolder read_from_file(const char* path, StringPool* pool) {
     int cursor = 5;
     unsigned char* bytecode = (unsigned char*)ss_malloc(byte_size + 1);
     fread(bytecode, 1, byte_size, file);
-    /*
-    char version[10];
-    load_version(bytecode, version);
-    if (strcmp(version, VERSION) != 0) {
-        ss_throw("This bytecode file uses Seascript v%s, which differs from the current version (%s). Running it can be dangerous.\nHalt.\n", version, VERSION);
-    }
-    */
 
-   HeaderInfo info = extract_header_info(bytecode);
-   /*
-   printf("Version: %s\n", info.version);
-   printf("Instruction count: %d\n", info.instruction_length);
-   printf("Bytecode count: %d\n", info.bytecode_size);
-   printf("Constant pool address: %d\n", info.pool_addr);
-   printf("Instruction address: %d\n", info.instr_addr);
-   exit(0);
-   */
+    HeaderInfo info = extract_header_info(bytecode);
+
     if (strcmp(info.version, VERSION) != 0) {
         ss_throw("This bytecode file uses Seascript v%s, which differs from the current version (%s). Running it can be dangerous.\nHalt.\n", info.version, VERSION);
     }
 
-   cursor = info.instr_addr;
+    cursor = info.instr_addr;
 
     while (cursor != byte_size) {
         if (bytecode[cursor] >= info.pool_addr) {
