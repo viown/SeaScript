@@ -12,6 +12,17 @@
 #define VERSION "0.0.0"
 #endif
 
+/*
+* Header info
+*
+* 0-5   :  The version of the bytecode (mismatched versions won't be executed).
+* 6-9   :  Size of instructions
+* 10-13 :  Total size of the bytecode
+* 14-17 :  Address where constants such as strings are stored.
+* 18-21 :  Address where instructions begin.
+* 22-41 :  Reserved for future use.
+*/
+
 #define STRING_POOL 177
 
 typedef struct {
@@ -29,6 +40,15 @@ typedef struct {
     Opcode op;
     int bytes_to_read;
 } OpcodeReader;
+
+typedef struct {
+    char version[6];
+    int instruction_length;
+    int bytecode_size;
+    int pool_addr;
+    int instr_addr;
+    char unused[18];
+} HeaderInfo;
 
 static const OpcodeReader reader_map[] = {
     {NOP, 0},

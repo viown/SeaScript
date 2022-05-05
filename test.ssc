@@ -1,5 +1,0 @@
-function testFunction() {
-    return time();    
-}
-
-print(testFunction());

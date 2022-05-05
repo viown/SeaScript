@@ -24,7 +24,7 @@
 
 static const char* const ss_keywords[] = {
     "if", "function", "while", "break",
-    "return", "global", "local", "load",
+    "return", "decl", "local", "load",
     "for", "in", "not", "and", "or", "else",
     "elseif"
 };

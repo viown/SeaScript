@@ -2,14 +2,14 @@
 
 SeaScript is a simple, typeless programming language made in C.
 
-Seascript is designed to be fast and reliable while maintaining the capabilities of a high-level language.
+SeaScript is designed to be fast and reliable while maintaining the capabilities of a high-level language.
 
 # Example Program
 
 example.ssc:
 
     function wait(seconds) {
-        global start = time(); // UNIX time
+        decl start = time(); // UNIX time
 
         while ((time() - start) < seconds) {}
     }

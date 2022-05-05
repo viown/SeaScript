@@ -38,7 +38,7 @@ static inline bool is_function_definition(Token* current_token) {
 
 static inline bool is_variable_declaration(Token* current_token) {
     if (!IS_START_TOKEN(current_token)) {
-        return strcmp(PREVIOUS_TOKEN(current_token).value, "global") == 0;
+        return strcmp(PREVIOUS_TOKEN(current_token).value, "decl") == 0;
     } else {
         return false;
     }
@@ -49,7 +49,7 @@ static inline bool is_variable_reassignment(Token* current_token) {
         return false;
     bool is_assigning = current_token->token == IDENTIFIER && strcmp(NEXT_TOKEN(current_token).value, ASSIGNMENT) == 0;
     if (!IS_START_TOKEN(current_token)) {
-        return is_assigning && strcmp(PREVIOUS_TOKEN(current_token).value, "global") != 0;
+        return is_assigning && strcmp(PREVIOUS_TOKEN(current_token).value, "decl") != 0;
     } else {
         return is_assigning;
     }
